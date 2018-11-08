@@ -17,15 +17,20 @@ void smg_settings::test_init()
 	web_page_overlay_settings web_page;
 	web_page.x = 100;
 	web_page.y = 100;
-	web_page.width = 400;
-	web_page.height = 400;
-	web_page.url = "https://google.com";
+	web_page.width = 600;
+	web_page.height = 600;
+	web_page.url = "help.html";
 	web_pages.push_back(web_page);
 }
 
-void smg_settings::read()
+bool smg_settings::read()
 {
 	std::ifstream infile(config_file_name);
+	if (infile.fail())
+	{
+		return false;
+	}
+
 	std::string line;
 	int apps_count = 0;
 	int web_pages_count = 0;
@@ -50,6 +55,7 @@ void smg_settings::read()
 		web_page.read(infile);
 		web_pages.push_back(web_page);
 	}
+	return true;
 }
 
 void smg_settings::write()

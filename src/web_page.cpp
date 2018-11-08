@@ -2,7 +2,6 @@
 #include "webform.h"
 #include <algorithm>
 
-
 std::list<std::shared_ptr<web_forms_window>>  web_forms_windows;
 
 HANDLE webform_thread = 0;
@@ -149,7 +148,23 @@ void create_container_window(web_page_overlay_settings & n)
 		std::shared_ptr<web_forms_window> cur_web_view_window = get_webform(hMain);
 		if (cur_web_view_window != nullptr)
 		{
-			cur_web_view_window->url = n.url;
+			if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0)
+			{
+				cur_web_view_window->url = n.url;
+			} else {
+				WCHAR buffer[MAX_PATH];
+				GetCurrentDirectory(MAX_PATH, buffer );
+				std::wstring ws(buffer);
+				std::string temp_path(ws.begin(), ws.end());
+				//std::string::size_type pos = temp_path.find_last_of("\\/");
+
+				cur_web_view_window->url = "file:////";
+				cur_web_view_window->url += temp_path;// .substr(0, pos);
+				cur_web_view_window->url += "\\";
+				cur_web_view_window->url += n.url;
+					
+			}
+			
 			WCHAR * url = new wchar_t[cur_web_view_window->url.size() + 1];
 			mbstowcs(&url[0], cur_web_view_window->url.c_str(), cur_web_view_window->url.size() + 1);
 

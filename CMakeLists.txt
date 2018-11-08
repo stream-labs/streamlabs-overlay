@@ -5,6 +5,8 @@ ADD_DEFINITIONS(-D_UNICODE)
 
 file(GLOB SOURCES "src/*.cpp" "include/*.h")
 file(GLOB WEBFORM_SOURCES "webform/*.cpp" "webform/*.h")
+
+configure_file( "help.html" ${CMAKE_CURRENT_BINARY_DIR}/help.html COPYONLY)
  
 project(smg_overlays)
 add_executable(smg_overlays ${SOURCES} ${WEBFORM_SOURCES})

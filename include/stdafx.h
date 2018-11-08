@@ -56,7 +56,7 @@ struct smg_settings
 	
 	void test_init();
 
-	void read();
+	bool read();
 	void write();
 };
 

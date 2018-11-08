@@ -26,7 +26,10 @@ bool hweb_overlay_crated = false;
 int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
 	//app_settings.test_init();
-	app_settings.read();
+	if (!app_settings.read())
+	{
+		app_settings.test_init();
+	}	
 
 	webform_hInstance = hInstance;
 	webform_thread = CreateThread(nullptr, 0, web_page_thread_func, nullptr, 0, &webform_thread_id);
