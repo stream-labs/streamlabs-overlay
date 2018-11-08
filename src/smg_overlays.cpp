@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <algorithm>
 
 #include "web_page.h"
 
@@ -123,23 +124,33 @@ void process_hotkeys(MSG &msg)
 {
 	switch (msg.wParam)
 	{
+	case HOTKEY_CATCH_APP:
+	{
+		//HWND top_window = GetTopWindow(NULL);
+		HWND top_window = GetForegroundWindow();
+		if (top_window != nullptr)
+		{
+			unsigned long process_id = 0;
+			GetWindowThreadProcessId(top_window, &process_id);
+			EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
+		}
+		create_windows_overlays();
+	}
+	break;
 	case HOTKEY_SHOW_OVERLAYS:
 	{
+		//need to hide befor show. or show can be ignored. 
+		show_overlays = false;
+		hide_overlays();
+
 		show_overlays = true;
-		// do not need to show it right now.it will get new content and be shown later
-		//std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-//			ShowWindow(n->overlay_hwnd, SW_SHOW);
-		//});
 	}
 	break;
 	case HOTKEY_HIDE_OVERLAYS:
 	{
 		show_overlays = false;
 		
-		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-			ShowWindow(n->overlay_hwnd, SW_HIDE);
-		});
-		PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_HIDE_OVERLAYS, 0);
+		hide_overlays();
 	}
 	break;
 	case HOTKEY_UPDATE_OVERLAYS:
@@ -148,7 +159,7 @@ void process_hotkeys(MSG &msg)
 		{
 			std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
 				n->update_window_screenshot();
-				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+				//InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
 			});
 		}
 	} break;
@@ -163,6 +174,14 @@ void process_hotkeys(MSG &msg)
 		PostQuitMessage(0);
 	}break;
 	};
+}
+
+void hide_overlays()
+{
+	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
+		ShowWindow(n->overlay_hwnd, SW_HIDE);
+	});
+	PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_HIDE_OVERLAYS, 0);
 }
 
 void create_overlay_window_class()
@@ -213,6 +232,7 @@ void register_hotkeys()
 	RegisterHotKey(NULL, HOTKEY_ADD_WEB, MOD_ALT, 0x57);  //add 'W'ebview
 	RegisterHotKey(NULL, HOTKEY_UPDATE_OVERLAYS, MOD_ALT, 0x55);  //'U'pdate
 	RegisterHotKey(NULL, HOTKEY_QUITE, MOD_ALT, 0x51);  //'Q'uit
+	RegisterHotKey(NULL, HOTKEY_CATCH_APP, MOD_ALT, 0x50);  //catch a'P'p window
 }
 
 void get_windows_list()
@@ -270,7 +290,7 @@ BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM param)
 	{
 		unsigned long process_id = 0;
 		GetWindowThreadProcessId(hwnd, &process_id);
-		if ( *((unsigned long*)param) == process_id  && (GetWindow(hwnd, GW_OWNER) == (HWND)nullptr && IsWindowVisible(hwnd) ) )//&& ))
+		if ( *((unsigned long*)param) == process_id  && (GetWindow(hwnd, GW_OWNER) == (HWND)nullptr && IsWindowVisible(hwnd) ) )
 		{
 			window_ok = true;
 		}
@@ -282,13 +302,53 @@ BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM param)
 		}
 	}
 	
+	if (window_ok)
+	{
+		WINDOWINFO wi;
+		GetWindowInfo(hwnd, &wi);
+		int y = wi.rcWindow.bottom - wi.rcWindow.top;
+		int x = wi.rcWindow.left - wi.rcWindow.right;
+
+		int written = GetWindowTextA(hwnd, buffer, 128);
+	}
+
 	if(window_ok )
 	{
-		std::shared_ptr<captured_window> found_window = std::make_shared<captured_window>();
-		found_window->orig_handle = hwnd;
-		found_window->get_window_screenshot();
+		bool we_have_it = false;
+		std::for_each(showing_windows.begin(), showing_windows.end(), [&hwnd, &we_have_it](std::shared_ptr<captured_window> &n) {
+			if (n->orig_handle == hwnd)
+			{
+				we_have_it = true;
+			}
+		});
 
-		showing_windows.push_back(found_window);
+		if (!we_have_it)
+		{
+			std::shared_ptr<captured_window> found_window = std::make_shared<captured_window>();
+			found_window->orig_handle = hwnd;
+			found_window->get_window_screenshot();
+			showing_windows.push_back(found_window);
+
+			//add process file name to settings 
+			TCHAR nameProcess[MAX_PATH];
+			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, *((unsigned long*)param));
+			DWORD file_name_size = MAX_PATH;
+			QueryFullProcessImageName( processHandle, 0, nameProcess, &file_name_size);
+			CloseHandle(processHandle);
+			std::wstring ws(nameProcess);
+			std::string temp_path(ws.begin(), ws.end());
+			std::string::size_type pos = temp_path.find_last_of("\\/");
+			std::string file_name = temp_path.substr(pos+1, temp_path.size());
+
+			std::list<std::string>::iterator findIter = std::find_if(app_settings.apps_names.begin(), app_settings.apps_names.end(), 
+				[&file_name](const std::string &v) { return v.compare(file_name) == 0; }
+				);
+			if (findIter == app_settings.apps_names.end())
+			{
+				app_settings.apps_names.push_back(file_name);
+			}
+		
+		}
 	}
 	return TRUE;
 }
@@ -454,7 +514,10 @@ bool captured_window::get_window_screenshot()
 				height = new_height;
 				
 				updated = true;
-				MoveWindow(overlay_hwnd, x, y, width, height, FALSE);
+				if (overlay_hwnd)
+				{
+					MoveWindow(overlay_hwnd, x, y, width, height, FALSE);
+				}
 			} else {
 				DeleteDC(new_hdc);
 				DeleteObject(new_hbmp);
@@ -462,22 +525,27 @@ bool captured_window::get_window_screenshot()
 		}
 	}
 
-	if (!updated)
+	if (overlay_hwnd)
 	{
-		if (IsWindow(orig_handle))
+		if (!updated)
 		{
-			//it is still a window we can show it later 
-			ShowWindow(overlay_hwnd, SW_HIDE);
-		} else {
-			//it is not a window anymore . should close our overlay 
-			ShowWindow(overlay_hwnd, SW_HIDE);
+			if (IsWindow(orig_handle))
+			{
+				//it is still a window we can show it later 
+				ShowWindow(overlay_hwnd, SW_HIDE);
+			}
+			else {
+				//it is not a window anymore . should close our overlay 
+				ShowWindow(overlay_hwnd, SW_HIDE);
+			}
+
+			//std::cout << "get_window_screenshot had issue " << GetLastError() << std::endl; 
 		}
-		
-		//std::cout << "get_window_screenshot had issue " << GetLastError() << std::endl; 
-	} else {
-		if (!IsWindowVisible(overlay_hwnd))
-		{
-			ShowWindow(overlay_hwnd, SW_SHOW);
+		else {
+			if (!IsWindowVisible(overlay_hwnd))
+			{
+				ShowWindow(overlay_hwnd, SW_SHOWNA);
+			}
 		}
 	}
 	ReleaseDC(NULL, hdcScreen);

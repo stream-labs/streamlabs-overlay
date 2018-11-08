@@ -13,6 +13,7 @@ void register_hotkeys();
 void create_windows_overlays();
 void create_overlay_window_class();
 void process_hotkeys(MSG &msg);
+void hide_overlays();
 void get_windows_list();
 bool FindRunningProcess(const WCHAR * process_name_part);
 

@@ -34,6 +34,7 @@ const int HOTKEY_HIDE_OVERLAYS = 2;
 const int HOTKEY_UPDATE_OVERLAYS = 3;
 const int HOTKEY_QUITE = 4;
 const int HOTKEY_ADD_WEB = 5;
+const int HOTKEY_CATCH_APP = 6;
 
 const std::string config_file_name = "settings.cfg";
 
