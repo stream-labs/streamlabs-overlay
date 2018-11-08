@@ -34,7 +34,17 @@ std::shared_ptr<web_forms_window> get_webform(HWND container)
 		}
 	}
 	);
+
 	return ret;
+}
+
+void remove_webform(HWND container)
+{
+	web_forms_windows.remove_if([container](std::shared_ptr<web_forms_window> &n)
+	{
+		return(n->container_hwnd == container);
+	}
+	);
 }
 
 LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -45,7 +55,7 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		std::shared_ptr<web_forms_window> new_web_view = std::make_shared<web_forms_window>();
 		new_web_view->container_hwnd = hwnd;
-		new_web_view->webform_hwnd = WebformCreate(hwnd, 103);  // We pick 103 as the id for our child control
+		new_web_view->webform_hwnd = WebformCreate(hwnd, 103);
 		web_forms_windows.push_back(new_web_view);
 	} break;
 	case WM_SIZE:
@@ -66,7 +76,7 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	} break;
 	case WM_DESTROY:
 	{
-		PostQuitMessage(0);
+		remove_webform(hwnd);
 	} break;
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -115,7 +125,7 @@ DWORD WINAPI web_page_thread_func(void* data)
 
 				app_settings.web_pages.push_back(new_web_view);			
 			}break;
-			case HOTKEY_HIDE_ALL:
+			case HOTKEY_HIDE_OVERLAYS:
 			{
 				//do not hide window. hidden windows does not paint 
 			}

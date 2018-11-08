@@ -11,6 +11,7 @@
 #pragma comment (lib, "uxtheme.lib")
 
 std::list<std::shared_ptr<captured_window> > showing_windows;
+bool show_overlays = false;
 
 void update_settings(); 
 
@@ -68,11 +69,15 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 			}
 			break;
 			case WM_TIMER:
-				std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-					n->update_window_screenshot();
-					InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
-				});
-
+				if (show_overlays)
+				{
+					std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
+						if (n->update_window_screenshot())
+						{
+							InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+						}
+					});
+				}
 				std::for_each(web_forms_windows.begin(), web_forms_windows.end(), [](std::shared_ptr<web_forms_window> &n)
 					{
 						if (!n->hweb_overlay_crated && n->webform_hwnd != nullptr)
@@ -115,27 +120,34 @@ void process_hotkeys(MSG &msg)
 {
 	switch (msg.wParam)
 	{
-	case HOTKEY_SHOW_OVERLAY:
+	case HOTKEY_SHOW_OVERLAYS:
 	{
-		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-			ShowWindow(n->overlay_hwnd, SW_SHOW);
-		});
+		show_overlays = true;
+		// do not need to show it right now.it will get new content and be shown later
+		//std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
+//			ShowWindow(n->overlay_hwnd, SW_SHOW);
+		//});
 	}
 	break;
-	case HOTKEY_HIDE_ALL:
+	case HOTKEY_HIDE_OVERLAYS:
 	{
+		show_overlays = false;
+		
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
 			ShowWindow(n->overlay_hwnd, SW_HIDE);
 		});
-		PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_HIDE_ALL, 0);
+		PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_HIDE_OVERLAYS, 0);
 	}
 	break;
-	case HOTKEY_UPDATE_OVERLAY:
+	case HOTKEY_UPDATE_OVERLAYS:
 	{
-		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-			n->update_window_screenshot();
-			InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
-		});
+		if (show_overlays)
+		{
+			std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
+				n->update_window_screenshot();
+				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+			});
+		}
 	} break;
 	case HOTKEY_ADD_WEB:
 	{
@@ -179,8 +191,13 @@ void create_windows_overlays()
 				//SetLayeredWindowAttributes(n->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_COLORKEY);
 
 				SetWindowPos(n->overlay_hwnd, HWND_TOPMOST, n->x, n->y, n->width, n->height, SWP_NOREDRAW);
-
-				ShowWindow(n->overlay_hwnd, SW_HIDE);
+				if (show_overlays)
+				{
+					ShowWindow(n->overlay_hwnd, SW_SHOW);
+				} else {
+					ShowWindow(n->overlay_hwnd, SW_HIDE);
+				}
+				
 			}
 		}
 	});
@@ -188,10 +205,10 @@ void create_windows_overlays()
 
 void register_hotkeys()
 {
-	RegisterHotKey(NULL, HOTKEY_SHOW_OVERLAY, MOD_ALT, 0x53);  //'S'how
-	RegisterHotKey(NULL, HOTKEY_HIDE_ALL, MOD_ALT, 0x48);  //'H'ide all
+	RegisterHotKey(NULL, HOTKEY_SHOW_OVERLAYS, MOD_ALT, 0x53);  //'S'how
+	RegisterHotKey(NULL, HOTKEY_HIDE_OVERLAYS, MOD_ALT, 0x48);  //'H'ide all
 	RegisterHotKey(NULL, HOTKEY_ADD_WEB, MOD_ALT, 0x57);  //add 'W'ebview
-	RegisterHotKey(NULL, HOTKEY_UPDATE_OVERLAY, MOD_ALT, 0x55);  //'U'pdate
+	RegisterHotKey(NULL, HOTKEY_UPDATE_OVERLAYS, MOD_ALT, 0x55);  //'U'pdate
 	RegisterHotKey(NULL, HOTKEY_QUITE, MOD_ALT, 0x51);  //'Q'uit
 }
 
@@ -358,9 +375,9 @@ void draw_overlay_gdi(HWND &hWnd)
 	EndPaint(hWnd, &ps);
 }
 
-void captured_window::update_window_screenshot() 
+bool captured_window::update_window_screenshot() 
 {
-	get_window_screenshot();
+	return get_window_screenshot();
 }
 
 inline captured_window::~captured_window()
@@ -383,7 +400,7 @@ inline void captured_window::clean_resources()
 	DeleteObject(hbmp);
 }
 
-void captured_window::get_window_screenshot() 
+bool captured_window::get_window_screenshot() 
 {
 	bool updated = false;
 	BOOL ret = false;
@@ -441,11 +458,28 @@ void captured_window::get_window_screenshot()
 			}
 		}
 	}
+
 	if (!updated)
 	{
+		if (IsWindow(orig_handle))
+		{
+			//it is still a window we can show it later 
+			ShowWindow(overlay_hwnd, SW_HIDE);
+		} else {
+			//it is not a window anymore . should close our overlay 
+			ShowWindow(overlay_hwnd, SW_HIDE);
+		}
+		
 		//std::cout << "get_window_screenshot had issue " << GetLastError() << std::endl; 
+	} else {
+		if (!IsWindowVisible(overlay_hwnd))
+		{
+			ShowWindow(overlay_hwnd, SW_SHOW);
+		}
 	}
 	ReleaseDC(NULL, hdcScreen);
+
+	return updated;
 }
 
 void update_settings()

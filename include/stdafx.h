@@ -29,9 +29,9 @@
 
 enum class window_grab_method { bitblt, print, message_print};
 
-const int HOTKEY_SHOW_OVERLAY = 1;
-const int HOTKEY_HIDE_ALL = 2;
-const int HOTKEY_UPDATE_OVERLAY = 3;
+const int HOTKEY_SHOW_OVERLAYS = 1;
+const int HOTKEY_HIDE_OVERLAYS = 2;
+const int HOTKEY_UPDATE_OVERLAYS = 3;
 const int HOTKEY_QUITE = 4;
 const int HOTKEY_ADD_WEB = 5;
 

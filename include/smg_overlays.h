@@ -16,14 +16,15 @@ void process_hotkeys(MSG &msg);
 void get_windows_list();
 bool FindRunningProcess(const WCHAR * process_name_part);
 
+extern bool show_overlays;
 
 class captured_window
 {
 public:
 	window_grab_method use_method;
 
-	void get_window_screenshot();
-	void update_window_screenshot();
+	bool get_window_screenshot();
+	bool update_window_screenshot();
 
 	HWND orig_handle;
 	HBITMAP hbmp;
