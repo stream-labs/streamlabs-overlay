@@ -11,6 +11,8 @@ void draw_overlay_gdi(HWND &hWnd);
 BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM);
 void register_hotkeys();
 void create_windows_overlays();
+void create_overlay_window_class();
+void process_hotkeys(MSG &msg);
 void get_windows_list();
 bool FindRunningProcess(const WCHAR * process_name_part);
 

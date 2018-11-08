@@ -19,14 +19,45 @@
 #include <atlbase.h>
 #include <atlstr.h>
 #include <atlsync.h>
-#include <iostream>
+
+#include <list>
+#include <memory>
 
 #include <uxtheme.h>    // for dbl-buffered painting
  
+
+
 enum class window_grab_method { bitblt, print, message_print};
 
 const int HOTKEY_SHOW_OVERLAY = 1;
 const int HOTKEY_HIDE_ALL = 2;
 const int HOTKEY_UPDATE_OVERLAY = 3;
 const int HOTKEY_QUITE = 4;
-const int HOTKEY_SHOW_WEB = 5;
+const int HOTKEY_ADD_WEB = 5;
+
+const std::string config_file_name = "settings.cfg";
+
+struct web_page_overlay_settings
+{
+	std::string url;
+	int x;
+	int y;
+	int width;
+	int height;
+
+	void read(std::ifstream &infile);
+	void write(std::ofstream & outfile);
+};
+
+struct smg_settings
+{
+	std::list<std::string> apps_names;
+	std::list<web_page_overlay_settings> web_pages;
+	
+	void test_init();
+
+	void read();
+	void write();
+};
+
+extern smg_settings app_settings;

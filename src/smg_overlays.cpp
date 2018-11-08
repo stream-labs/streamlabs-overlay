@@ -2,10 +2,8 @@
 #include "stdafx.h"
 #include "smg_overlays.h"
 
-#include <new>
-#include <list>
-#include <memory>
 #include <algorithm>
+#include <iostream>
 
 #include "web_page.h"
 
@@ -14,15 +12,21 @@
 
 std::list<std::shared_ptr<captured_window> > showing_windows;
 
+void update_settings(); 
+
 HINSTANCE g_hInstance = nullptr;
 wchar_t const g_szWindowClass[] = L"overlays";
 BOOL g_bDblBuffered = FALSE;
- 
+
+smg_settings app_settings;
 bool hweb_overlay_crated = false;
 
 //  Entry to the app
 int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
+	//app_settings.test_init();
+	app_settings.read();
+
 	webform_hInstance = hInstance;
 	webform_thread = CreateThread(nullptr, 0, web_page_thread_func, nullptr, 0, &webform_thread_id);
 	if (webform_thread) {
@@ -36,20 +40,13 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 
     // Init COM and double-buffered painting
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-    if (SUCCEEDED(hr))
+    
+	if (SUCCEEDED(hr))
     {
         hr = BufferedPaintInit();
         g_bDblBuffered = SUCCEEDED(hr);
 		 
-        WNDCLASSEX wcex = { sizeof(wcex) };
-        wcex.style          = CS_HREDRAW | CS_VREDRAW;
-        wcex.lpfnWndProc    = WndProc;
-        wcex.hInstance      = g_hInstance;
-        wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-        wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-        wcex.lpszClassName  = g_szWindowClass;
-
-        RegisterClassEx(&wcex);
+		create_overlay_window_class();
 				
 		get_windows_list();
 				
@@ -67,40 +64,7 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 			{
 			case WM_HOTKEY:
 			{
-				switch (msg.wParam)
-				{
-				case HOTKEY_SHOW_OVERLAY:
-				{
-					std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-						ShowWindow(n->overlay_hwnd, SW_SHOW);
-					});
-				}
-				break;
-				case HOTKEY_HIDE_ALL:
-				{
-					std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-						ShowWindow(n->overlay_hwnd, SW_HIDE);
-					});
-					PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_HIDE_ALL, 0);
-				}
-				break;
-				case HOTKEY_UPDATE_OVERLAY:
-				{
-					std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-						n->update_window_screenshot();
-						InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
-					});
-				} break;
-				case HOTKEY_SHOW_WEB:
-				{
-					PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_SHOW_WEB, 0);
-				} break;
-
-				case HOTKEY_QUITE:
-				{
-					PostQuitMessage(0);
-				}break;
-				};
+				process_hotkeys(msg);
 			}
 			break;
 			case WM_TIMER:
@@ -108,17 +72,24 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 					n->update_window_screenshot();
 					InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
 				});
-				if (!hweb_overlay_crated && webform_hwnd != nullptr)
-				{
-					hweb_overlay_crated = true;
-					
-					std::shared_ptr<captured_window> found_window = std::make_shared<captured_window>();
-					found_window->orig_handle = webform_hwnd;
-					found_window->use_method = window_grab_method::bitblt;
-					found_window->get_window_screenshot();
-					showing_windows.push_back(found_window);
-					create_windows_overlays();
-				}
+
+				std::for_each(web_forms_windows.begin(), web_forms_windows.end(), [](std::shared_ptr<web_forms_window> &n)
+					{
+						if (!n->hweb_overlay_crated && n->webform_hwnd != nullptr)
+						{
+							n->hweb_overlay_crated = true;
+
+							std::shared_ptr<captured_window> found_window = std::make_shared<captured_window>();
+							found_window->orig_handle = n->webform_hwnd;
+							found_window->use_method = window_grab_method::bitblt;
+							found_window->get_window_screenshot();
+							showing_windows.push_back(found_window);
+							create_windows_overlays();
+						}
+					}
+					);
+
+
 				break;
 			default:
 				TranslateMessage(&msg);
@@ -134,8 +105,62 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 
         CoUninitialize();
     }
+	update_settings();
+	app_settings.write();
 
     return 0;
+}
+
+void process_hotkeys(MSG &msg)
+{
+	switch (msg.wParam)
+	{
+	case HOTKEY_SHOW_OVERLAY:
+	{
+		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
+			ShowWindow(n->overlay_hwnd, SW_SHOW);
+		});
+	}
+	break;
+	case HOTKEY_HIDE_ALL:
+	{
+		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
+			ShowWindow(n->overlay_hwnd, SW_HIDE);
+		});
+		PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_HIDE_ALL, 0);
+	}
+	break;
+	case HOTKEY_UPDATE_OVERLAY:
+	{
+		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
+			n->update_window_screenshot();
+			InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+		});
+	} break;
+	case HOTKEY_ADD_WEB:
+	{
+		PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_ADD_WEB, 0);
+	} break;
+
+	case HOTKEY_QUITE:
+	{
+		update_settings();
+		PostQuitMessage(0);
+	}break;
+	};
+}
+
+void create_overlay_window_class()
+{
+	WNDCLASSEX wcex = { sizeof(wcex) };
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;
+	wcex.hInstance = g_hInstance;
+	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.lpszClassName = g_szWindowClass;
+
+	RegisterClassEx(&wcex);
 }
 
 void create_windows_overlays()
@@ -165,19 +190,22 @@ void register_hotkeys()
 {
 	RegisterHotKey(NULL, HOTKEY_SHOW_OVERLAY, MOD_ALT, 0x53);  //'S'how
 	RegisterHotKey(NULL, HOTKEY_HIDE_ALL, MOD_ALT, 0x48);  //'H'ide all
-	RegisterHotKey(NULL, HOTKEY_SHOW_WEB, MOD_ALT, 0x57);  //show 'W'ebview
+	RegisterHotKey(NULL, HOTKEY_ADD_WEB, MOD_ALT, 0x57);  //add 'W'ebview
 	RegisterHotKey(NULL, HOTKEY_UPDATE_OVERLAY, MOD_ALT, 0x55);  //'U'pdate
 	RegisterHotKey(NULL, HOTKEY_QUITE, MOD_ALT, 0x51);  //'Q'uit
 }
 
 void get_windows_list()
 {
-	if (0)
-	{
-		EnumWindows(get_overlayed_windows, 0);
-	}else {
-		FindRunningProcess(L"notepad");
-	}
+	//EnumWindows(get_overlayed_windows, 0);
+	std::for_each(app_settings.apps_names.begin(), app_settings.apps_names.end(),  [](std::string &n)
+		{
+			WCHAR * process_name = new wchar_t[n.size() + 1];
+			mbstowcs(&process_name[0], n.c_str(), n.size()+1);
+			
+			FindRunningProcess(process_name);
+		}
+		);		
 }
 
 bool FindRunningProcess(const WCHAR * process_name_part) 
@@ -207,8 +235,6 @@ bool FindRunningProcess(const WCHAR * process_name_part)
 					break;
 				}
 			}
-
-			// clean the snapshot object
 			CloseHandle(hProcessSnap);
 		}
 	}
@@ -385,7 +411,7 @@ void captured_window::get_window_screenshot()
 			switch (use_method)
 			{
 			case window_grab_method::bitblt:
-				ret = BitBlt(new_hdc, 0, 0, width, height, hdcScreen, 0, 0, SRCCOPY);
+				ret = BitBlt(new_hdc, 0, 0, new_width, new_height, hdcScreen, 0, 0, SRCCOPY);
 				break;
 			case window_grab_method::print:
 				ret = PrintWindow(orig_handle, new_hdc, 0);
@@ -420,4 +446,26 @@ void captured_window::get_window_screenshot()
 		//std::cout << "get_window_screenshot had issue " << GetLastError() << std::endl; 
 	}
 	ReleaseDC(NULL, hdcScreen);
+}
+
+void update_settings()
+{
+	app_settings.web_pages.clear();
+
+	std::for_each(web_forms_windows.begin(), web_forms_windows.end(), [](std::shared_ptr<web_forms_window> &n)
+	{
+		web_page_overlay_settings wnd_settings;
+		wnd_settings.url = n->url;
+		
+		RECT client_rect = { 0 };
+		GetWindowRect(n->container_hwnd, &client_rect);
+		wnd_settings.x = client_rect.left;
+		wnd_settings.y = client_rect.top;
+		wnd_settings.width = client_rect.right - client_rect.left;
+		wnd_settings.height = client_rect.bottom - client_rect.top;
+
+		app_settings.web_pages.push_back(wnd_settings);
+	}
+	);
+
 }
