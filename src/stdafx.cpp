@@ -25,16 +25,18 @@ void smg_settings::test_init()
 
 bool smg_settings::read()
 {
+	std::cout << "read settings from file " << config_file_name << ", settings ver " << settings_version << std::endl;
 	std::ifstream infile(config_file_name);
 	if (infile.fail())
 	{
+		std::cout << "read settings failed " << std::endl;
 		return false;
 	}
 
 	std::string line;
 	int apps_count = 0;
 	int web_pages_count = 0;
-
+ 
 	std::getline(infile, line);
 	std::istringstream apps_count_line(line);
 	apps_count_line >> apps_count;
@@ -60,6 +62,8 @@ bool smg_settings::read()
 
 void smg_settings::write()
 {
+	std::cout << "write settings to file " << config_file_name << std::endl;
+
 	std::ofstream outfile(config_file_name);
 	outfile << apps_names.size() << std::endl;
 	std::for_each(apps_names.begin(), apps_names.end(), [&outfile](std::string &n)
@@ -74,6 +78,13 @@ void smg_settings::write()
 	});
 
 	outfile.close();
+}
+
+smg_settings::smg_settings():settings_version(0x0001)
+{
+	transparency = 0xD0;
+	use_color_key = false;
+	redraw_timeout = 300;
 }
 
 void web_page_overlay_settings::write(std::ofstream & outfile)
@@ -107,4 +118,6 @@ void web_page_overlay_settings::read(std::ifstream & infile)
 
 	std::getline(infile, line);
 	url = line;
+	
+	std::cout << "read webview from config " << x << ", " << y << ", " << width << ", " << height << ", " << url << std::endl;
 }

@@ -52,13 +52,19 @@ struct web_page_overlay_settings
 
 struct smg_settings
 {
+	const int settings_version;
 	std::list<std::string> apps_names;
 	std::list<web_page_overlay_settings> web_pages;
-	
+
+	int transparency; // o - 255 
+	bool use_color_key;
+	int redraw_timeout;//ms
+
 	void test_init();
 
 	bool read();
-	void write();
+	void write();	
+	smg_settings();
 };
 
 extern smg_settings app_settings;

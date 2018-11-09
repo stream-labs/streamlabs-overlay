@@ -1,6 +1,7 @@
 #include "web_page.h"
 #include "webform.h"
 #include <algorithm>
+#include <iostream>
 
 std::list<std::shared_ptr<web_forms_window>>  web_forms_windows;
 
@@ -94,7 +95,7 @@ DWORD WINAPI web_page_thread_func(void* data)
 	wcex.lpfnWndProc = (WNDPROC)PlainWndProc;
 	wcex.hInstance = webform_hInstance;
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcex.lpszClassName = _T("PlainClass");
+	wcex.lpszClassName = _T("Webview");
 	ATOM res = RegisterClassEx(&wcex);
 
 	std::for_each(app_settings.web_pages.begin(), app_settings.web_pages.end(), [](web_page_overlay_settings &n)
@@ -112,6 +113,7 @@ DWORD WINAPI web_page_thread_func(void* data)
 			{
 			case HOTKEY_ADD_WEB:
 			{
+				std::cout << "add webview" << std::endl;
 				web_page_overlay_settings new_web_view;
 				
 				new_web_view.url = "https://google.com";
@@ -142,7 +144,7 @@ DWORD WINAPI web_page_thread_func(void* data)
 void create_container_window(web_page_overlay_settings & n)
 {
 	HWND hMain;         // Our main window
-	hMain = CreateWindowEx(0, _T("PlainClass"), _T("Plain Window"), WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, n.x, n.y, n.width, n.height, NULL, NULL, webform_hInstance, NULL);
+	hMain = CreateWindowEx(0, _T("Webview"), _T("Webview Window"), WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, n.x, n.y, n.width, n.height, NULL, NULL, webform_hInstance, NULL);
 	if (hMain != NULL)
 	{
 		std::shared_ptr<web_forms_window> cur_web_view_window = get_webform(hMain);

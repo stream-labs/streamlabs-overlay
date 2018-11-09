@@ -26,7 +26,8 @@ bool hweb_overlay_crated = false;
 //  Entry to the app
 int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
-	//app_settings.test_init();
+	std::cout << "start application " << std::endl;
+	
 	if (!app_settings.read())
 	{
 		app_settings.test_init();
@@ -59,7 +60,7 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 
 		create_windows_overlays();
 		
-		SetTimer(0, OVERLAY_UPDATE_TIMER, 300, (TIMERPROC)nullptr);
+		SetTimer(0, OVERLAY_UPDATE_TIMER, app_settings.redraw_timeout, (TIMERPROC)nullptr);
 
 		// Main message loop
 		MSG msg;
@@ -116,12 +117,15 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
     }
 	update_settings();
 	app_settings.write();
+	
+	std::cout << "exit from app " << std::endl;
 
     return 0;
 }
 
 void process_hotkeys(MSG &msg)
 {
+	std::cout << "process_hotkeys id " << msg.wParam << std::endl;
 	switch (msg.wParam)
 	{
 	case HOTKEY_CATCH_APP:
@@ -132,6 +136,7 @@ void process_hotkeys(MSG &msg)
 		{
 			unsigned long process_id = 0;
 			GetWindowThreadProcessId(top_window, &process_id);
+			std::cout << "catch app "<< process_id <<", "<< top_window << std::endl;
 			EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
 		}
 		create_windows_overlays();
@@ -139,10 +144,14 @@ void process_hotkeys(MSG &msg)
 	break;
 	case HOTKEY_SHOW_OVERLAYS:
 	{
-		//need to hide befor show. or show can be ignored. 
-		show_overlays = false;
-		hide_overlays();
-
+		if (show_overlays)
+		{
+			//need to hide befor show. or show can be ignored. 
+			show_overlays = false;
+			hide_overlays();
+		}
+		
+		std::cout << "show overlays " << std::endl;
 		show_overlays = true;
 	}
 	break;
@@ -178,6 +187,7 @@ void process_hotkeys(MSG &msg)
 
 void hide_overlays()
 {
+	std::cout << "hide_overlays " << std::endl;
 	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
 		ShowWindow(n->overlay_hwnd, SW_HIDE);
 	});
@@ -209,8 +219,12 @@ void create_windows_overlays()
 
 			if (n->overlay_hwnd)
 			{
-				SetLayeredWindowAttributes(n->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_ALPHA);
-				//SetLayeredWindowAttributes(n->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_COLORKEY);
+				if (app_settings.use_color_key)
+				{
+					SetLayeredWindowAttributes(n->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_COLORKEY);
+				} else {
+					SetLayeredWindowAttributes(n->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), app_settings.transparency, LWA_ALPHA);
+				}
 
 				SetWindowPos(n->overlay_hwnd, HWND_TOPMOST, n->x, n->y, n->width, n->height, SWP_NOREDRAW);
 				if (show_overlays)
@@ -478,15 +492,26 @@ bool captured_window::get_window_screenshot()
 		int new_width = client_rect.right - client_rect.left;
 		int new_height = client_rect.bottom - client_rect.top;
 			
-		HDC new_hdc = CreateCompatibleDC(hdcScreen);
-		HBITMAP new_hbmp = CreateCompatibleBitmap(hdcScreen, new_width, new_height);
+		HDC new_hdc = nullptr;
+		HBITMAP new_hbmp = nullptr;
+		bool keep_gdi = false;;
+
+		if (new_width == width && new_height == height)
+		{
+			keep_gdi = true;
+			new_hdc = hdc;
+			new_hbmp = hbmp;
+		} else {
+			new_hdc = CreateCompatibleDC(hdcScreen);
+			new_hbmp = CreateCompatibleBitmap(hdcScreen, new_width, new_height);
+			SelectObject(new_hdc, new_hbmp);
+		}
 
 		if ( new_hdc == nullptr || new_hbmp == nullptr)
 		{
 			DeleteDC(new_hdc);
 			DeleteObject(new_hbmp);
 		} else {
-			SelectObject(new_hdc, new_hbmp);
 
 			switch (use_method)
 			{
@@ -504,23 +529,36 @@ bool captured_window::get_window_screenshot()
 			
 			if (ret)
 			{
-				clean_resources();
-
-				hdc = new_hdc;
-				hbmp = new_hbmp;
-				x = new_x;
-				y = new_y;
-				width = new_width;
-				height = new_height;
-				
-				updated = true;
-				if (overlay_hwnd)
+				if (!keep_gdi)
 				{
-					MoveWindow(overlay_hwnd, x, y, width, height, FALSE);
+					clean_resources();
+
+					hdc = new_hdc;
+					hbmp = new_hbmp;
 				}
+				
+				if (x == new_x && y == new_y && width == new_width && height == new_height)
+				{
+				} else {
+					x = new_x;
+					y = new_y;
+					width = new_width;
+					height = new_height;
+
+					if (overlay_hwnd)
+					{
+						MoveWindow(overlay_hwnd, x, y, width, height, FALSE);
+					}
+				}
+				updated = true;
 			} else {
-				DeleteDC(new_hdc);
-				DeleteObject(new_hbmp);
+				std::cout << "get_window_screenshot failed to get bitmap from orig window " << GetLastError() << std::endl;
+				if (!keep_gdi)
+				{
+
+					DeleteDC(new_hdc);
+					DeleteObject(new_hbmp);
+				}
 			}
 		}
 	}
@@ -538,8 +576,6 @@ bool captured_window::get_window_screenshot()
 				//it is not a window anymore . should close our overlay 
 				ShowWindow(overlay_hwnd, SW_HIDE);
 			}
-
-			//std::cout << "get_window_screenshot had issue " << GetLastError() << std::endl; 
 		}
 		else {
 			if (!IsWindowVisible(overlay_hwnd))
@@ -572,5 +608,5 @@ void update_settings()
 		app_settings.web_pages.push_back(wnd_settings);
 	}
 	);
-
+	std::cout << "update_settings finished " << std::endl;
 }
