@@ -24,6 +24,13 @@ smg_settings app_settings;
 bool hweb_overlay_crated = false;
 
 //  Entry to the app
+int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/);
+
+int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
+{
+	main(hInstance, hPrevInstance, pCmdLine, nCmdShow);
+}
+
 int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
 	std::cout << "start application " << std::endl;
@@ -66,6 +73,8 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 		MSG msg;
 		while (GetMessage(&msg, nullptr, 0, 0))
 		{
+			std::cout << "wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
+
 			switch (msg.message)
 			{
 			case WM_HOTKEY:
@@ -74,15 +83,6 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 			}
 			break;
 			case WM_TIMER:
-				if (show_overlays)
-				{
-					std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-						if (n->update_window_screenshot())
-						{
-							InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
-						}
-					});
-				}
 				std::for_each(web_forms_windows.begin(), web_forms_windows.end(), [](std::shared_ptr<web_forms_window> &n)
 					{
 						if (!n->hweb_overlay_crated && n->webform_hwnd != nullptr)
@@ -99,6 +99,15 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 					}
 					);
 
+				if (show_overlays)
+				{
+					std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
+						if (n->update_window_screenshot())
+						{
+							InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+						}
+					});
+				}
 
 				break;
 			default:
@@ -125,7 +134,7 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 
 void process_hotkeys(MSG &msg)
 {
-	std::cout << "process_hotkeys id " << msg.wParam << std::endl;
+	//std::cout << "process_hotkeys id " << msg.wParam << std::endl;
 	switch (msg.wParam)
 	{
 	case HOTKEY_CATCH_APP:
@@ -179,7 +188,6 @@ void process_hotkeys(MSG &msg)
 
 	case HOTKEY_QUITE:
 	{
-		update_settings();
 		PostQuitMessage(0);
 	}break;
 	};

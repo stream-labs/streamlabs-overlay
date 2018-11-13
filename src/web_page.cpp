@@ -107,6 +107,8 @@ DWORD WINAPI web_page_thread_func(void* data)
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
+		std::cout << "web page proc msg id " << msg.message << " for hwnd "<< msg.hwnd << std::endl;
+
 		if (msg.message == WM_HOTKEY)
 		{
 			switch (msg.wParam)
@@ -169,7 +171,6 @@ void create_container_window(web_page_overlay_settings & n)
 			
 			WCHAR * url = new wchar_t[cur_web_view_window->url.size() + 1];
 			mbstowcs(&url[0], cur_web_view_window->url.c_str(), cur_web_view_window->url.size() + 1);
-
 			WebformGo(cur_web_view_window->webform_hwnd, url);
 		}
 
