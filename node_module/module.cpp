@@ -1,5 +1,5 @@
 #include <node.h>
-#include "smg_overlays.h"  // NOLINT(build/include)
+#include "overlays.h"  // NOLINT(build/include)
 
 namespace demo {
 
