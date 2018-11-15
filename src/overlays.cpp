@@ -1,138 +1,20 @@
  
 #include "stdafx.h"
-#include "smg_overlays.h"
+#include "overlays.h"
 
 #include <algorithm>
 #include <iostream>
 #include <algorithm>
 
-#include "web_page.h"
+#include "web_view.h"
+#include "settings.h"
 
 #include "tlhelp32.h"
 #pragma comment (lib, "uxtheme.lib")
 
-std::list<std::shared_ptr<captured_window> > showing_windows;
-bool show_overlays = false;
-
-void update_settings(); 
-
-HINSTANCE g_hInstance = nullptr;
 wchar_t const g_szWindowClass[] = L"overlays";
-BOOL g_bDblBuffered = FALSE;
 
-smg_settings app_settings;
-bool hweb_overlay_crated = false;
-
-//  Entry to the app
-int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/);
-
-int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
-{
-	main(hInstance, hPrevInstance, pCmdLine, nCmdShow);
-}
-
-int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/)
-{
-	std::cout << "start application " << std::endl;
-	
-	if (!app_settings.read())
-	{
-		app_settings.test_init();
-	}	
-
-	webform_hInstance = hInstance;
-	webform_thread = CreateThread(nullptr, 0, web_page_thread_func, nullptr, 0, &webform_thread_id);
-	if (webform_thread) {
-		// Optionally do stuff, such as wait on the thread.
-	}
-
-     g_hInstance = hInstance;
-
-    //  Mark that this process is DPI aware.
-    SetProcessDPIAware();
-
-    // Init COM and double-buffered painting
-    HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-    
-	if (SUCCEEDED(hr))
-    {
-        hr = BufferedPaintInit();
-        g_bDblBuffered = SUCCEEDED(hr);
-		 
-		create_overlay_window_class();
-				
-		get_windows_list();
-				
-		register_hotkeys();
-
-		create_windows_overlays();
-		
-		SetTimer(0, OVERLAY_UPDATE_TIMER, app_settings.redraw_timeout, (TIMERPROC)nullptr);
-
-		// Main message loop
-		MSG msg;
-		while (GetMessage(&msg, nullptr, 0, 0))
-		{
-			std::cout << "wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
-
-			switch (msg.message)
-			{
-			case WM_HOTKEY:
-			{
-				process_hotkeys(msg);
-			}
-			break;
-			case WM_TIMER:
-				std::for_each(web_forms_windows.begin(), web_forms_windows.end(), [](std::shared_ptr<web_forms_window> &n)
-					{
-						if (!n->hweb_overlay_crated && n->webform_hwnd != nullptr)
-						{
-							n->hweb_overlay_crated = true;
-
-							std::shared_ptr<captured_window> found_window = std::make_shared<captured_window>();
-							found_window->orig_handle = n->webform_hwnd;
-							found_window->use_method = window_grab_method::bitblt;
-							found_window->get_window_screenshot();
-							showing_windows.push_back(found_window);
-							create_windows_overlays();
-						}
-					}
-					);
-
-				if (show_overlays)
-				{
-					std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
-						if (n->update_window_screenshot())
-						{
-							InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
-						}
-					});
-				}
-
-				break;
-			default:
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-				break;
-			};
-		}
-        
-		if (g_bDblBuffered)
-            BufferedPaintUnInit();
-  
-		KillTimer(0, OVERLAY_UPDATE_TIMER);
-
-        CoUninitialize();
-    }
-	update_settings();
-	app_settings.write();
-	
-	std::cout << "exit from app " << std::endl;
-
-    return 0;
-}
-
-void process_hotkeys(MSG &msg)
+void smg_overlays::process_hotkeys(MSG &msg)
 {
 	//std::cout << "process_hotkeys id " << msg.wParam << std::endl;
 	switch (msg.wParam)
@@ -153,27 +35,27 @@ void process_hotkeys(MSG &msg)
 	break;
 	case HOTKEY_SHOW_OVERLAYS:
 	{
-		if (show_overlays)
+		if (showing_overlays)
 		{
 			//need to hide befor show. or show can be ignored. 
-			show_overlays = false;
+			showing_overlays = false;
 			hide_overlays();
 		}
 		
 		std::cout << "show overlays " << std::endl;
-		show_overlays = true;
+		showing_overlays = true;
 	}
 	break;
 	case HOTKEY_HIDE_OVERLAYS:
 	{
-		show_overlays = false;
+		showing_overlays = false;
 		
 		hide_overlays();
 	}
 	break;
 	case HOTKEY_UPDATE_OVERLAYS:
 	{
-		if (show_overlays)
+		if (showing_overlays)
 		{
 			std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
 				n->update_window_screenshot();
@@ -183,7 +65,7 @@ void process_hotkeys(MSG &msg)
 	} break;
 	case HOTKEY_ADD_WEB:
 	{
-		PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_ADD_WEB, 0);
+		PostThreadMessage((DWORD)web_views_thread_id, WM_HOTKEY, HOTKEY_ADD_WEB, 0);
 	} break;
 
 	case HOTKEY_QUITE:
@@ -193,21 +75,60 @@ void process_hotkeys(MSG &msg)
 	};
 }
 
-void hide_overlays()
+void smg_overlays::on_update_timer()
+{
+	std::for_each(web_view_windows.begin(), web_view_windows.end(), [this](std::shared_ptr<web_view_window> &n)
+	{
+		if (!n->overlay_crated && n->web_view_hwnd != nullptr)
+		{
+			n->overlay_crated = true;
+
+			std::shared_ptr<captured_window> found_window = std::make_shared<captured_window>();
+			found_window->orig_handle = n->web_view_hwnd;
+			found_window->use_method = window_grab_method::bitblt;
+			found_window->get_window_screenshot();
+			showing_windows.push_back(found_window);
+			create_windows_overlays();
+		}
+	}
+	);
+
+	if (showing_overlays)
+	{
+		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
+			if (n->update_window_screenshot())
+			{
+				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+			}
+		});
+	}
+
+}
+
+void smg_overlays::deinit()
+{
+	update_settings();
+	app_settings.write();
+
+	std::cout << "exit from app " << std::endl;
+
+}
+
+void  smg_overlays::hide_overlays()
 {
 	std::cout << "hide_overlays " << std::endl;
 	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
 		ShowWindow(n->overlay_hwnd, SW_HIDE);
 	});
-	PostThreadMessage((DWORD)webform_thread_id, WM_HOTKEY, HOTKEY_HIDE_OVERLAYS, 0);
+	PostThreadMessage((DWORD)web_views_thread_id, WM_HOTKEY, HOTKEY_HIDE_OVERLAYS, 0);
 }
 
-void create_overlay_window_class()
+void  smg_overlays::create_overlay_window_class()
 {
 	WNDCLASSEX wcex = { sizeof(wcex) };
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	wcex.lpfnWndProc = WndProc;
-	wcex.hInstance = g_hInstance;
+	wcex.hInstance = GetModuleHandle(NULL);
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszClassName = g_szWindowClass;
@@ -215,15 +136,15 @@ void create_overlay_window_class()
 	RegisterClassEx(&wcex);
 }
 
-void create_windows_overlays()
+void  smg_overlays::create_windows_overlays()
 {
-	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) 
+	std::for_each(showing_windows.begin(), showing_windows.end(), [this](std::shared_ptr<captured_window> &n) 
 	{
 		if (n->overlay_hwnd == nullptr)
 		{
 			DWORD const dwStyle = WS_POPUP;     // no border or title bar
 			DWORD const dwStyleEx = WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT;   // transparent, topmost, with no taskbar item
-			n->overlay_hwnd = CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, g_hInstance, NULL);
+			n->overlay_hwnd = CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
 
 			if (n->overlay_hwnd)
 			{
@@ -235,7 +156,7 @@ void create_windows_overlays()
 				}
 
 				SetWindowPos(n->overlay_hwnd, HWND_TOPMOST, n->x, n->y, n->width, n->height, SWP_NOREDRAW);
-				if (show_overlays)
+				if (showing_overlays)
 				{
 					ShowWindow(n->overlay_hwnd, SW_SHOW);
 				} else {
@@ -247,7 +168,7 @@ void create_windows_overlays()
 	});
 }
 
-void register_hotkeys()
+void  smg_overlays::register_hotkeys()
 {
 	RegisterHotKey(NULL, HOTKEY_SHOW_OVERLAYS, MOD_ALT, 0x53);  //'S'how
 	RegisterHotKey(NULL, HOTKEY_HIDE_OVERLAYS, MOD_ALT, 0x48);  //'H'ide all
@@ -257,7 +178,7 @@ void register_hotkeys()
 	RegisterHotKey(NULL, HOTKEY_CATCH_APP, MOD_ALT, 0x50);  //catch a'P'p window
 }
 
-void get_windows_list()
+void  smg_overlays::get_windows_list()
 {
 	//EnumWindows(get_overlayed_windows, 0);
 	std::for_each(app_settings.apps_names.begin(), app_settings.apps_names.end(),  [](std::string &n)
@@ -268,6 +189,34 @@ void get_windows_list()
 			FindRunningProcess(process_name);
 		}
 		);		
+}
+
+smg_overlays::smg_overlays()
+{
+	showing_overlays = false;
+
+	std::cout << "start application " << std::endl;
+
+	if (!app_settings.read())
+	{
+		app_settings.default_init();
+		//app_settings.test_init();
+	}
+
+}
+
+void smg_overlays::init()
+{
+	create_overlay_window_class();
+
+	get_windows_list();
+
+	register_hotkeys();
+
+	create_windows_overlays();
+
+
+
 }
 
 bool FindRunningProcess(const WCHAR * process_name_part) 
@@ -304,7 +253,7 @@ bool FindRunningProcess(const WCHAR * process_name_part)
 	return procRunning;
 }
 
-BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM param)
+BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 {
 	char buffer[128];
 	bool window_ok = false;
@@ -375,51 +324,7 @@ BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM param)
 	return TRUE;
 }
 
-// ----------------------------------------------------------------------
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-        case WM_CREATE:
-        { 
-			
-        }
-		break;
-		case WM_SIZE:
-		{ 
-		} break;
-        case WM_DESTROY:
-        {
-            PostQuitMessage(0);
-            return 0;
-        }
-		break;
-        case WM_ERASEBKGND:
-        {
-            // Don't do any erasing here.  It's done in WM_PAINT to avoid flicker.
-            return 1;
-        }
-		break;
-        case WM_TIMER:
-        {
-			InvalidateRect(hWnd, NULL, TRUE);
-            return 0;
-        }
-		break;
-        case WM_PAINT:
-        {
-			draw_overlay_gdi(hWnd);
-            return 0;
-        }
-		break;
-
-		default:break;
-    }
-
-    return DefWindowProc(hWnd, message, wParam, lParam);
-}
-
-void draw_overlay_gdi(HWND &hWnd)
+void smg_overlays::draw_overlay_gdi(HWND & hWnd, bool g_bDblBuffered)
 {
 	PAINTSTRUCT     ps;
 	HPAINTBUFFER    hBufferedPaint = NULL;
@@ -460,7 +365,7 @@ void draw_overlay_gdi(HWND &hWnd)
 	EndPaint(hWnd, &ps);
 }
 
-bool captured_window::update_window_screenshot() 
+bool captured_window::update_window_screenshot()
 {
 	return get_window_screenshot();
 }
@@ -597,13 +502,13 @@ bool captured_window::get_window_screenshot()
 	return updated;
 }
 
-void update_settings()
+void  smg_overlays::update_settings()
 {
 	app_settings.web_pages.clear();
 
-	std::for_each(web_forms_windows.begin(), web_forms_windows.end(), [](std::shared_ptr<web_forms_window> &n)
+	std::for_each(web_view_windows.begin(), web_view_windows.end(), [this](std::shared_ptr<web_view_window> &n)
 	{
-		web_page_overlay_settings wnd_settings;
+		web_view_overlay_settings wnd_settings;
 		wnd_settings.url = n->url;
 		
 		RECT client_rect = { 0 };
