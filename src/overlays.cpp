@@ -4,19 +4,19 @@
 
 #include <algorithm>
 #include <iostream>
-#include <algorithm>
 
 #include "web_view.h"
 #include "settings.h"
 
 #include "tlhelp32.h"
+#include "..\include\overlays.h"
 #pragma comment (lib, "uxtheme.lib")
 
 wchar_t const g_szWindowClass[] = L"overlays";
 
 void smg_overlays::process_hotkeys(MSG &msg)
 {
-	//std::cout << "process_hotkeys id " << msg.wParam << std::endl;
+	std::cout << "APP:"  << "process_hotkeys id " << msg.wParam << std::endl;
 	switch (msg.wParam)
 	{
 	case HOTKEY_CATCH_APP:
@@ -27,7 +27,7 @@ void smg_overlays::process_hotkeys(MSG &msg)
 		{
 			unsigned long process_id = 0;
 			GetWindowThreadProcessId(top_window, &process_id);
-			std::cout << "catch app "<< process_id <<", "<< top_window << std::endl;
+			std::cout << "APP:"  << "APP:" << "catch app "<< process_id <<", "<< top_window << std::endl;
 			EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
 		}
 		create_windows_overlays();
@@ -42,7 +42,7 @@ void smg_overlays::process_hotkeys(MSG &msg)
 			hide_overlays();
 		}
 		
-		std::cout << "show overlays " << std::endl;
+		std::cout << "APP:"  << "show overlays " << std::endl;
 		showing_overlays = true;
 	}
 	break;
@@ -65,31 +65,104 @@ void smg_overlays::process_hotkeys(MSG &msg)
 	} break;
 	case HOTKEY_ADD_WEB:
 	{
+		std::cout << "APP:" << "get HOTKEY_ADD_WEB " << web_views_thread_id<<  std::endl;
+		if (in_standalone_mode)
+		{
+			std::cout << "APP:" << "create default web view" << std::endl;
+			web_view_overlay_settings n;
+			n.x = 100;
+			n.y = 100;
+			n.width = 400;
+			n.height = 400;
+			n.url = "http://mail.ru";
+			create_empty_web_view_window(n);
+		}
 		PostThreadMessage((DWORD)web_views_thread_id, WM_HOTKEY, HOTKEY_ADD_WEB, 0);
 	} break;
 
-	case HOTKEY_QUITE:
+	case HOTKEY_QUIT:
 	{
 		PostQuitMessage(0);
 	}break;
 	};
 }
 
+int smg_overlays::create_empty_web_view_window( web_view_overlay_settings &n )
+{
+	std::shared_ptr<web_view_window> new_web_view_window = std::make_shared<web_view_window>();
+	new_web_view_window->orig_handle = nullptr;
+	new_web_view_window->use_method = window_grab_method::bitblt;
+	new_web_view_window->x = n.x;
+	new_web_view_window->y = n.y;
+	new_web_view_window->width = n.width;
+	new_web_view_window->height = n.height;
+	new_web_view_window->url = n.url;
+	showing_windows.push_back(new_web_view_window);
+
+	if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0)
+	{
+		new_web_view_window->url = n.url;
+	} else {
+		WCHAR buffer[MAX_PATH];
+		GetCurrentDirectory(MAX_PATH, buffer );
+		std::wstring ws(buffer);
+		std::string temp_path(ws.begin(), ws.end());
+		//std::string::size_type pos = temp_path.find_last_of("\\/");
+
+		new_web_view_window->url = "file:////";
+		new_web_view_window->url += temp_path;// .substr(0, pos);
+		new_web_view_window->url += "\\";
+		new_web_view_window->url += n.url;
+	}
+
+	return new_web_view_window->id;
+}
+
+std::shared_ptr<web_view_window> smg_overlays::get_web_view_by_container(HWND container)
+{
+	std::shared_ptr<web_view_window> ret = nullptr;
+	std::for_each(showing_windows.begin(), showing_windows.end(), [&ret, container](std::shared_ptr<captured_window> &n)
+	{
+		if (n->is_web_view())
+		{
+			std::shared_ptr<web_view_window> derived = std::static_pointer_cast<web_view_window> (n);
+			if (derived->container_hwnd == container)
+			{
+				ret = derived;
+			}
+
+		}
+	}
+	);
+
+	return ret;
+}
+
+bool web_view_window::check_orig_and_create_overlay()
+{
+	if (!overlay_crated && web_view_hwnd != nullptr)
+	{
+		overlay_crated = true;
+
+		orig_handle = web_view_hwnd;
+		use_method = window_grab_method::bitblt;
+		
+		return true;
+	} else {
+		return false;
+	}
+}
+
 void smg_overlays::on_update_timer()
 {
-	std::for_each(web_view_windows.begin(), web_view_windows.end(), [this](std::shared_ptr<web_view_window> &n)
-	{
-		if (!n->overlay_crated && n->web_view_hwnd != nullptr)
-		{
-			n->overlay_crated = true;
+	create_windows_overlays();
 
-			std::shared_ptr<captured_window> found_window = std::make_shared<captured_window>();
-			found_window->orig_handle = n->web_view_hwnd;
-			found_window->use_method = window_grab_method::bitblt;
-			found_window->get_window_screenshot();
-			showing_windows.push_back(found_window);
-			create_windows_overlays();
-		}
+	std::for_each(showing_windows.begin(), showing_windows.end(), [this](std::shared_ptr<captured_window> &n)
+	{
+		if(n->check_orig_and_create_overlay())
+		{ 
+			n->get_window_screenshot();
+		}		
 	}
 	);
 
@@ -110,13 +183,12 @@ void smg_overlays::deinit()
 	update_settings();
 	app_settings.write();
 
-	std::cout << "exit from app " << std::endl;
-
+	std::cout << "APP:"  << "exit from app " << std::endl;
 }
 
 void  smg_overlays::hide_overlays()
 {
-	std::cout << "hide_overlays " << std::endl;
+	std::cout << "APP:"  << "hide_overlays " << std::endl;
 	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<captured_window> &n) {
 		ShowWindow(n->overlay_hwnd, SW_HIDE);
 	});
@@ -140,7 +212,7 @@ void  smg_overlays::create_windows_overlays()
 {
 	std::for_each(showing_windows.begin(), showing_windows.end(), [this](std::shared_ptr<captured_window> &n) 
 	{
-		if (n->overlay_hwnd == nullptr)
+		if (n->overlay_hwnd == nullptr && n->ready_to_create_overlay())
 		{
 			DWORD const dwStyle = WS_POPUP;     // no border or title bar
 			DWORD const dwStyleEx = WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT;   // transparent, topmost, with no taskbar item
@@ -174,11 +246,11 @@ void  smg_overlays::register_hotkeys()
 	RegisterHotKey(NULL, HOTKEY_HIDE_OVERLAYS, MOD_ALT, 0x48);  //'H'ide all
 	RegisterHotKey(NULL, HOTKEY_ADD_WEB, MOD_ALT, 0x57);  //add 'W'ebview
 	RegisterHotKey(NULL, HOTKEY_UPDATE_OVERLAYS, MOD_ALT, 0x55);  //'U'pdate
-	RegisterHotKey(NULL, HOTKEY_QUITE, MOD_ALT, 0x51);  //'Q'uit
+	RegisterHotKey(NULL, HOTKEY_QUIT, MOD_ALT, 0x51);  //'Q'uit
 	RegisterHotKey(NULL, HOTKEY_CATCH_APP, MOD_ALT, 0x50);  //catch a'P'p window
 }
 
-void  smg_overlays::get_windows_list()
+void  smg_overlays::create_windows_for_apps()
 {
 	//EnumWindows(get_overlayed_windows, 0);
 	std::for_each(app_settings.apps_names.begin(), app_settings.apps_names.end(),  [](std::string &n)
@@ -191,11 +263,45 @@ void  smg_overlays::get_windows_list()
 		);		
 }
 
+ size_t smg_overlays::get_count()
+{
+	return showing_windows.size();
+}
+
+std::shared_ptr<captured_window> smg_overlays::get_overlay_by_id(int overlay_id)
+{
+	std::shared_ptr<captured_window> ret;
+
+	std::list< std::shared_ptr<captured_window> >::iterator findIter = std::find_if(showing_windows.begin(), showing_windows.end(),
+		 [&overlay_id](std::shared_ptr<captured_window> &n) { return overlay_id == n->id; }
+	);
+
+	if (findIter != showing_windows.end())
+	{
+		 ret = *findIter;
+	}
+
+	return ret;
+}
+
+std::vector<int > smg_overlays::get_ids()
+{
+	std::vector<int > ret;
+	int i = 0;
+	ret.resize(showing_windows.size());
+	std::for_each(showing_windows.begin(), showing_windows.end(), [&ret, &i](std::shared_ptr<captured_window> &n) {
+		ret[i] = n->id;
+		i++;
+	});
+
+	return ret;
+}
+
 smg_overlays::smg_overlays()
 {
 	showing_overlays = false;
 
-	std::cout << "start application " << std::endl;
+	std::cout << "APP:"  << "start application " << std::endl;
 
 	if (!app_settings.read())
 	{
@@ -209,14 +315,20 @@ void smg_overlays::init()
 {
 	create_overlay_window_class();
 
-	get_windows_list();
+	create_windows_for_apps();
 
-	register_hotkeys();
+	if (in_standalone_mode)
+	{
+		register_hotkeys();
+	}
 
 	create_windows_overlays();
-
-
-
+	
+	std::for_each(app_settings.web_pages.begin(), app_settings.web_pages.end(), [this](web_view_overlay_settings &n)
+	{
+		create_empty_web_view_window(n);
+	}
+	);
 }
 
 bool FindRunningProcess(const WCHAR * process_name_part) 
@@ -350,7 +462,7 @@ void smg_overlays::draw_overlay_gdi(HWND & hWnd, bool g_bDblBuffered)
 			BOOL ret = BitBlt(hdc, 0, 0, n->width, n->height, n->hdc, 0, 0, SRCCOPY);
 			if (!ret)
 			{
-				std::cout << "draw_overlay_gdi had issue " << GetLastError() << std::endl;
+				std::cout << "APP:"  << "draw_overlay_gdi had issue " << GetLastError() << std::endl;
 			}
 		}
 	});
@@ -365,18 +477,48 @@ void smg_overlays::draw_overlay_gdi(HWND & hWnd, bool g_bDblBuffered)
 	EndPaint(hWnd, &ps);
 }
 
+bool web_view_window::save_state_to_settings()
+{
+	web_view_overlay_settings wnd_settings;
+	wnd_settings.url = url;
+
+	RECT client_rect = { 0 };
+	GetWindowRect(container_hwnd, &client_rect);
+	wnd_settings.x = client_rect.left;
+	wnd_settings.y = client_rect.top;
+	wnd_settings.width = client_rect.right - client_rect.left;
+	wnd_settings.height = client_rect.bottom - client_rect.top;
+
+	app_settings.web_pages.push_back(wnd_settings);
+	return true;
+}
+
+void  smg_overlays::update_settings()
+{
+	app_settings.web_pages.clear();
+
+	std::for_each(showing_windows.begin(), showing_windows.end(), [this](std::shared_ptr<captured_window> &n)
+	{
+		n->save_state_to_settings();
+	}
+	);
+	std::cout << "APP:"  << "update_settings finished " << std::endl;
+}
+
 bool captured_window::update_window_screenshot()
 {
 	return get_window_screenshot();
 }
 
-inline captured_window::~captured_window()
+captured_window::~captured_window()
 {
 	clean_resources();
 }
 
-inline captured_window::captured_window()
+captured_window::captured_window()
 {
+	static int id_counter = 128;
+	id = id_counter++;
 	use_method = window_grab_method::print;
 	orig_handle = nullptr;
 	overlay_hwnd = nullptr;
@@ -384,7 +526,7 @@ inline captured_window::captured_window()
 	hbmp = nullptr;
 }
 
-inline void captured_window::clean_resources()
+void captured_window::clean_resources()
 {
 	DeleteDC(hdc);
 	DeleteObject(hbmp);
@@ -465,7 +607,7 @@ bool captured_window::get_window_screenshot()
 				}
 				updated = true;
 			} else {
-				std::cout << "get_window_screenshot failed to get bitmap from orig window " << GetLastError() << std::endl;
+				std::cout << "APP:"  << "get_window_screenshot failed to get bitmap from orig window " << GetLastError() << std::endl;
 				if (!keep_gdi)
 				{
 
@@ -501,25 +643,4 @@ bool captured_window::get_window_screenshot()
 
 	return updated;
 }
-
-void  smg_overlays::update_settings()
-{
-	app_settings.web_pages.clear();
-
-	std::for_each(web_view_windows.begin(), web_view_windows.end(), [this](std::shared_ptr<web_view_window> &n)
-	{
-		web_view_overlay_settings wnd_settings;
-		wnd_settings.url = n->url;
-		
-		RECT client_rect = { 0 };
-		GetWindowRect(n->container_hwnd, &client_rect);
-		wnd_settings.x = client_rect.left;
-		wnd_settings.y = client_rect.top;
-		wnd_settings.width = client_rect.right - client_rect.left;
-		wnd_settings.height = client_rect.bottom - client_rect.top;
-
-		app_settings.web_pages.push_back(wnd_settings);
-	}
-	);
-	std::cout << "update_settings finished " << std::endl;
-}
+ 

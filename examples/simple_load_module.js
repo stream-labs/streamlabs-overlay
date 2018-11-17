@@ -1,19 +1,99 @@
-const addon = require('../build/Release/smg_overlay');
+const streamlabs_overlays = require('../build/Debug/streamlabs_overlay');
 
-console.log(addon.hello());
+console.log('Call start');
+streamlabs_overlays.start();
 
-function function1() {
-    // stuff you want to happen right away
-    console.log('Welcome to My Console,');
+function script_finished() {	
+	console.log('--------------- script finished');
+	console.log('');
+	console.log('Call stop');
+	streamlabs_overlays.stop();
+
+    console.log('Script end');
 }
 
-function function2() {
-    // all the stuff you want to happen after that pause
-    console.log('Blah blah blah blah extra-blah');
+function finish_program() 
+{
+	console.log('--------------- finish program');
+	console.log('');
+	console.log('Call get count');
+	console.log(streamlabs_overlays.get_overlays_count());
+
+	console.log('Call get overlays ids');
+	var overlays_ids = streamlabs_overlays.get_overlays_ids();
+	console.log(overlays_ids);
+
+	console.log('Call get overlay info ' + overlays_ids[0]);
+	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
+
+	console.log('Call remove overlay');
+	console.log(streamlabs_overlays.remove_overlay());
+
+	console.log('Call hide');
+	streamlabs_overlays.hide_overlays();
+	
+	console.log('Call get overlays ids');
+	var overlays_ids = streamlabs_overlays.get_overlays_ids();
+	console.log(overlays_ids);
+
+	console.log('Call get overlay info ' + overlays_ids[0]);
+	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
+	
+	setTimeout(script_finished, 2000);
 }
 
-// call the first chunk of code right away
-function1();
+function start_test() 
+{
+	console.log('--------------- start_test');
+	console.log('');
+	console.log('Call get count');
+	console.log(streamlabs_overlays.get_overlays_count());
 
-// call the rest of the code and have it execute after 3 seconds
-setTimeout(function2, 15000);
+	console.log('Call get overlays ids');
+	var overlays_ids = streamlabs_overlays.get_overlays_ids();
+	console.log(overlays_ids);
+
+	console.log('Call get overlay info ' + overlays_ids[0]);
+	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
+
+	console.log('Call add overlay');
+	console.log(streamlabs_overlays.add_overlay("http://google.com"));
+
+	console.log('Call get count');
+	console.log(streamlabs_overlays.get_overlays_count());
+
+	console.log('Call show');
+	streamlabs_overlays.show_overlays();
+	
+	setTimeout(finish_program, 15000);
+}
+
+function light_test() 
+{
+	console.log('--------------- light_test');
+	console.log('');
+	console.log('Call get count');
+	console.log(streamlabs_overlays.get_overlays_count());
+
+	console.log('Call get overlays ids');
+	var overlays_ids = streamlabs_overlays.get_overlays_ids();
+	console.log(overlays_ids);
+
+	console.log('Call get overlay info ' + overlays_ids[0]);
+	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
+
+	console.log('Call add overlay');
+	console.log(streamlabs_overlays.add_overlay("http://yandex.com"));
+
+	console.log('Call get count');
+	console.log(streamlabs_overlays.get_overlays_count());
+
+	console.log('Call show');
+	streamlabs_overlays.show_overlays();
+}
+
+setTimeout(start_test, 2000);
+//setTimeout(light_test, 2000);
+
+
+setTimeout(script_finished, 200000);

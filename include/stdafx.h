@@ -21,6 +21,7 @@
 //#include <atlsync.h>
 
 #include <list>
+#include <vector>
 #include <memory>
 
 #include <uxtheme.h>    // for dbl-buffered painting
@@ -31,6 +32,6 @@ enum class window_grab_method { bitblt, print, message_print};
 const int HOTKEY_SHOW_OVERLAYS = 1;
 const int HOTKEY_HIDE_OVERLAYS = 2;
 const int HOTKEY_UPDATE_OVERLAYS = 3;
-const int HOTKEY_QUITE = 4;
+const int HOTKEY_QUIT = 4;
 const int HOTKEY_ADD_WEB = 5;
 const int HOTKEY_CATCH_APP = 6;
