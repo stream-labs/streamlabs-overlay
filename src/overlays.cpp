@@ -60,11 +60,11 @@ void smg_overlays::process_hotkeys(MSG& msg)
 			std::cout << "APP:"
 			          << "create default web view" << std::endl;
 			web_view_overlay_settings n;
-			n.x      = 100;
-			n.y      = 100;
-			n.width  = 400;
+			n.x = 100;
+			n.y = 100;
+			n.width = 400;
 			n.height = 400;
-			n.url    = "http://mail.ru";
+			n.url = "http://mail.ru";
 
 			create_web_view_window(n);
 		}
@@ -79,13 +79,17 @@ void smg_overlays::process_hotkeys(MSG& msg)
 int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 {
 	std::shared_ptr<web_view_window> new_web_view_window = std::make_shared<web_view_window>();
-	new_web_view_window->orig_handle                     = nullptr;
-	new_web_view_window->use_method                      = window_grab_method::bitblt;
-	new_web_view_window->x                               = n.x;
-	new_web_view_window->y                               = n.y;
-	new_web_view_window->width                           = n.width;
-	new_web_view_window->height                          = n.height;
-	new_web_view_window->url                             = n.url;
+	new_web_view_window->orig_handle = nullptr;
+	new_web_view_window->use_method = window_grab_method::bitblt;
+
+	RECT overlay_rect;
+	overlay_rect.left = n.x;
+	overlay_rect.right = n.x + n.width;
+	overlay_rect.top = n.y;
+	overlay_rect.bottom = n.y + n.height;
+	new_web_view_window->set_rect(overlay_rect);
+
+	new_web_view_window->url = n.url;
 
 	if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0) {
 		new_web_view_window->url = n.url;
@@ -93,7 +97,7 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 		WCHAR buffer[MAX_PATH];
 		GetCurrentDirectory(MAX_PATH, buffer);
 		std::wstring ws(buffer);
-		std::string  temp_path(ws.begin(), ws.end());
+		std::string temp_path(ws.begin(), ws.end());
 		//std::string::size_type pos = temp_path.find_last_of("\\/");
 
 		new_web_view_window->url = "file:////";
@@ -104,12 +108,20 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 
 	showing_windows.push_back(new_web_view_window);
 
-	PostThreadMessage(
-	    web_views_thread_id,
-	    WM_WEBVIEW_CREATE,
-	    new_web_view_window->id,
-	    reinterpret_cast<LPARAM>(new_web_view_window->url.c_str()));
-	//todo send size and position or set it after creatition still have to make that functionality to set from node 
+	web_view_overlay_settings* new_window_params = new web_view_overlay_settings();
+	new_window_params->x = n.y;
+	new_window_params->y = n.y;
+	new_window_params->width = n.width;
+	new_window_params->height = n.height;
+	new_window_params->url = new_web_view_window->url;
+
+	BOOL ret = PostThreadMessage(
+	    web_views_thread_id, WM_WEBVIEW_CREATE, new_web_view_window->id, reinterpret_cast<LPARAM>(new_window_params));
+	if (!ret) {
+		delete new_window_params;
+		//todo failed to create web view probably have to remove overlay or something
+	}
+
 	return new_web_view_window->id;
 }
 
@@ -120,20 +132,29 @@ bool web_view_window::save_state_to_settings()
 
 	RECT client_rect = {0};
 	GetWindowRect(orig_handle, &client_rect);
-	wnd_settings.x      = client_rect.left;
-	wnd_settings.y      = client_rect.top;
-	wnd_settings.width  = client_rect.right - client_rect.left;
+	wnd_settings.x = client_rect.left;
+	wnd_settings.y = client_rect.top;
+	wnd_settings.width = client_rect.right - client_rect.left;
 	wnd_settings.height = client_rect.bottom - client_rect.top;
 
 	app_settings.web_pages.push_back(wnd_settings);
 	return true;
 }
 
+std::string web_view_window::get_url()
+{
+	return url;
+}
+
+bool web_view_window::ready_to_create_overlay()
+{
+	return orig_handle != nullptr;
+}
+
 void web_view_window::clean_resources()
 {
-	//todo send message to close web views windows?
-
 	captured_window::clean_resources();
+	PostThreadMessage(web_views_thread_id, WM_WEBVIEW_CLOSE, id, NULL);
 }
 
 void smg_overlays::on_update_timer()
@@ -169,11 +190,11 @@ void smg_overlays::hide_overlays()
 
 void smg_overlays::create_overlay_window_class()
 {
-	WNDCLASSEX wcex    = {sizeof(wcex)};
-	wcex.style         = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc   = WndProc;
-	wcex.hInstance     = GetModuleHandle(NULL);
-	wcex.hCursor       = LoadCursor(nullptr, IDC_ARROW);
+	WNDCLASSEX wcex = {sizeof(wcex)};
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;
+	wcex.hInstance = GetModuleHandle(NULL);
+	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszClassName = g_szWindowClass;
 
@@ -187,31 +208,30 @@ void smg_overlays::create_windows_overlays()
 	});
 }
 
-void smg_overlays::create_window_for_overlay(std::shared_ptr<captured_window> &overlay)
+void smg_overlays::create_window_for_overlay(std::shared_ptr<captured_window>& overlay)
 {
 	if (overlay->overlay_hwnd == nullptr && overlay->ready_to_create_overlay()) {
-		DWORD const dwStyle   = WS_POPUP; // no border or title bar
-		DWORD const dwStyleEx = WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE
-			                    | WS_EX_TRANSPARENT; // transparent, topmost, with no taskbar item
+		DWORD const dwStyle = WS_POPUP; // no border or title bar
+		DWORD const dwStyleEx =
+		    WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT; // transparent, topmost, with no taskbar item
 
-		overlay->overlay_hwnd = CreateWindowEx(
-			dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
+		overlay->overlay_hwnd =
+		    CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
 
 		if (overlay->overlay_hwnd) {
 			if (app_settings.use_color_key) {
 				SetLayeredWindowAttributes(overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_COLORKEY);
 			} else {
-				SetLayeredWindowAttributes(
-				    overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), app_settings.transparency, LWA_ALPHA);
+				SetLayeredWindowAttributes(overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), app_settings.transparency, LWA_ALPHA);
 			}
-
+			RECT overlay_rect = overlay->get_rect();
 			SetWindowPos(
 			    overlay->overlay_hwnd,
 			    HWND_TOPMOST,
-			    overlay->x,
-			    overlay->y,
-			    overlay->width,
-			    overlay->height,
+			    overlay_rect.left,
+			    overlay_rect.top,
+			    overlay_rect.right - overlay_rect.left,
+			    overlay_rect.bottom - overlay_rect.top,
 			    SWP_NOREDRAW);
 			if (showing_overlays) {
 				ShowWindow(overlay->overlay_hwnd, SW_SHOW);
@@ -220,7 +240,6 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<captured_window> &o
 			}
 		}
 	}
-	
 }
 
 void smg_overlays::register_hotkeys()
@@ -233,10 +252,10 @@ void smg_overlays::register_hotkeys()
 	RegisterHotKey(NULL, HOTKEY_CATCH_APP, MOD_ALT, 0x50);       //catch a'P'p window
 }
 
-void smg_overlays::original_window_ready(int overlay_id, HWND orig_window) {
+void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
+{
 	std::shared_ptr<captured_window> work_overlay = get_overlay_by_id(overlay_id);
-	if (work_overlay != nullptr)
-	{
+	if (work_overlay != nullptr) {
 		work_overlay->orig_handle = orig_window;
 		create_window_for_overlay(work_overlay);
 	}
@@ -262,8 +281,8 @@ std::shared_ptr<captured_window> smg_overlays::get_overlay_by_id(int overlay_id)
 {
 	std::shared_ptr<captured_window> ret;
 
-	std::list<std::shared_ptr<captured_window>>::iterator findIter = std::find_if(
-	    showing_windows.begin(), showing_windows.end(), [&overlay_id](std::shared_ptr<captured_window>& n) {
+	std::list<std::shared_ptr<captured_window>>::iterator findIter =
+	    std::find_if(showing_windows.begin(), showing_windows.end(), [&overlay_id](std::shared_ptr<captured_window>& n) {
 		    return overlay_id == n->id;
 	    });
 
@@ -280,10 +299,7 @@ bool smg_overlays::remove_overlay(std::shared_ptr<captured_window> overlay)
 		overlay->status = overlay_status::destroing;
 		overlay->clean_resources();
 
-		std::remove_if(showing_windows.begin(), showing_windows.end(), [&overlay](std::shared_ptr<captured_window>& n) {
-			return (overlay->id == n->id);
-		});
-
+		showing_windows.remove_if([&overlay](std::shared_ptr<captured_window>& n) { return (overlay->id == n->id); });
 		return true;
 	}
 	return false;
@@ -292,7 +308,7 @@ bool smg_overlays::remove_overlay(std::shared_ptr<captured_window> overlay)
 std::vector<int> smg_overlays::get_ids()
 {
 	std::vector<int> ret;
-	int              i = 0;
+	int i = 0;
 	ret.resize(showing_windows.size());
 	std::for_each(showing_windows.begin(), showing_windows.end(), [&ret, &i](std::shared_ptr<captured_window>& n) {
 		ret[i] = n->id;
@@ -318,12 +334,11 @@ smg_overlays::smg_overlays()
 void smg_overlays::init()
 {
 	create_overlay_window_class();
-	 
+
 	create_windows_for_apps();
 
 	std::for_each(app_settings.web_pages.begin(), app_settings.web_pages.end(), [this](web_view_overlay_settings& n) {
 		create_web_view_window(n);
-
 	});
 
 	if (in_standalone_mode) {
@@ -337,7 +352,7 @@ bool FindRunningProcess(const WCHAR* process_name_part)
 {
 	bool procRunning = false;
 
-	HANDLE         hProcessSnap;
+	HANDLE hProcessSnap;
 	PROCESSENTRY32 pe32;
 	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
@@ -365,14 +380,13 @@ bool FindRunningProcess(const WCHAR* process_name_part)
 BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 {
 	char buffer[128];
-	bool window_ok      = false;
+	bool window_ok = false;
 	bool window_catched = false;
-	std::shared_ptr<captured_window> found_window   = nullptr;
+	std::shared_ptr<captured_window> found_window = nullptr;
 	if (param != NULL) {
 		unsigned long process_id = 0;
 		GetWindowThreadProcessId(hwnd, &process_id);
-		if (*((unsigned long*)param) == process_id
-		    && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd))) {
+		if (*((unsigned long*)param) == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd))) {
 			window_ok = true;
 		}
 	} else {
@@ -401,22 +415,22 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 		    });
 
 		if (!we_have_it) {
-			found_window              = std::make_shared<captured_window>();
-			found_window->orig_handle                     = hwnd;
+			found_window = std::make_shared<captured_window>();
+			found_window->orig_handle = hwnd;
 			found_window->get_window_screenshot();
 			showing_windows.push_back(found_window);
 			window_catched = true;
 
 			//add process file name to settings
-			TCHAR  nameProcess[MAX_PATH];
-			HANDLE processHandle  = OpenProcess(PROCESS_ALL_ACCESS, FALSE, *((unsigned long*)param));
-			DWORD  file_name_size = MAX_PATH;
+			TCHAR nameProcess[MAX_PATH];
+			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, *((unsigned long*)param));
+			DWORD file_name_size = MAX_PATH;
 			QueryFullProcessImageName(processHandle, 0, nameProcess, &file_name_size);
 			CloseHandle(processHandle);
-			std::wstring           ws(nameProcess);
-			std::string            temp_path(ws.begin(), ws.end());
-			std::string::size_type pos       = temp_path.find_last_of("\\/");
-			std::string            file_name = temp_path.substr(pos + 1, temp_path.size());
+			std::wstring ws(nameProcess);
+			std::string temp_path(ws.begin(), ws.end());
+			std::string::size_type pos = temp_path.find_last_of("\\/");
+			std::string file_name = temp_path.substr(pos + 1, temp_path.size());
 
 			std::list<std::string>::iterator findIter = std::find_if(
 			    app_settings.apps_names.begin(), app_settings.apps_names.end(), [&file_name](const std::string& v) {
@@ -435,9 +449,9 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 
 void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 {
-	PAINTSTRUCT  ps;
+	PAINTSTRUCT ps;
 	HPAINTBUFFER hBufferedPaint = NULL;
-	RECT         rc;
+	RECT rc;
 
 	GetClientRect(hWnd, &rc);
 	HDC hdc = BeginPaint(hWnd, &ps);
@@ -453,7 +467,17 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 
 	std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<captured_window>& n) {
 		if (hWnd == n->overlay_hwnd) {
-			BOOL ret = BitBlt(hdc, 0, 0, n->width, n->height, n->hdc, 0, 0, SRCCOPY);
+			RECT overlay_rect = n->get_rect();
+			BOOL ret = BitBlt(
+			    hdc,
+			    0,
+			    0,
+			    overlay_rect.right - overlay_rect.left,
+			    overlay_rect.bottom - overlay_rect.top,
+			    n->hdc,
+			    0,
+			    0,
+			    SRCCOPY);
 			if (!ret) {
 				std::cout << "APP:"
 				          << "draw_overlay_gdi had issue " << GetLastError() << std::endl;
@@ -481,14 +505,19 @@ void smg_overlays::update_settings()
 	          << "update_settings finished " << std::endl;
 }
 
+bool captured_window::save_state_to_settings()
+{
+	return false;
+}
+
 std::string captured_window::get_url()
 {
 	return "";
 }
 
-bool captured_window::is_web_view()
+bool captured_window::ready_to_create_overlay()
 {
-	return false;
+	return orig_handle != nullptr;
 }
 
 captured_window::~captured_window()
@@ -499,12 +528,12 @@ captured_window::~captured_window()
 captured_window::captured_window()
 {
 	static int id_counter = 128;
-	id                    = id_counter++;
-	use_method            = window_grab_method::print;
-	orig_handle           = nullptr;
-	overlay_hwnd          = nullptr;
-	hdc                   = nullptr;
-	hbmp                  = nullptr;
+	id = id_counter++;
+	use_method = window_grab_method::print;
+	orig_handle = nullptr;
+	overlay_hwnd = nullptr;
+	hdc = nullptr;
+	hbmp = nullptr;
 
 	status = overlay_status::creating;
 }
@@ -520,31 +549,45 @@ void captured_window::clean_resources()
 	}
 }
 
+RECT captured_window::get_rect()
+{
+	std::lock_guard<std::mutex> lock(rect_access);
+	RECT ret = rect;
+	return ret;
+}
+
+bool captured_window::set_rect(RECT& new_rect)
+{
+	std::lock_guard<std::mutex> lock(rect_access);
+	rect = new_rect;
+	return true;
+}
+
 bool captured_window::get_window_screenshot()
 {
-	bool updated     = false;
-	BOOL ret         = false;
+	bool updated = false;
+	BOOL ret = false;
 	RECT client_rect = {0};
-	HDC  hdcScreen   = GetDC(orig_handle);
+	HDC hdcScreen = GetDC(orig_handle);
 
 	ret = GetWindowRect(orig_handle, &client_rect);
 	if (ret && hdcScreen != nullptr) {
-		int new_x      = client_rect.left;
-		int new_y      = client_rect.top;
-		int new_width  = client_rect.right - client_rect.left;
+		int new_x = client_rect.left;
+		int new_y = client_rect.top;
+		int new_width = client_rect.right - client_rect.left;
 		int new_height = client_rect.bottom - client_rect.top;
+		RECT cur_rect = get_rect();
 
-		HDC     new_hdc  = nullptr;
+		HDC new_hdc = nullptr;
 		HBITMAP new_hbmp = nullptr;
-		bool    keep_gdi = false;
-		;
+		bool keep_gdi = false;
 
-		if (new_width == width && new_height == height) {
+		if (new_width == cur_rect.right - cur_rect.left && new_height == cur_rect.bottom - cur_rect.top && hdc != nullptr) {
 			keep_gdi = true;
-			new_hdc  = hdc;
+			new_hdc = hdc;
 			new_hbmp = hbmp;
 		} else {
-			new_hdc  = CreateCompatibleDC(hdcScreen);
+			new_hdc = CreateCompatibleDC(hdcScreen);
 			new_hbmp = CreateCompatibleBitmap(hdcScreen, new_width, new_height);
 			SelectObject(new_hdc, new_hbmp);
 		}
@@ -575,26 +618,23 @@ bool captured_window::get_window_screenshot()
 					DeleteDC(hdc);
 					DeleteObject(hbmp);
 
-					hdc  = new_hdc;
+					hdc = new_hdc;
 					hbmp = new_hbmp;
 				}
 
-				if (x == new_x && y == new_y && width == new_width && height == new_height) {
+				if (client_rect.left == cur_rect.left && client_rect.right == cur_rect.right && client_rect.top == cur_rect.top
+				    && client_rect.bottom == cur_rect.bottom) {
 				} else {
-					x      = new_x;
-					y      = new_y;
-					width  = new_width;
-					height = new_height;
+					set_rect(client_rect);
 
 					if (overlay_hwnd) {
-						MoveWindow(overlay_hwnd, x, y, width, height, FALSE);
+						MoveWindow(overlay_hwnd, new_x, new_y, new_width, new_height, FALSE);
 					}
 				}
 				updated = true;
 			} else {
 				std::cout << "APP:"
-				          << "get_window_screenshot failed to get bitmap from orig window " << GetLastError()
-				          << std::endl;
+				          << "get_window_screenshot failed to get bitmap from orig window " << GetLastError() << std::endl;
 				if (!keep_gdi) {
 					DeleteDC(new_hdc);
 					DeleteObject(new_hbmp);

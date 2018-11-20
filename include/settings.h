@@ -1,34 +1,34 @@
 #pragma once
 
+#include <list>
 #include <stdlib.h>
 #include <string>
-#include <list>
 
 const std::string config_file_name = "settings.cfg";
 
 class web_view_overlay_settings
 {
-public:
+	public:
 	std::string url;
 	int x;
 	int y;
 	int width;
 	int height;
 
-	void read(std::ifstream &infile);
-	void write(std::ofstream & outfile);
+	void read(std::ifstream& infile);
+	void write(std::ofstream& outfile);
 };
 
 class smg_settings
 {
-public:
+	public:
 	const int settings_version;
 	std::list<std::string> apps_names;
 	std::list<web_view_overlay_settings> web_pages;
 
-	int transparency; // o - 255 
+	int transparency; // o - 255
 	bool use_color_key;
-	int redraw_timeout;//ms
+	int redraw_timeout; //ms
 
 	void test_init();
 	void default_init();

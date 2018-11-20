@@ -94,8 +94,8 @@ function light_test()
 	setTimeout(script_finished, 20000);
 }
 
-//setTimeout(start_test, 2000);
-setTimeout(light_test, 2000);
+setTimeout(start_test, 2000);
+//setTimeout(light_test, 2000);
 
 
 setTimeout(script_finished, 200000);

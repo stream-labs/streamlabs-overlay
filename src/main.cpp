@@ -8,14 +8,14 @@
 #include "web_view.h"
 
 std::shared_ptr<smg_overlays> app;
-smg_settings                  app_settings;
+smg_settings app_settings;
 
-HANDLE overlays_thread    = nullptr;
-DWORD  overlays_thread_id = 0;
-BOOL   g_bDblBuffered     = FALSE;
+HANDLE overlays_thread = nullptr;
+DWORD overlays_thread_id = 0;
+BOOL g_bDblBuffered = FALSE;
 
 const int OVERLAY_UPDATE_TIMER = 001;
-bool      in_standalone_mode   = false;
+bool in_standalone_mode = false;
 
 //  Regular entry to the app
 int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/);
@@ -29,7 +29,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLi
 int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
 	in_standalone_mode = true;
-	overlays_thread    = GetModuleHandle(NULL);
+	overlays_thread = GetModuleHandle(NULL);
 	overlays_thread_id = GetCurrentThreadId();
 
 	return overlay_thread_func(NULL);
@@ -53,24 +53,28 @@ DWORD WINAPI overlay_thread_func(void* data)
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 	if (SUCCEEDED(hr)) {
-		hr             = BufferedPaintInit();
+		hr = BufferedPaintInit();
 		g_bDblBuffered = SUCCEEDED(hr);
 
 		app->init();
-		
+
 		SetTimer(0, OVERLAY_UPDATE_TIMER, app_settings.redraw_timeout, (TIMERPROC) nullptr);
+
 		// Main message loop
 		MSG msg;
 		while (GetMessage(&msg, nullptr, 0, 0)) {
-			std::cout << "APP:"  << "wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
+			//std::cout << "APP:"  << "wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
 
 			switch (msg.message) {
 			case WM_WEBVIEW_CREATED:
-				app->original_window_ready((int)msg.wParam, * (reinterpret_cast<HWND*>(msg.lParam)) );
+				app->original_window_ready((int)msg.wParam, *(reinterpret_cast<HWND*>(msg.lParam)));
 				break;
-			case WM_WEBVIEW_CLOSED:
-				//todo web view was closed . remove from list 
-				break;
+			case WM_WEBVIEW_CLOSED: {
+				std::cout << "APP:"
+				          << "WM_WEBVIEW_CLOSED " << (int)msg.wParam << std::endl;
+				auto closed = app->get_overlay_by_id((int)msg.wParam);
+				app->remove_overlay(closed);
+			} break;
 			case WM_HOTKEY: {
 				app->process_hotkeys(msg);
 			} break;
@@ -122,6 +126,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return 0;
 	} break;
 	case WM_PAINT: {
+		std::cout << "APP:"
+		          << "WM_PAINT " << hWnd << std::endl;
 		app->draw_overlay_gdi(hWnd, g_bDblBuffered);
 		return 0;
 	} break;
@@ -167,11 +173,11 @@ int WINAPI hide_overlays()
 int WINAPI add_webview(const char* url)
 {
 	web_view_overlay_settings n;
-	n.x      = 100;
-	n.y      = 100;
-	n.width  = 400;
+	n.x = 100;
+	n.y = 100;
+	n.width = 400;
 	n.height = 400;
-	n.url    = std::string(url);
+	n.url = std::string(url);
 
 	int ret = app->create_web_view_window(n);
 

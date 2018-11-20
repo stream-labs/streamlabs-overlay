@@ -2,7 +2,7 @@
 BasedOnStyle: LLVM
 TabWidth: 4
 UseTab: ForIndentation
-ColumnLimit: 120
+ColumnLimit: 128
 
 # Language
 Language: Cpp
@@ -29,8 +29,8 @@ SortIncludes: true
 
 # Alignment
 AlignAfterOpenBracket: AlwaysBreak
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
 AlignEscapedNewlines: Left
 AlignOperands: true
 AlignTrailingComments: true
@@ -95,6 +95,6 @@ CompactNamespaces: false
 DisableFormat: false
 FixNamespaceComments: true
 #ForEachMacros: ''
-KeepEmptyLinesAtTheStartOfBlocks: false
+KeepEmptyLinesAtTheStartOfBlocks: true
 ReflowComments: false
 SortUsingDeclarations: true
