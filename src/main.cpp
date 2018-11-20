@@ -1,21 +1,21 @@
-#include "stdafx.h"
 #include "overlays.h"
+#include "stdafx.h"
 
 #include <algorithm>
 #include <iostream>
 
-#include "web_view.h"
 #include "settings.h"
+#include "web_view.h"
 
 std::shared_ptr<smg_overlays> app;
-smg_settings app_settings;
+smg_settings                  app_settings;
 
-HANDLE overlays_thread = nullptr;
+HANDLE overlays_thread    = nullptr;
 DWORD  overlays_thread_id = 0;
-BOOL g_bDblBuffered = FALSE;
+BOOL   g_bDblBuffered     = FALSE;
 
 const int OVERLAY_UPDATE_TIMER = 001;
-bool in_standalone_mode = false;
+bool      in_standalone_mode   = false;
 
 //  Regular entry to the app
 int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/);
@@ -29,6 +29,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLi
 int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
 	in_standalone_mode = true;
+	overlays_thread    = GetModuleHandle(NULL);
+	overlays_thread_id = GetCurrentThreadId();
 
 	return overlay_thread_func(NULL);
 }
@@ -50,29 +52,28 @@ DWORD WINAPI overlay_thread_func(void* data)
 	// Init COM and double-buffered painting
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-	if (SUCCEEDED(hr))
-	{
-		hr = BufferedPaintInit();
+	if (SUCCEEDED(hr)) {
+		hr             = BufferedPaintInit();
 		g_bDblBuffered = SUCCEEDED(hr);
 
 		app->init();
 		
-		PostThreadMessage((DWORD)web_views_thread_id, WM_HOTKEY, HOTKEY_ADD_WEB, 0);
-
-		SetTimer(0, OVERLAY_UPDATE_TIMER, app_settings.redraw_timeout, (TIMERPROC)nullptr);
+		SetTimer(0, OVERLAY_UPDATE_TIMER, app_settings.redraw_timeout, (TIMERPROC) nullptr);
 		// Main message loop
 		MSG msg;
-		while (GetMessage(&msg, nullptr, 0, 0))
-		{
-			//std::cout << "APP:"  << "wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
+		while (GetMessage(&msg, nullptr, 0, 0)) {
+			std::cout << "APP:"  << "wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
 
-			switch (msg.message)
-			{
-			case WM_HOTKEY:
-			{
+			switch (msg.message) {
+			case WM_WEBVIEW_CREATED:
+				app->original_window_ready((int)msg.wParam, * (reinterpret_cast<HWND*>(msg.lParam)) );
+				break;
+			case WM_WEBVIEW_CLOSED:
+				//todo web view was closed . remove from list 
+				break;
+			case WM_HOTKEY: {
 				app->process_hotkeys(msg);
-			}
-			break;
+			} break;
 			case WM_TIMER:
 				app->on_update_timer();
 				break;
@@ -101,45 +102,32 @@ BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM param)
 	return app->process_found_window(hwnd, param);
 }
 
-// ----------------------------------------------------------------------
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message)
-	{
-	case WM_CREATE:
-	{
-
-	}
-	break;
-	case WM_SIZE:
-	{
+	switch (message) {
+	case WM_CREATE: {
 	} break;
-	case WM_DESTROY:
-	{
+	case WM_SIZE: {
+	} break;
+	case WM_DESTROY: {
 		PostQuitMessage(0);
 		return 0;
-	}
-	break;
-	case WM_ERASEBKGND:
-	{
+	} break;
+	case WM_ERASEBKGND: {
 		// Don't do any erasing here.  It's done in WM_PAINT to avoid flicker.
 		return 1;
-	}
-	break;
-	case WM_TIMER:
-	{
+	} break;
+	case WM_TIMER: {
 		InvalidateRect(hWnd, NULL, TRUE);
 		return 0;
-	}
-	break;
-	case WM_PAINT:
-	{
+	} break;
+	case WM_PAINT: {
 		app->draw_overlay_gdi(hWnd, g_bDblBuffered);
 		return 0;
-	}
-	break;
+	} break;
 
-	default:break;
+	default:
+		break;
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
@@ -178,15 +166,15 @@ int WINAPI hide_overlays()
 
 int WINAPI add_webview(const char* url)
 {
-	int ret = 0;
 	web_view_overlay_settings n;
-	n.x = 100;
-	n.y = 100;
-	n.width = 400;
+	n.x      = 100;
+	n.y      = 100;
+	n.width  = 400;
 	n.height = 400;
-	n.url = std::string(url);
-	ret = app->create_empty_web_view_window(n);
-	
+	n.url    = std::string(url);
+
+	int ret = app->create_web_view_window(n);
+
 	PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_ADD_WEB, 0);
 	return ret;
 }

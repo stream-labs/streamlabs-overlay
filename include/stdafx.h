@@ -35,3 +35,25 @@ const int HOTKEY_UPDATE_OVERLAYS = 3;
 const int HOTKEY_QUIT = 4;
 const int HOTKEY_ADD_WEB = 5;
 const int HOTKEY_CATCH_APP = 6;
+
+
+#define WM_WEBVIEW_CREATE (WM_USER + 32)
+//wParam id
+//lParam url
+
+#define WM_WEBVIEW_CLOSE (WM_USER + 33)
+//wParam id
+
+#define WM_WEBVIEW_SET_URL (WM_USER + 34)
+//lParam url
+
+#define WM_WEBVIEW_CREATED (WM_USER + 35)
+//wParam id
+//lParam hwnd
+
+#define WM_WEBVIEW_CLOSED (WM_USER + 36)
+//wParam id
+
+#define WM_WINDOW_CREATED (WM_USER + 37)
+//
+//have window to what we ready to create overlay

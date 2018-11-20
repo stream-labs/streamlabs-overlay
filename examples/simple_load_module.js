@@ -1,4 +1,4 @@
-const streamlabs_overlays = require('../build/Debug/streamlabs_overlay');
+const streamlabs_overlays = require('../build/Release/streamlabs_overlay');
 
 console.log('Call start');
 streamlabs_overlays.start();
@@ -83,17 +83,19 @@ function light_test()
 	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
 
 	console.log('Call add overlay');
-	console.log(streamlabs_overlays.add_overlay("http://yandex.com"));
+	console.log(streamlabs_overlays.add_overlay("http://google.com"));
 
 	console.log('Call get count');
-	console.log(streamlabs_overlays.get_overlays_count());
+	//console.log(streamlabs_overlays.get_overlays_count());
 
 	console.log('Call show');
-	streamlabs_overlays.show_overlays();
+	//streamlabs_overlays.show_overlays();
+	
+	setTimeout(script_finished, 20000);
 }
 
-setTimeout(start_test, 2000);
-//setTimeout(light_test, 2000);
+//setTimeout(start_test, 2000);
+setTimeout(light_test, 2000);
 
 
 setTimeout(script_finished, 200000);

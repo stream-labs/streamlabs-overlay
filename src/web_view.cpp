@@ -7,44 +7,105 @@
 #include <algorithm>
 #include <iostream>
 
-
-HANDLE web_views_thread = 0;
-DWORD  web_views_thread_id = 0;
+HANDLE    web_views_thread    = 0;
+DWORD     web_views_thread_id = 0;
 HINSTANCE web_views_hInstance = 0;
-extern std::shared_ptr<smg_overlays> app;
 
-void create_container_window(std::shared_ptr<web_view_window> & n);
+extern DWORD overlays_thread_id;
+
+class web_view_wnd
+{
+	public:
+	int         overlay_id;
+	HWND        container;
+	HWND        web_view;
+	std::string url;
+
+	web_view_wnd(int _overlay_id, std::string _url)
+	    : overlay_id(_overlay_id), url(_url), container(nullptr), web_view(nullptr){};
+
+	void close_windows()
+	{
+		if (container != nullptr) {
+			CloseWindow(container);
+			container = nullptr;
+		}
+		if (web_view != nullptr) {
+			CloseWindow(web_view);
+			web_view = nullptr;
+		}
+	};
+
+	void apply_url(std::string &_url);
+};
+std::list<std::shared_ptr<web_view_wnd>> web_views;
+
+void                          create_container_window(std::shared_ptr<web_view_wnd> n);
+std::shared_ptr<web_view_wnd> get_web_view_by_container(HWND);
+std::shared_ptr<web_view_wnd> get_web_view_by_id(int id);
 
 LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	switch (msg)
-	{
-	case WM_CREATE:
-	{
-	} break;
-	case WM_SIZE:
-	{
-		std::shared_ptr<web_view_window> new_web_view = app->get_web_view_by_container(hwnd);
-		if (new_web_view != nullptr)
-		{
-			MoveWindow(new_web_view->web_view_hwnd, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
+	switch (msg) {
+	case WM_CREATE: {
+		CREATESTRUCT* params = (CREATESTRUCT*)lParam;
+		if (params != nullptr) {
+			web_view_wnd* wnd_params = (web_view_wnd*)params->lpCreateParams;
+			if (wnd_params != nullptr) {
+				wnd_params->container = hwnd;
+				wnd_params->web_view  = WebformCreate(hwnd, 103);
+
+				PostThreadMessage(
+				    overlays_thread_id,
+				    WM_WEBVIEW_CREATED,
+				    wnd_params->overlay_id,
+				    reinterpret_cast<LPARAM>(&(wnd_params->web_view)));
+				wnd_params->apply_url(wnd_params->url);
+			}
 		}
 
 	} break;
-	case WM_COMMAND:
-	{
-		int id = LOWORD(wParam), code = HIWORD(wParam);
-		if (id == 103 && code == WEBFN_CLICKED)
-		{
-			const TCHAR *url = WebformLastClick(app->get_web_view_by_container(hwnd)->web_view_hwnd);
-			WebformGo(app->get_web_view_by_container(hwnd)->web_view_hwnd, url);
-			//WebformGo(get_web_view_hwnd(hwnd), _T("http://bbc.co.uk"));
+	case WM_SIZE: {
+		HWND web_view_hwnd = nullptr;
+
+		std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_container(hwnd);
+		if (web_view_window != nullptr) {
+			web_view_hwnd = web_view_window->web_view;
+		}
+
+		if (web_view_hwnd != nullptr) {
+			MoveWindow(web_view_hwnd, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
 		}
 	} break;
-	case WM_DESTROY:
-	{
-		app->get_web_view_by_container(hwnd)->web_view_hwnd = nullptr;
-		app->get_web_view_by_container(hwnd)->container_hwnd = nullptr;
+	case WM_COMMAND: {
+		int id = LOWORD(wParam), code = HIWORD(wParam);
+		if (id == 103 && code == WEBFN_CLICKED) {
+			HWND web_view_hwnd = nullptr;
+
+			std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_container(hwnd);
+			if (web_view_window != nullptr) {
+				web_view_hwnd = web_view_window->web_view;
+			}
+
+			if (web_view_hwnd != nullptr) {
+				const TCHAR* url = WebformLastClick(web_view_hwnd);
+				//todo convert url to std::string and save 
+				//web_view_window->apply_url(url);  
+				WebformGo(web_view_hwnd, url);
+			}
+		}
+	} break;
+	case WM_DESTROY: {
+		std::shared_ptr<web_view_wnd> closed_window = get_web_view_by_container(hwnd);
+		if (closed_window != nullptr) {
+			PostThreadMessage(overlays_thread_id, WM_WEBVIEW_CLOSED, closed_window->overlay_id, NULL);
+
+			closed_window->container = nullptr;
+			closed_window->close_windows();
+			web_views.remove_if([closed_window](std::shared_ptr<web_view_wnd>& n) {
+				return (closed_window->overlay_id == n->overlay_id);
+			});
+		}
 
 	} break;
 	}
@@ -54,59 +115,58 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 DWORD WINAPI web_views_thread_func(void* data)
 {
 	HRESULT ole_ret = OleInitialize(0);
-	if (ole_ret != S_FALSE && ole_ret != S_OK)
-	{
+	if (ole_ret != S_FALSE && ole_ret != S_OK) {
 		return 0;
 	}
 
-	WNDCLASSEX wcex = { 0 }; wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = (WNDPROC)PlainWndProc;
-	wcex.hInstance = web_views_hInstance;
-	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	WNDCLASSEX wcex    = {0};
+	wcex.cbSize        = sizeof(WNDCLASSEX);
+	wcex.style         = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc   = (WNDPROC)PlainWndProc;
+	wcex.hInstance     = web_views_hInstance;
+	wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wcex.lpszClassName = _T("Webview");
-	ATOM res = RegisterClassEx(&wcex);
-	   
+	ATOM res           = RegisterClassEx(&wcex);
+
 	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		std::cout << "APP:"  << "web page proc msg id " << msg.message << " for hwnd "<< msg.hwnd << std::endl;
+	while (GetMessage(&msg, NULL, 0, 0)) {
+		//std::cout << "APP:" << "web page proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
 
-		if (msg.message == WM_HOTKEY)
-		{
-			switch (msg.wParam)
+		switch (msg.message) {
+		case WM_WEBVIEW_CREATE: {
+			std::shared_ptr<web_view_wnd> new_wnd =
+			    std::make_shared<web_view_wnd>((int)msg.wParam, std::string((char*)msg.lParam));
+			std::cout << "APP:" << new_wnd->overlay_id << ", " << new_wnd->url << std::endl;
+			web_views.push_back(new_wnd);
+			create_container_window(new_wnd);
+		} break;
+		case WM_WEBVIEW_CLOSE:
 			{
-			case HOTKEY_ADD_WEB:
-			{
-				int created = 0;
-				std::for_each(app->showing_windows.begin(), app->showing_windows.end(), [&created](std::shared_ptr<captured_window> &n)
-				{ 
-					std::cout << "APP:" << "add webviews test 2" << std::endl;
-					if (n->is_web_view())
-					{
-						std::cout << "APP:" << "add webviews test 1" << std::endl;
-						std::shared_ptr<web_view_window> derived = std::static_pointer_cast<web_view_window> (n);
-						if (derived->container_hwnd == nullptr)
-						{
-							created++;
-							create_container_window(derived);
-						}
+				HWND web_view_hwnd = nullptr;
 
-					}
-					return; 
+				std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_id((int)msg.wParam);
+				if (web_view_window != nullptr) {
+				    web_views.remove_if([web_view_window](std::shared_ptr<web_view_wnd>& n) {
+					    return (web_view_window->overlay_id == n->overlay_id);
+				    });
+				    web_view_window->close_windows();
 				}
+			}
 
-				);
-
-				std::cout << "APP:"  << "add webviews " << created << std::endl;
-			}break;
-			case HOTKEY_HIDE_OVERLAYS:
+			break;
+			break;
+		case WM_WEBVIEW_SET_URL:
 			{
-				//do not hide window. hidden windows does not paint 
+				HWND web_view_hwnd = nullptr;
+
+				std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_id((int)msg.wParam);
+				if (web_view_window != nullptr) {
+					web_view_window->apply_url(std::string((char*)msg.lParam));
+				}
 			}
 			break;
-			};
-		}
+		};
+
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
@@ -115,20 +175,59 @@ DWORD WINAPI web_views_thread_func(void* data)
 	return 0;
 }
 
-void create_container_window(std::shared_ptr<web_view_window> & n)
+void create_container_window(std::shared_ptr<web_view_wnd> n)
 {
-	HWND hMain;         // Our main window
-	hMain = CreateWindowEx(0, _T("Webview"), _T("Webview Window"), WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, n->x, n->y, n->width, n->height, NULL, NULL, web_views_hInstance, NULL);
-	if (hMain != NULL)
-	{
-		n->container_hwnd = hMain;
-		n->web_view_hwnd = WebformCreate(hMain, 103);
-		n->orig_handle = n->web_view_hwnd;
+	HWND hMain; // Our main window
+	hMain = CreateWindowEx(
+	    0,
+	    _T("Webview"),
+	    _T("Webview Window"),
+	    WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+	    100, //n->x,
+	    100, //n->y,
+	    400, //n->width,
+	    400, //n->height,
+	    NULL,
+	    NULL,
+	    web_views_hInstance,
+	    n.get());
 
-		WCHAR * url = new wchar_t[n->url.size() + 1];
-		mbstowcs(&url[0], n->url.c_str(), n->url.size() + 1);
-		WebformGo(n->web_view_hwnd, url);
-		delete url;
+	if (hMain != NULL) {
 		ShowWindow(hMain, SW_SHOW);
+	}
+}
+
+std::shared_ptr<web_view_wnd> get_web_view_by_container(HWND container)
+{
+	std::shared_ptr<web_view_wnd> ret = nullptr;
+	auto finded_wnd = std::find_if(web_views.begin(), web_views.end(), [&container](std::shared_ptr<web_view_wnd>& n) {
+		return container == n->container;
+	});
+	if (finded_wnd != web_views.end()) {
+		ret = *(finded_wnd);
+	}
+	return ret;
+}
+
+std::shared_ptr<web_view_wnd> get_web_view_by_id(int id)
+{
+	std::shared_ptr<web_view_wnd> ret        = nullptr;
+	auto                          finded_wnd = std::find_if(
+        web_views.begin(), web_views.end(), [&id](std::shared_ptr<web_view_wnd>& n) { return id == n->overlay_id; });
+	if (finded_wnd != web_views.end()) {
+		ret = *(finded_wnd);
+	}
+	return ret;
+}
+
+void web_view_wnd::apply_url(std::string& _url)
+{
+	url = _url;
+	if (web_view!=nullptr)
+	{
+		WCHAR* wide_url = new wchar_t[url.size() + 1];
+		mbstowcs(&wide_url[0], url.c_str(), url.size() + 1);
+		WebformGo(web_view, wide_url);
+		delete[] wide_url;
 	}
 }
