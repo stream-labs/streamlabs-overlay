@@ -10,9 +10,10 @@ int WINAPI stop_overlays_thread();
 std::shared_ptr<smg_overlays> WINAPI get_overlays();
 int WINAPI show_overlays();
 int WINAPI hide_overlays();
+int WINAPI remove_overlay(int id);
 int WINAPI add_webview(const char* url);
 int WINAPI add_webview(const char* url, int x, int y, int width, int height);
-bool WINAPI set_webview_params(int id, const char* url, int x, int y, int width, int height);
+bool WINAPI set_webview_position(int id, int x, int y, int width, int height);
 
 BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -36,7 +37,8 @@ class captured_window
 
 	public:
 	RECT get_rect();
-	bool set_rect(RECT& new_rect);
+	virtual bool set_rect(RECT& new_rect);
+	virtual bool apply_new_rect(RECT& new_rect);
 
 	window_grab_method use_method;
 	overlay_status status;
@@ -70,6 +72,7 @@ class web_view_window : public captured_window
 	virtual bool ready_to_create_overlay();
 	virtual void clean_resources();
 	virtual std::string get_url();
+	virtual bool apply_new_rect(RECT& new_rect);
 };
 
 class app_window : public captured_window

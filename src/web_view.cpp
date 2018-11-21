@@ -163,6 +163,19 @@ DWORD WINAPI web_views_thread_func(void* data)
 				web_view_window->apply_url(std::string((char*)msg.lParam));
 			}
 		} break;
+		case WM_WEBVIEW_SET_POSITION: {
+			std::cout << "APP:"
+			          << "WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
+
+			RECT* new_rect = reinterpret_cast<RECT * >(msg.lParam);
+			if (new_rect != nullptr) {
+				std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_id((int)msg.wParam);
+				if (web_view_window != nullptr) {
+					MoveWindow(web_view_window->container, new_rect->left, new_rect->top, new_rect->right - new_rect->left, new_rect->bottom - new_rect->top, TRUE);
+				}
+				delete new_rect;
+			}
+		} break;
 		};
 
 		TranslateMessage(&msg);

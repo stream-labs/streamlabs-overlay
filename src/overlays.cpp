@@ -90,6 +90,8 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 	new_web_view_window->set_rect(overlay_rect);
 
 	new_web_view_window->url = n.url;
+	std::cout << "APP:"
+	          << "create new webview " << n.url << std::endl;
 
 	if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0) {
 		new_web_view_window->url = n.url;
@@ -110,6 +112,7 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 		std::unique_lock<std::shared_mutex> lock(overlays_list_access);
 		showing_windows.push_back(new_web_view_window);
 	}
+
 	web_view_overlay_settings* new_window_params = new web_view_overlay_settings();
 	new_window_params->x = n.y;
 	new_window_params->y = n.y;
@@ -158,6 +161,18 @@ void web_view_window::clean_resources()
 {
 	captured_window::clean_resources();
 	PostThreadMessage(web_views_thread_id, WM_WEBVIEW_CLOSE, id, NULL);
+}
+
+bool web_view_window::apply_new_rect(RECT& new_rect)
+{
+	RECT* send_rect = new RECT(new_rect);
+	BOOL ret = PostThreadMessage(web_views_thread_id, WM_WEBVIEW_SET_POSITION, id, reinterpret_cast<LPARAM>(send_rect));
+ 	if (!ret) {
+		delete send_rect;
+		return false;
+	}
+	
+	return true;
 }
 
 void smg_overlays::on_update_timer()
@@ -254,8 +269,7 @@ void smg_overlays::register_hotkeys()
 	RegisterHotKey(NULL, HOTKEY_ADD_WEB, MOD_ALT, 0x57);         // add 'W'ebview
 	RegisterHotKey(NULL, HOTKEY_UPDATE_OVERLAYS, MOD_ALT, 0x55); //'U'pdate
 	RegisterHotKey(NULL, HOTKEY_QUIT, MOD_ALT, 0x51);            //'Q'uit
-	RegisterHotKey(NULL, HOTKEY_CATCH_APP, MOD_ALT,
-	               0x50); // catch a'P'p window
+	RegisterHotKey(NULL, HOTKEY_CATCH_APP, MOD_ALT, 0x50);       // catch a'P'p window
 }
 
 void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
@@ -573,6 +587,11 @@ RECT captured_window::get_rect()
 	std::lock_guard<std::mutex> lock(rect_access);
 	RECT ret = rect;
 	return ret;
+}
+
+bool captured_window::apply_new_rect(RECT& new_rect) 
+{
+	return set_rect(new_rect);
 }
 
 bool captured_window::set_rect(RECT& new_rect)

@@ -26,6 +26,23 @@
 
 #include <uxtheme.h> // for dbl-buffered painting
 
+/*
+Concepts:
+overlay window - window drawing over all other windows 
+source window - window from what content will be taken for overlay window 
+web_view - kind of source. it is simple window with ole webbrowser in it 
+app window - main window of some app as source for overlay 
+
+Threads: 
+All work with overlays in main thread. web views have their own thread. most communication between them by PostThreadMessages 
+Also have mutex to control access to overlays thread data. 
+one for changes in list of overlays "overlays_list_access" and each overlay object have own mutex for data what can be accessed by other thread. 
+
+Modes:
+Stand alone app. - control by hot keys. 
+Node module. - control by node module api. 
+*/
+
 enum class window_grab_method
 {
 	bitblt,
@@ -41,22 +58,33 @@ const int HOTKEY_ADD_WEB = 5;
 const int HOTKEY_CATCH_APP = 6;
 
 #define WM_WEBVIEW_CREATE (WM_USER + 32)
+//command for web view thread to create web view 
 //wParam id
 //lParam url
 
 #define WM_WEBVIEW_CLOSE (WM_USER + 33)
+//command for web view thread to close web view 
 //wParam id
 
 #define WM_WEBVIEW_SET_URL (WM_USER + 34)
+//command for web view thread to set url 
+//wParam id
 //lParam url
 
-#define WM_WEBVIEW_CREATED (WM_USER + 35)
+#define WM_WEBVIEW_SET_POSITION (WM_USER + 35)
+//command for web view thread to set overlay position and size 
+//wParam id
+//lParam LPRECT. have to delete it after recive
+
+#define WM_WEBVIEW_CREATED (WM_USER + 36)
+//signal for overlay thread about webview created 
 //wParam id
 //lParam hwnd
 
-#define WM_WEBVIEW_CLOSED (WM_USER + 36)
+#define WM_WEBVIEW_CLOSED (WM_USER + 37)
+//signal for overlay thread about webview closed 
 //wParam id
 
-#define WM_WINDOW_CREATED (WM_USER + 37)
-//
-//have window to what we ready to create overlay
+#define WM_WINDOW_CREATED (WM_USER + 38)
+//signal for overlay thread about source window created and can be used to make overlay for it 
+

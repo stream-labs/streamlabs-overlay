@@ -54,7 +54,7 @@ namespace demo
 		if (argc == 1) {
 			char url[512];
 			size_t result;
-			status = napi_get_value_string_utf8(env, argv[0], url, 100, &result);
+			status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
 			std::cout << "APP:"
 			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
 			crated_overlay_id = add_webview(url);
@@ -77,7 +77,7 @@ namespace demo
 		if (argc == 5) {
 			char url[512];
 			size_t result;
-			status = napi_get_value_string_utf8(env, argv[0], url, 100, &result);
+			status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
 			std::cout << "APP:"
 			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
 
@@ -109,9 +109,8 @@ namespace demo
 		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
 		std::cout << "APP:"
-		          << "GetOverlayInfo look for " << overlay_id << std::endl;
-		std::shared_ptr<captured_window> requested_overlay = get_overlays()->get_overlay_by_id(overlay_id);
-		get_overlays()->remove_overlay(requested_overlay);
+		          << "RemoveOverlay " << overlay_id << std::endl;
+		remove_overlay(overlay_id);
 
 		return nullptr;
 	}
@@ -185,37 +184,31 @@ namespace demo
 		return ret;
 	}
 
-	napi_value SetOverlay(napi_env env, napi_callback_info args)
+	napi_value SetOverlayPosition(napi_env env, napi_callback_info args)
 	{
 		napi_status status;
-		size_t argc = 6;
-		napi_value argv[6];
+		size_t argc = 5;
+		napi_value argv[5];
 		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
-		int crated_overlay_id = -1;
-		if (argc == 6) {
+		int function_ret = -1;
+		if (argc == 5) {
 			int id;
 			status = napi_get_value_int32(env, argv[0], &id);
 
-			char url[512];
-			size_t result;
-			status = napi_get_value_string_utf8(env, argv[1], url, 100, &result);
-			std::cout << "APP:"
-			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
-
 			int x;
-			status = napi_get_value_int32(env, argv[2], &x);
+			status = napi_get_value_int32(env, argv[1], &x);
 			int y;
-			status = napi_get_value_int32(env, argv[3], &y);
+			status = napi_get_value_int32(env, argv[2], &y);
 			int width;
-			status = napi_get_value_int32(env, argv[4], &width);
+			status = napi_get_value_int32(env, argv[3], &width);
 			int height;
-			status = napi_get_value_int32(env, argv[5], &height);
+			status = napi_get_value_int32(env, argv[4], &height);
 
-			crated_overlay_id = set_webview_params(id, url, x, y, width, height);
+			function_ret = set_webview_position(id, x, y, width, height);
 		}
 
 		napi_value ret;
-		status = napi_create_int32(env, crated_overlay_id, &ret);
+		status = napi_create_int32(env, function_ret, &ret);
 		if (status != napi_ok)
 			return nullptr;
 		return ret;
@@ -286,6 +279,13 @@ namespace demo
 		if (status != napi_ok)
 			return nullptr;
 		status = napi_set_named_property(env, exports, "add_overlay_ex", fn);
+		if (status != napi_ok)
+			return nullptr;
+
+		status = napi_create_function(env, nullptr, 0, SetOverlayPosition, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
+		status = napi_set_named_property(env, exports, "set_overlay_position", fn);
 		if (status != napi_ok)
 			return nullptr;
 
