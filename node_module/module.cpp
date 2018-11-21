@@ -52,7 +52,7 @@ namespace demo
 		int crated_overlay_id = -1;
 
 		if (argc == 1) {
-			char url[512];
+			char * url = new char[512];
 			size_t result;
 			status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
 			std::cout << "APP:"
@@ -75,7 +75,7 @@ namespace demo
 		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 		int crated_overlay_id = -1;
 		if (argc == 5) {
-			char url[512];
+			char *url = new char[512];
 			size_t result;
 			status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
 			std::cout << "APP:"
@@ -214,6 +214,33 @@ namespace demo
 		return ret;
 	}
 
+	napi_value SetOverlayUrl(napi_env env, napi_callback_info args)
+	{
+		napi_status status;
+		size_t argc = 2;
+		napi_value argv[2];
+		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
+		int overlay_id = -1;
+
+		if (argc == 2) {
+			int overlay_id;
+			status = napi_get_value_int32(env, argv[0], &overlay_id);
+
+			char * url = new char[512];
+			size_t result;
+			status = napi_get_value_string_utf8(env, argv[1], url, 256, &result);
+			std::cout << "APP:"
+			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
+			overlay_id = set_webview_url(overlay_id, url);
+		}
+
+		napi_value ret;
+		status = napi_create_int32(env, overlay_id, &ret);
+		if (status != napi_ok)
+			return nullptr;
+		return ret;
+	}
+
 	napi_value init(napi_env env, napi_value exports)
 	{
 		napi_status status;
@@ -289,16 +316,20 @@ namespace demo
 		if (status != napi_ok)
 			return nullptr;
 
+		status = napi_create_function(env, nullptr, 0, SetOverlayUrl, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
+		status = napi_set_named_property(env, exports, "set_overlay_url", fn);
+		if (status != napi_ok)
+			return nullptr;
+
 		status = napi_create_function(env, nullptr, 0, RemoveOverlay, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
 		status = napi_set_named_property(env, exports, "remove_overlay", fn);
 		if (status != napi_ok)
 			return nullptr;
-
-		//set url
-		//set position and size
-
+		 
 		//set transparency
 		return exports;
 	}

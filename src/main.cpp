@@ -75,6 +75,12 @@ DWORD WINAPI overlay_thread_func(void* data)
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
 			} break;
+			case WM_WEBVIEW_CLOSE: {
+				std::cout << "APP:"
+				          << "WM_WEBVIEW_CLOSE " << (int)msg.wParam << std::endl;
+				auto closed = app->get_overlay_by_id((int)msg.wParam);
+				app->remove_overlay(closed);
+			} break;
 			case WM_WEBVIEW_SET_POSITION: {
 				std::cout << "APP:"
 				          << "WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
@@ -85,6 +91,19 @@ DWORD WINAPI overlay_thread_func(void* data)
 						overlay->apply_new_rect(*new_rect);
 					}
 					delete new_rect;
+				}
+			} break;
+			case WM_WEBVIEW_SET_URL: {
+				std::cout << "APP:"
+				          << "WM_WEBVIEW_SET_URL " << (int)msg.wParam << std::endl;
+				std::shared_ptr<captured_window> overlay = app->get_overlay_by_id((int)msg.wParam);
+				char* new_url = reinterpret_cast<char*>(msg.lParam);
+				if (new_url != nullptr) {
+					if (overlay != nullptr) {
+						overlay->set_url(new_url);
+					} else {
+						delete [] new_url;
+					}					
 				}
 			} break;
 			case WM_HOTKEY: {
@@ -178,10 +197,9 @@ int WINAPI hide_overlays()
 	return 0;
 }
 
-int WINAPI remove_overlay(int id) 
+int WINAPI remove_overlay(int id)
 {
-	//std::shared_ptr<captured_window> requested_overlay = get_overlays()->get_overlay_by_id(overlay_id);
-	//get_overlays()->remove_overlay(requested_overlay);
+	BOOL ret = PostThreadMessage(overlays_thread_id, WM_WEBVIEW_CLOSE, id, NULL);
 	return 0;
 }
 
@@ -193,9 +211,9 @@ int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 	n.width = width;
 	n.height = height;
 	n.url = std::string(url);
-	std::cout << "url" << url << std::endl;
-	std::cout << "n.url" << n.url << std::endl;
+
 	int ret = smg_overlays::get_instance()->create_web_view_window(n);
+	delete[] url;
 
 	return ret;
 }
@@ -216,6 +234,18 @@ bool WINAPI set_webview_position(int id, int x, int y, int width, int height)
 	BOOL ret = PostThreadMessage(overlays_thread_id, WM_WEBVIEW_SET_POSITION, id, reinterpret_cast<LPARAM>(n));
 	if (!ret) {
 		delete n;
+		return false;
+	}
+
+	return true;
+}
+
+bool WINAPI set_webview_url(int id, char* url)
+{
+	BOOL ret = PostThreadMessage(overlays_thread_id, WM_WEBVIEW_SET_URL, id, reinterpret_cast<LPARAM>(url));
+	if(!ret)	{
+		delete[] url;
+		return false;
 	}
 
 	return true;

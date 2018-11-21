@@ -152,6 +152,18 @@ std::string web_view_window::get_url()
 	return url;
 }
 
+void web_view_window::set_url( char* new_url)
+{
+	std::string save_url = new_url;
+	BOOL ret = PostThreadMessage(web_views_thread_id, WM_WEBVIEW_SET_URL, id, reinterpret_cast<LPARAM>(new_url));
+	if (!ret)
+	{
+		delete [] new_url;
+	} else {
+		url = save_url;
+	}
+}
+
 bool web_view_window::ready_to_create_overlay()
 {
 	return orig_handle != nullptr;
@@ -167,11 +179,11 @@ bool web_view_window::apply_new_rect(RECT& new_rect)
 {
 	RECT* send_rect = new RECT(new_rect);
 	BOOL ret = PostThreadMessage(web_views_thread_id, WM_WEBVIEW_SET_POSITION, id, reinterpret_cast<LPARAM>(send_rect));
- 	if (!ret) {
+	if (!ret) {
 		delete send_rect;
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -589,7 +601,7 @@ RECT captured_window::get_rect()
 	return ret;
 }
 
-bool captured_window::apply_new_rect(RECT& new_rect) 
+bool captured_window::apply_new_rect(RECT& new_rect)
 {
 	return set_rect(new_rect);
 }

@@ -5,6 +5,7 @@
 
 class smg_overlays;
 
+// char* params like url - functions get ownership of that pointer and clean memory when finish with it
 int WINAPI start_overlays_thread();
 int WINAPI stop_overlays_thread();
 std::shared_ptr<smg_overlays> WINAPI get_overlays();
@@ -14,6 +15,7 @@ int WINAPI remove_overlay(int id);
 int WINAPI add_webview(const char* url);
 int WINAPI add_webview(const char* url, int x, int y, int width, int height);
 bool WINAPI set_webview_position(int id, int x, int y, int width, int height);
+bool WINAPI set_webview_url(int id, char* url);
 
 BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -47,6 +49,10 @@ class captured_window
 
 	virtual bool save_state_to_settings();
 	virtual std::string get_url();
+	virtual void set_url(char* url)
+	{
+		delete [] url ;
+	};
 	virtual bool ready_to_create_overlay();
 	HWND orig_handle;
 	HBITMAP hbmp;
@@ -72,6 +78,7 @@ class web_view_window : public captured_window
 	virtual bool ready_to_create_overlay();
 	virtual void clean_resources();
 	virtual std::string get_url();
+	virtual void set_url(char* new_url);
 	virtual bool apply_new_rect(RECT& new_rect);
 };
 

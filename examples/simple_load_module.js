@@ -50,7 +50,7 @@ function start_test()
 	console.log(streamlabs_overlays.get_overlays_count());
 
 	console.log('Call add overlay');
-	console.log(streamlabs_overlays.add_overlay("http://google.com"));
+	console.log(streamlabs_overlays.add_overlay("https://www.google.com/doodles/"));
 
 	console.log('Call get overlays ids');
 	var overlays_ids = streamlabs_overlays.get_overlays_ids();
@@ -60,18 +60,18 @@ function start_test()
 	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
 
 	//console.log('Call add overlay with size');
-	//console.log(streamlabs_overlays.add_overlay_ex("http://google.com", 200, 50, 400, 200));
+	//console.log(streamlabs_overlays.add_overlay_ex("https://www.google.com/", 200, 50, 400, 200));
 	
-	console.log('Call set overlay position');
-	console.log(streamlabs_overlays.set_overlay_position(overlays_ids[0], 2000, 50, 400, 200));
-	
-	console.log('Call get count');
-	console.log(streamlabs_overlays.get_overlays_count());
+	//console.log('Call set overlay position');
+	//console.log(streamlabs_overlays.set_overlay_position(overlays_ids[0], 2000, 50, 400, 200));
 
+	console.log('Call set overlay url');
+	console.log(streamlabs_overlays.set_overlay_url(overlays_ids[0], "http://bing.com/"));
+	
 	console.log('Call show');
 	streamlabs_overlays.show_overlays();
 	
-	setTimeout(finish_program, 5000);
+	setTimeout(finish_program, 7000);
 }
 
 function light_test() 
@@ -103,5 +103,4 @@ function light_test()
 setTimeout(start_test, 2000);
 //setTimeout(light_test, 2000);
 
-
-setTimeout(script_finished, 200000);
+setTimeout(script_finished, 12000);
