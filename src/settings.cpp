@@ -88,6 +88,8 @@ void web_view_overlay_settings::write(std::ofstream& outfile)
 	outfile << url << std::endl;
 }
 
+web_view_overlay_settings::web_view_overlay_settings() : x(0), y(0), width(0), height(0) {}
+
 void web_view_overlay_settings::read(std::ifstream& infile)
 {
 	std::string line;

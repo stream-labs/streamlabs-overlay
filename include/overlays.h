@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mutex>
+#include <shared_mutex>
 #include "stdafx.h"
 
 class smg_overlays;
@@ -11,6 +11,8 @@ std::shared_ptr<smg_overlays> WINAPI get_overlays();
 int WINAPI show_overlays();
 int WINAPI hide_overlays();
 int WINAPI add_webview(const char* url);
+int WINAPI add_webview(const char* url, int x, int y, int width, int height);
+bool WINAPI set_webview_params(int id, const char* url, int x, int y, int width, int height);
 
 BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -79,8 +81,19 @@ class web_view_overlay_settings;
 
 class smg_overlays
 {
-	std::mutex block_access;
+	static std::shared_ptr<smg_overlays> instance;
+
+	public:
+	mutable std::shared_mutex overlays_list_access;
 	bool showing_overlays;
+
+	static std::shared_ptr<smg_overlays> get_instance()
+	{
+		if (instance == nullptr) {
+			instance = std::make_shared<smg_overlays>();
+		}
+		return instance;
+	};
 
 	public:
 	std::list<std::shared_ptr<captured_window>> showing_windows;

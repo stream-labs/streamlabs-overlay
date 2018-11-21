@@ -59,6 +59,9 @@ function start_test()
 	console.log('Call add overlay');
 	console.log(streamlabs_overlays.add_overlay("http://google.com"));
 
+	console.log('Call add overlay with size');
+	console.log(streamlabs_overlays.add_overlay_ex("http://google.com", 200, 50, 400, 200));
+
 	console.log('Call get count');
 	console.log(streamlabs_overlays.get_overlays_count());
 

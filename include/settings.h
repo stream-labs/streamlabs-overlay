@@ -17,6 +17,8 @@ class web_view_overlay_settings
 
 	void read(std::ifstream& infile);
 	void write(std::ofstream& outfile);
+	
+	web_view_overlay_settings();
 };
 
 class smg_settings

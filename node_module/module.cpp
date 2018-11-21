@@ -33,8 +33,8 @@ namespace demo
 
 	napi_value GetOverlaysCount(napi_env env, napi_callback_info args)
 	{
-		int         count = get_overlays()->get_count();
-		napi_value  ret;
+		int count = get_overlays()->get_count();
+		napi_value ret;
 		napi_status status;
 
 		status = napi_create_int32(env, count, &ret);
@@ -46,21 +46,55 @@ namespace demo
 	napi_value AddOverlay(napi_env env, napi_callback_info args)
 	{
 		napi_status status;
-		size_t      argc = 1;
-		napi_value  argv[1];
+		size_t argc = 1;
+		napi_value argv[1];
 		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
+		int crated_overlay_id = -1;
 
 		if (argc == 1) {
-			char   url[512];
+			char url[512];
 			size_t result;
 			status = napi_get_value_string_utf8(env, argv[0], url, 100, &result);
 			std::cout << "APP:"
 			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
-			add_webview(url);
+			crated_overlay_id = add_webview(url);
 		}
 
 		napi_value ret;
-		status = napi_create_int32(env, 0, &ret);
+		status = napi_create_int32(env, crated_overlay_id, &ret);
+		if (status != napi_ok)
+			return nullptr;
+		return ret;
+	}
+
+	napi_value AddOverlayEx(napi_env env, napi_callback_info args)
+	{
+		napi_status status;
+		size_t argc = 5;
+		napi_value argv[5];
+		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
+		int crated_overlay_id = -1;
+		if (argc == 5) {
+			char url[512];
+			size_t result;
+			status = napi_get_value_string_utf8(env, argv[0], url, 100, &result);
+			std::cout << "APP:"
+			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
+
+			int x;
+			status = napi_get_value_int32(env, argv[1], &x);
+			int y;
+			status = napi_get_value_int32(env, argv[2], &y);
+			int width;
+			status = napi_get_value_int32(env, argv[3], &width);
+			int height;
+			status = napi_get_value_int32(env, argv[4], &height);
+
+			crated_overlay_id = add_webview(url, x, y, width, height);
+		}
+
+		napi_value ret;
+		status = napi_create_int32(env, crated_overlay_id, &ret);
 		if (status != napi_ok)
 			return nullptr;
 		return ret;
@@ -69,9 +103,9 @@ namespace demo
 	napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 	{
 		napi_status status;
-		size_t      argc = 1;
-		napi_value  argv[1];
-		int32_t     overlay_id;
+		size_t argc = 1;
+		napi_value argv[1];
+		int32_t overlay_id;
 		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
 		std::cout << "APP:"
@@ -85,9 +119,9 @@ namespace demo
 	napi_value GetOverlayInfo(napi_env env, napi_callback_info args)
 	{
 		napi_status status;
-		size_t      argc = 1;
-		napi_value  argv[1];
-		int32_t     overlay_id;
+		size_t argc = 1;
+		napi_value argv[1];
+		int32_t overlay_id;
 		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
 		std::cout << "APP:"
@@ -112,21 +146,22 @@ namespace demo
 				status = napi_create_string_utf8(env, url_str.c_str(), url_str.size() + 1, &url);
 				status = napi_set_named_property(env, ret, "url", url);
 			}
+			RECT overlay_rect = requested_overlay->get_rect();
 
 			napi_value width;
-			status = napi_create_int32(env, requested_overlay->width, &width);
+			status = napi_create_int32(env, overlay_rect.right - overlay_rect.left, &width);
 			status = napi_set_named_property(env, ret, "width", width);
 
 			napi_value height;
-			status = napi_create_int32(env, requested_overlay->height, &height);
+			status = napi_create_int32(env, overlay_rect.bottom - overlay_rect.top, &height);
 			status = napi_set_named_property(env, ret, "height", width);
 
 			napi_value x;
-			status = napi_create_int32(env, requested_overlay->x, &x);
+			status = napi_create_int32(env, overlay_rect.left, &x);
 			status = napi_set_named_property(env, ret, "x", x);
 
 			napi_value y;
-			status = napi_create_int32(env, requested_overlay->y, &y);
+			status = napi_create_int32(env, overlay_rect.top, &y);
 			status = napi_set_named_property(env, ret, "y", y);
 
 			return ret;
@@ -136,8 +171,8 @@ namespace demo
 	napi_value GetOverlaysIDs(napi_env env, napi_callback_info args)
 	{
 		std::vector<int> ids = get_overlays()->get_ids();
-		napi_value       ret;
-		napi_status      status;
+		napi_value ret;
+		napi_status status;
 		status = napi_create_array(env, &ret);
 		for (int i = 0; i < ids.size(); i++) {
 			napi_value id;
@@ -150,10 +185,46 @@ namespace demo
 		return ret;
 	}
 
+	napi_value SetOverlay(napi_env env, napi_callback_info args)
+	{
+		napi_status status;
+		size_t argc = 6;
+		napi_value argv[6];
+		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
+		int crated_overlay_id = -1;
+		if (argc == 6) {
+			int id;
+			status = napi_get_value_int32(env, argv[0], &id);
+
+			char url[512];
+			size_t result;
+			status = napi_get_value_string_utf8(env, argv[1], url, 100, &result);
+			std::cout << "APP:"
+			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
+
+			int x;
+			status = napi_get_value_int32(env, argv[2], &x);
+			int y;
+			status = napi_get_value_int32(env, argv[3], &y);
+			int width;
+			status = napi_get_value_int32(env, argv[4], &width);
+			int height;
+			status = napi_get_value_int32(env, argv[5], &height);
+
+			crated_overlay_id = set_webview_params(id, url, x, y, width, height);
+		}
+
+		napi_value ret;
+		status = napi_create_int32(env, crated_overlay_id, &ret);
+		if (status != napi_ok)
+			return nullptr;
+		return ret;
+	}
+
 	napi_value init(napi_env env, napi_value exports)
 	{
 		napi_status status;
-		napi_value  fn;
+		napi_value fn;
 
 		status = napi_create_function(env, nullptr, 0, Start, nullptr, &fn);
 		if (status != napi_ok)
@@ -208,6 +279,13 @@ namespace demo
 		if (status != napi_ok)
 			return nullptr;
 		status = napi_set_named_property(env, exports, "add_overlay", fn);
+		if (status != napi_ok)
+			return nullptr;
+
+		status = napi_create_function(env, nullptr, 0, AddOverlayEx, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
+		status = napi_set_named_property(env, exports, "add_overlay_ex", fn);
 		if (status != napi_ok)
 			return nullptr;
 

@@ -7,7 +7,6 @@
 #include "settings.h"
 #include "web_view.h"
 
-std::shared_ptr<smg_overlays> app;
 smg_settings app_settings;
 
 HANDLE overlays_thread = nullptr;
@@ -37,7 +36,8 @@ int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCm
 
 DWORD WINAPI overlay_thread_func(void* data)
 {
-	app = std::make_shared<smg_overlays>();
+	std::shared_ptr<smg_overlays> app;
+	app = smg_overlays::get_instance();
 
 	web_views_hInstance = GetModuleHandle(NULL);
 
@@ -103,7 +103,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM param)
 {
-	return app->process_found_window(hwnd, param);
+	return smg_overlays::get_instance()->process_found_window(hwnd, param);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -126,9 +126,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return 0;
 	} break;
 	case WM_PAINT: {
-		std::cout << "APP:"
-		          << "WM_PAINT " << hWnd << std::endl;
-		app->draw_overlay_gdi(hWnd, g_bDblBuffered);
+		smg_overlays::get_instance()->draw_overlay_gdi(hWnd, g_bDblBuffered);
 		return 0;
 	} break;
 
@@ -143,8 +141,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 //when used as a "plugin" we have to start our own thread to work with windows events loop
 int WINAPI start_overlays_thread()
 {
-	//todo start_as_standalone, ignore_settings
-
 	overlays_thread = CreateThread(nullptr, 0, overlay_thread_func, nullptr, 0, &overlays_thread_id);
 	if (overlays_thread) {
 		// Optionally do stuff, such as wait on the thread.
@@ -170,22 +166,32 @@ int WINAPI hide_overlays()
 	return 0;
 }
 
-int WINAPI add_webview(const char* url)
+int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 {
 	web_view_overlay_settings n;
-	n.x = 100;
-	n.y = 100;
-	n.width = 400;
-	n.height = 400;
+	n.x = x;
+	n.y = y;
+	n.width = width;
+	n.height = height;
 	n.url = std::string(url);
 
-	int ret = app->create_web_view_window(n);
+	int ret = smg_overlays::get_instance()->create_web_view_window(n);
 
-	PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_ADD_WEB, 0);
 	return ret;
+}
+
+int WINAPI add_webview(const char* url)
+{
+	return add_webview(url, 100, 100, 400, 300);
+}
+
+bool WINAPI set_webview_params(int id, const char* url, int x, int y, int width, int height)
+{
+	//set params to overlay 
+	return true;
 }
 
 std::shared_ptr<smg_overlays> get_overlays()
 {
-	return app;
+	return smg_overlays::get_instance();
 }
