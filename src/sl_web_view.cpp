@@ -1,6 +1,6 @@
-#include "web_view.h"
-#include "overlays.h"
-#include "settings.h"
+#include "sl_web_view.h"
+#include "sl_overlays.h"
+#include "sl_overlays_settings.h"
 
 #include "webform.h"
 
@@ -95,6 +95,8 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 		}
 	} break;
+	case WM_CLOSE: {
+	} break;
 	case WM_DESTROY: {
 		std::shared_ptr<web_view_wnd> closed_window = get_web_view_by_container(hwnd);
 		if (closed_window != nullptr) {
@@ -151,10 +153,7 @@ DWORD WINAPI web_views_thread_func(void* data)
 				});
 				web_view_window->close_windows();
 			}
-		}
-
-		break;
-			break;
+		} break;
 		case WM_WEBVIEW_SET_URL: {
 			HWND web_view_hwnd = nullptr;
 
@@ -167,14 +166,24 @@ DWORD WINAPI web_views_thread_func(void* data)
 			std::cout << "APP:"
 			          << "WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
 
-			RECT* new_rect = reinterpret_cast<RECT * >(msg.lParam);
+			RECT* new_rect = reinterpret_cast<RECT*>(msg.lParam);
 			if (new_rect != nullptr) {
 				std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_id((int)msg.wParam);
 				if (web_view_window != nullptr) {
-					MoveWindow(web_view_window->container, new_rect->left, new_rect->top, new_rect->right - new_rect->left, new_rect->bottom - new_rect->top, TRUE);
+					MoveWindow(
+					    web_view_window->container,
+					    new_rect->left,
+					    new_rect->top,
+					    new_rect->right - new_rect->left,
+					    new_rect->bottom - new_rect->top,
+					    TRUE);
 				}
 				delete new_rect;
 			}
+		} break;
+		case WM_WEBVIEW_CLOSE_THREAD: {
+			//todo set quit flag 
+			//destroy all windows without notifying overlay thread 
 		} break;
 		};
 

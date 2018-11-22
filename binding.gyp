@@ -3,7 +3,7 @@
     {
       "target_name": "streamlabs_overlay",
 	  "include_dirs":["src", "include", "webform"],
-      "sources": [ "src\*.cpp" , "webform\*.cpp", "node_module\module.cpp"],
+      "sources": [ "src\*.cpp", "src\*.h" , "webform\*.cpp", "node_module\module.cpp"],
 	  "conditions": [
         [
           "OS=='win'",

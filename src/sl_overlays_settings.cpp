@@ -1,4 +1,4 @@
-#include "settings.h"
+#include "sl_overlays_settings.h"
 
 #include <algorithm>
 #include <fstream>

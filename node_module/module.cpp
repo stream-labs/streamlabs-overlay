@@ -3,9 +3,9 @@
 
 #include <iostream>
 #include <vector>
-#include "overlays.h" // NOLINT(build/include)
+#include "overlay_api.h" // NOLINT(build/include)
 
-namespace demo
+namespace overlays_node
 {
 	napi_value Start(napi_env env, napi_callback_info args)
 	{
@@ -33,7 +33,7 @@ namespace demo
 
 	napi_value GetOverlaysCount(napi_env env, napi_callback_info args)
 	{
-		int count = get_overlays()->get_count();
+		int count = get_overlays_count();
 		napi_value ret;
 		napi_status status;
 
@@ -125,7 +125,7 @@ namespace demo
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
 		std::cout << "APP:"
 		          << "GetOverlayInfo look for " << overlay_id << std::endl;
-		std::shared_ptr<captured_window> requested_overlay = get_overlays()->get_overlay_by_id(overlay_id);
+		std::shared_ptr<overlay_window> requested_overlay = get_overlays()->get_overlay_by_id(overlay_id);
 
 		if (requested_overlay == nullptr) {
 			return nullptr;

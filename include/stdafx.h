@@ -88,3 +88,5 @@ const int HOTKEY_CATCH_APP = 6;
 #define WM_WINDOW_CREATED (WM_USER + 38)
 //signal for overlay thread about source window created and can be used to make overlay for it 
 
+#define WM_WEBVIEW_CLOSE_THREAD (WM_USER + 39)
+//thread should be closed, all resources released, global vars cleaned 

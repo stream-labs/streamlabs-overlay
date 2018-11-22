@@ -3,23 +3,7 @@
 #include <shared_mutex>
 #include "stdafx.h"
 
-class smg_overlays;
 
-// char* params like url - functions get ownership of that pointer and clean memory when finish with it
-int WINAPI start_overlays_thread();
-int WINAPI stop_overlays_thread();
-std::shared_ptr<smg_overlays> WINAPI get_overlays();
-int WINAPI show_overlays();
-int WINAPI hide_overlays();
-int WINAPI remove_overlay(int id);
-int WINAPI add_webview(const char* url);
-int WINAPI add_webview(const char* url, int x, int y, int width, int height);
-bool WINAPI set_webview_position(int id, int x, int y, int width, int height);
-bool WINAPI set_webview_url(int id, char* url);
-
-BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM);
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-bool FindRunningProcess(const WCHAR* process_name_part);
 DWORD WINAPI overlay_thread_func(void* data);
 extern bool in_standalone_mode;
 
@@ -31,7 +15,7 @@ enum class overlay_status
 	destroing
 };
 
-class captured_window
+class overlay_window
 {
 	protected:
 	RECT rect;
@@ -62,13 +46,13 @@ class captured_window
 
 	int id;
 
-	~captured_window();
-	captured_window();
+	virtual ~overlay_window();
+	overlay_window();
 
 	virtual void clean_resources();
 };
 
-class web_view_window : public captured_window
+class web_view_window : public overlay_window
 {
 	public:
 	std::string url;
@@ -82,7 +66,7 @@ class web_view_window : public captured_window
 	virtual bool apply_new_rect(RECT& new_rect);
 };
 
-class app_window : public captured_window
+class app_window : public overlay_window
 {
 	public:
 };
@@ -92,6 +76,7 @@ class web_view_overlay_settings;
 class smg_overlays
 {
 	static std::shared_ptr<smg_overlays> instance;
+	bool quiting;
 
 	public:
 	mutable std::shared_mutex overlays_list_access;
@@ -106,15 +91,15 @@ class smg_overlays
 	};
 
 	public:
-	std::list<std::shared_ptr<captured_window>> showing_windows;
+	std::list<std::shared_ptr<overlay_window>> showing_windows;
 
 	smg_overlays();
-	~smg_overlays(){};
+	virtual ~smg_overlays(){};
 
 	void register_hotkeys();
 	void original_window_ready(int overlay_id, HWND orig_window);
 	void create_windows_overlays();
-	void create_window_for_overlay(std::shared_ptr<captured_window>& overlay);
+	void create_window_for_overlay(std::shared_ptr<overlay_window>& overlay);
 	void create_overlay_window_class();
 
 	int create_web_view_window(web_view_overlay_settings& n);
@@ -123,9 +108,9 @@ class smg_overlays
 	void create_windows_for_apps();
 
 	size_t get_count();
-	std::shared_ptr<captured_window> get_overlay_by_id(int overlay_id);
+	std::shared_ptr<overlay_window> get_overlay_by_id(int overlay_id);
 
-	bool remove_overlay(std::shared_ptr<captured_window> overlay);
+	bool remove_overlay(std::shared_ptr<overlay_window> overlay);
 
 	std::vector<int> get_ids();
 
