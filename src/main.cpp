@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "sl_overlays_settings.h"
+#include "sl_overlay_window.h"
 #include "sl_web_view.h"
 
 smg_settings app_settings;

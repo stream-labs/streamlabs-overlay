@@ -3,7 +3,9 @@
 
 #include <iostream>
 #include <vector>
-#include "overlay_api.h" // NOLINT(build/include)
+#include "sl_overlay_api.h" // NOLINT(build/include)
+#include "sl_overlay_window.h"
+#include "sl_overlays.h"
 
 namespace overlays_node
 {
