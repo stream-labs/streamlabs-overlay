@@ -4,8 +4,8 @@
 #include <algorithm>
 #include <iostream>
 
-#include "sl_overlays_settings.h"
 #include "sl_overlay_window.h"
+#include "sl_overlays_settings.h"
 #include "sl_web_view.h"
 
 smg_settings app_settings;
@@ -14,7 +14,7 @@ HANDLE overlays_thread = nullptr;
 DWORD overlays_thread_id = 0;
 BOOL g_bDblBuffered = FALSE;
 
-const int OVERLAY_UPDATE_TIMER = 001;
+int OVERLAY_UPDATE_TIMER = 0;
 bool in_standalone_mode = false;
 
 //  Regular entry to the app
@@ -59,32 +59,33 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 		app->init();
 
-		SetTimer(0, OVERLAY_UPDATE_TIMER, app_settings.redraw_timeout, (TIMERPROC) nullptr);
+		OVERLAY_UPDATE_TIMER = SetTimer(0, 0, app_settings.redraw_timeout, (TIMERPROC) nullptr);
 
 		// Main message loop
 		MSG msg;
 		while (GetMessage(&msg, nullptr, 0, 0)) {
 			//std::cout << "APP:"  << "wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
+			bool catched = false;
 
 			switch (msg.message) {
 			case WM_WEBVIEW_CREATED:
 				app->original_window_ready((int)msg.wParam, *(reinterpret_cast<HWND*>(msg.lParam)));
+				catched = true;
 				break;
 			case WM_WEBVIEW_CLOSED: {
-				std::cout << "APP:"
-				          << "WM_WEBVIEW_CLOSED " << (int)msg.wParam << std::endl;
+				std::cout << "APP: WM_WEBVIEW_CLOSED " << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
+				catched = true;
 			} break;
 			case WM_WEBVIEW_CLOSE: {
-				std::cout << "APP:"
-				          << "WM_WEBVIEW_CLOSE " << (int)msg.wParam << std::endl;
+				std::cout << "APP: WM_WEBVIEW_CLOSE " << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
+				catched = true;
 			} break;
 			case WM_WEBVIEW_SET_POSITION: {
-				std::cout << "APP:"
-				          << "WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
+				std::cout << "APP: WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				RECT* new_rect = reinterpret_cast<RECT*>(msg.lParam);
 				if (new_rect != nullptr) {
@@ -93,10 +94,10 @@ DWORD WINAPI overlay_thread_func(void* data)
 					}
 					delete new_rect;
 				}
+				catched = true;
 			} break;
 			case WM_WEBVIEW_SET_URL: {
-				std::cout << "APP:"
-				          << "WM_WEBVIEW_SET_URL " << (int)msg.wParam << std::endl;
+				std::cout << "APP: WM_WEBVIEW_SET_URL " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				char* new_url = reinterpret_cast<char*>(msg.lParam);
 				if (new_url != nullptr) {
@@ -106,18 +107,27 @@ DWORD WINAPI overlay_thread_func(void* data)
 						delete[] new_url;
 					}
 				}
+				catched = true;
 			} break;
 			case WM_HOTKEY: {
-				app->process_hotkeys(msg);
+				catched = app->process_hotkeys(msg);
+
 			} break;
 			case WM_TIMER:
-				app->on_update_timer();
+				//std::cout << "APP: WM_TIMER id = " << (int)msg.wParam << std::endl;
+				if ((int)msg.wParam == OVERLAY_UPDATE_TIMER) {
+					app->on_update_timer();
+					catched = true;
+				}
 				break;
 			default:
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
 				break;
 			};
+
+			if (!catched) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 
 		if (g_bDblBuffered)
@@ -133,6 +143,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 	//todo clean global var
 
 	app->deinit(); //todo clean singleton in case some one start thread another time after stop
+	
+	std::cout << "APP: exit from thread " << std::endl;
 
 	return 0;
 }
@@ -150,20 +162,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE: {
 	} break;
 	case WM_CLOSE: {
-		//todo some how window wants to be closed so need to remove its overlay object 
+		//todo some how window wants to be closed so need to remove its overlay object
+		std::cout << "APP: WndProc WM_CLOSE for " << hWnd << std::endl;
 	} break;
 	case WM_DESTROY: {
-		//todo read in HOTKEY_QUIT
+		std::cout << "APP: WndProc WM_DESTROY for " << hWnd << std::endl;
+		smg_overlays::get_instance()->on_window_destroy(hWnd);
+
 		return 0;
 	} break;
 	case WM_ERASEBKGND: {
 		// Don't do any erasing here.  It's done in WM_PAINT to avoid flicker.
 		return 1;
 	} break;
-	case WM_TIMER: {
-		InvalidateRect(hWnd, NULL, TRUE);
-		return 0;
-	} break;
+ 
+	case WM_QUIT: {
+		std::cout << "APP: WndProc WM_QUIT for " << hWnd << std::endl;
+	}
+		break;
 	case WM_PAINT: {
 		smg_overlays::get_instance()->draw_overlay_gdi(hWnd, g_bDblBuffered);
 		return 0;

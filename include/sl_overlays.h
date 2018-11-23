@@ -3,7 +3,6 @@
 #include <shared_mutex>
 #include "stdafx.h"
 
-
 DWORD WINAPI overlay_thread_func(void* data);
 extern bool in_standalone_mode;
 
@@ -19,21 +18,15 @@ class smg_overlays
 	mutable std::shared_mutex overlays_list_access;
 	bool showing_overlays;
 
-	static std::shared_ptr<smg_overlays> get_instance()
-	{
-		if (instance == nullptr) {
-			instance = std::make_shared<smg_overlays>();
-		}
-		return instance;
-	};
+	static std::shared_ptr<smg_overlays> get_instance();
 
 	public:
 	std::list<std::shared_ptr<overlay_window>> showing_windows;
 
 	smg_overlays();
 	virtual ~smg_overlays(){};
+	void deinit();
 
-	void register_hotkeys();
 	void original_window_ready(int overlay_id, HWND orig_window);
 	void create_windows_overlays();
 	void create_window_for_overlay(std::shared_ptr<overlay_window>& overlay);
@@ -46,17 +39,22 @@ class smg_overlays
 
 	size_t get_count();
 	std::shared_ptr<overlay_window> get_overlay_by_id(int overlay_id);
+	std::shared_ptr<overlay_window> get_overlay_by_window(HWND overlay_window);
 
 	bool remove_overlay(std::shared_ptr<overlay_window> overlay);
+	bool on_window_destroy(HWND window);
 
 	std::vector<int> get_ids();
 
 	void init();
 
-	void process_hotkeys(MSG& msg);
-	void on_update_timer();
+	void register_hotkeys();
+	void deregister_hotkeys();
+	bool process_hotkeys(MSG& msg);
 
-	void deinit();
+	void quit();
+
+	void on_update_timer();
 
 	BOOL process_found_window(HWND hwnd, LPARAM param);
 

@@ -2,9 +2,9 @@
 #include "stdafx.h"
 #include <mutex>
 
-enum class overlay_status
+enum class overlay_status:int
 {
-	creating,
+	creating = 1,
 	source_ready,
 	working,
 	destroing

@@ -10,6 +10,7 @@
 HANDLE web_views_thread = 0;
 DWORD web_views_thread_id = 0;
 HINSTANCE web_views_hInstance = 0;
+bool quiting = false;
 
 extern DWORD overlays_thread_id;
 
@@ -26,13 +27,18 @@ class web_view_wnd
 
 	void close_windows()
 	{
+		std::cout << "WEBVIEW: close_windows " << std::endl;
 		if (container != nullptr) {
-			CloseWindow(container);
+			std::cout << "WEBVIEW: close_windows container" << std::endl;
+			auto temp = container;
 			container = nullptr;
+			DestroyWindow(temp);
 		}
 		if (web_view != nullptr) {
-			CloseWindow(web_view);
+			std::cout << "WEBVIEW: close_windows web_view" << std::endl;
+			auto temp = web_view;
 			web_view = nullptr;
+			DestroyWindow(temp);
 		}
 	};
 
@@ -48,6 +54,7 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
 	case WM_CREATE: {
+		std::cout << "WEBVIEW: WM_CREATE " << std::endl;
 		CREATESTRUCT* params = (CREATESTRUCT*)lParam;
 		if (params != nullptr) {
 			web_view_wnd* wnd_params = (web_view_wnd*)params->lpCreateParams;
@@ -66,6 +73,7 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	} break;
 	case WM_SIZE: {
+		std::cout << "WEBVIEW: WM_SIZE " << std::endl;
 		HWND web_view_hwnd = nullptr;
 
 		std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_container(hwnd);
@@ -96,16 +104,27 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 	} break;
 	case WM_CLOSE: {
+		std::cout << "WEBVIEW: WM_CLOSE for " << hwnd  << std::endl;
 	} break;
 	case WM_DESTROY: {
+		std::cout << "WEBVIEW: WM_DESTROY for " << hwnd << std::endl;
 		std::shared_ptr<web_view_wnd> closed_window = get_web_view_by_container(hwnd);
 		if (closed_window != nullptr) {
+			std::cout << "WEBVIEW: webview object found and be deleted " << std::endl;
 			closed_window->container = nullptr;
-			closed_window->close_windows();
+			std::cout << "WEBVIEW: web_views size " << web_views.size() << std::endl;
 			web_views.remove_if(
 			    [closed_window](std::shared_ptr<web_view_wnd>& n) { return (closed_window->overlay_id == n->overlay_id); });
-
+			closed_window->close_windows();
+			std::cout << "WEBVIEW: web_views size " << web_views.size() << std::endl;
 			PostThreadMessage(overlays_thread_id, WM_WEBVIEW_CLOSED, closed_window->overlay_id, NULL);
+		}
+		if (quiting)
+		{
+			if( web_views.size() == 0)
+			{
+				PostQuitMessage(0);
+			}
 		}
 
 	} break;
@@ -134,21 +153,27 @@ DWORD WINAPI web_views_thread_func(void* data)
 		//std::cout << "APP:" << "web page proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
 
 		switch (msg.message) {
+		case WM_QUIT: {
+			std::cout << "WEBVIEW: WM_QUIT " << std::endl;
+		} break;
 		case WM_WEBVIEW_CREATE: {
 			web_view_overlay_settings* new_window_params = reinterpret_cast<web_view_overlay_settings*>(msg.lParam);
 
 			std::shared_ptr<web_view_wnd> new_wnd = std::make_shared<web_view_wnd>((int)msg.wParam, new_window_params->url);
-			std::cout << "APP:" << new_wnd->overlay_id << ", " << new_wnd->url << std::endl;
+			std::cout << "WEBVIEW: WM_WEBVIEW_CREATE" << new_wnd->overlay_id << ", " << new_wnd->url << std::endl;
 			web_views.push_back(new_wnd);
 			create_container_window(new_wnd, new_window_params);
 			delete new_window_params;
 		} break;
 		case WM_WEBVIEW_CLOSE: {
 			HWND web_view_hwnd = nullptr;
-
+			std::cout << "WEBVIEW: WM_WEBVIEW_CLOSE " << (int)msg.wParam << std::endl;
 			std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_id((int)msg.wParam);
 			if (web_view_window != nullptr) {
+				std::cout << "WEBVIEW: window found " << std::endl;
 				web_views.remove_if([web_view_window](std::shared_ptr<web_view_wnd>& n) {
+					std::cout << "WEBVIEW: remove window from list" << (web_view_window->overlay_id == n->overlay_id)
+					          << std::endl;
 					return (web_view_window->overlay_id == n->overlay_id);
 				});
 				web_view_window->close_windows();
@@ -163,8 +188,7 @@ DWORD WINAPI web_views_thread_func(void* data)
 			}
 		} break;
 		case WM_WEBVIEW_SET_POSITION: {
-			std::cout << "APP:"
-			          << "WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
+			std::cout << "WEBVIEW: WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
 
 			RECT* new_rect = reinterpret_cast<RECT*>(msg.lParam);
 			if (new_rect != nullptr) {
@@ -182,15 +206,23 @@ DWORD WINAPI web_views_thread_func(void* data)
 			}
 		} break;
 		case WM_WEBVIEW_CLOSE_THREAD: {
-			//todo set quit flag 
-			//destroy all windows without notifying overlay thread 
+			std::cout << "WEBVIEW: WM_WEBVIEW_CLOSE_THREAD" << std::endl;
+			if (quiting == false) 
+			{
+				//destroy all windows without notifying overlay thread
+				//todo but windows will be closed by 
+				if (web_views.size() == 0)
+				{
+					PostQuitMessage(0);
+				}
+			}
 		} break;
 		};
 
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-
+	std::cout << "WEBVIEW: Exit from loop " << std::endl;
 	OleUninitialize();
 	return 0;
 }

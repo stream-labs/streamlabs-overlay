@@ -1,8 +1,8 @@
 #include "sl_overlay_window.h"
 
 #include "sl_overlays_settings.h"
-#include "stdafx.h"
 #include "sl_web_view.h"
+#include "stdafx.h"
 
 #include <iostream>
 
@@ -41,12 +41,24 @@ overlay_window::overlay_window()
 
 void overlay_window::clean_resources()
 {
-	DeleteDC(hdc);
-	DeleteObject(hbmp);
+	if (status != overlay_status::destroing) {
+		status = overlay_status::destroing;
+		std::cout << "APP: clean_resources for " << id << std::endl;
+		if (hdc != nullptr) {
 
-	if (overlay_hwnd != nullptr) {
-		CloseWindow(overlay_hwnd);
-		overlay_hwnd = nullptr;
+			DeleteDC(hdc);
+			hdc = nullptr;
+		}
+
+		if (hbmp != nullptr) {
+			DeleteObject(hbmp);
+			hbmp = nullptr;
+		}
+
+		if (overlay_hwnd != nullptr) {
+			std::cout << "APP: clean_resources close overlay window hwnd " << overlay_hwnd << std::endl;
+			DestroyWindow(overlay_hwnd);
+		}
 	}
 }
 

@@ -16,8 +16,8 @@ function finish_program()
 {
 	console.log('--------------- finish program');
 	console.log('');
-	console.log('Call get count');
-	console.log(streamlabs_overlays.get_overlays_count());
+	//console.log('Call get count');
+	//console.log(streamlabs_overlays.get_overlays_count());
 
 	console.log('Call get overlays ids');
 	var overlays_ids = streamlabs_overlays.get_overlays_ids();
@@ -27,17 +27,17 @@ function finish_program()
 	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
 
 	console.log('Call remove overlay');
-	console.log(streamlabs_overlays.remove_overlay());
+	streamlabs_overlays.remove_overlay(overlays_ids[0]);
 
-	console.log('Call hide');
-	streamlabs_overlays.hide_overlays();
+	//console.log('Call hide');
+	//streamlabs_overlays.hide_overlays();
 	
 	console.log('Call get overlays ids');
 	var overlays_ids = streamlabs_overlays.get_overlays_ids();
 	console.log(overlays_ids);
 
-	console.log('Call get overlay info ' + overlays_ids[0]);
-	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
+	//console.log('Call get overlay info ' + overlays_ids[0]);
+	//console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
 	
 	setTimeout(script_finished, 2000);
 }
@@ -56,8 +56,8 @@ function start_test()
 	var overlays_ids = streamlabs_overlays.get_overlays_ids();
 	console.log(overlays_ids);
 
-	console.log('Call get overlay info ' + overlays_ids[0]);
-	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
+	//console.log('Call get overlay info ' + overlays_ids[0]);
+	//console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
 
 	//console.log('Call add overlay with size');
 	//console.log(streamlabs_overlays.add_overlay_ex("https://www.google.com/", 200, 50, 400, 200));

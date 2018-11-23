@@ -4,8 +4,8 @@
 #include <algorithm>
 #include <iostream>
 
-#include "sl_overlays_settings.h"
 #include "sl_overlay_window.h"
+#include "sl_overlays_settings.h"
 #include "sl_web_view.h"
 
 //#include "..\include\sl_overlays.h"
@@ -19,20 +19,20 @@ BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 bool FindRunningProcess(const WCHAR* process_name_part);
 
-void smg_overlays::process_hotkeys(MSG& msg)
+bool smg_overlays::process_hotkeys(MSG& msg)
 {
-	std::cout << "APP:"
-	          << "process_hotkeys id " << msg.wParam << std::endl;
+	bool ret = false;
+	std::cout << "APP: process_hotkeys id " << msg.wParam << std::endl;
 	switch (msg.wParam) {
 	case HOTKEY_CATCH_APP: {
 		HWND top_window = GetForegroundWindow();
 		if (top_window != nullptr) {
 			unsigned long process_id = 0;
 			GetWindowThreadProcessId(top_window, &process_id);
-			std::cout << "APP:"
-			          << "catch app " << process_id << ", " << top_window << std::endl;
+			std::cout << "APP: catch app " << process_id << ", " << top_window << std::endl;
 			EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
 		}
+		ret = true;
 	} break;
 	case HOTKEY_SHOW_OVERLAYS: {
 		if (showing_overlays) {
@@ -41,14 +41,15 @@ void smg_overlays::process_hotkeys(MSG& msg)
 			hide_overlays();
 		}
 
-		std::cout << "APP:"
-		          << "show overlays " << std::endl;
+		std::cout << "APP: show overlays " << std::endl;
 		showing_overlays = true;
+		ret = true;
 	} break;
 	case HOTKEY_HIDE_OVERLAYS: {
 		showing_overlays = false;
 
 		hide_overlays();
+		ret = true;
 	} break;
 	case HOTKEY_UPDATE_OVERLAYS: {
 		if (showing_overlays) {
@@ -57,13 +58,12 @@ void smg_overlays::process_hotkeys(MSG& msg)
 				n->get_window_screenshot();
 			});
 		}
+		ret = true;
 	} break;
 	case HOTKEY_ADD_WEB: {
-		std::cout << "APP:"
-		          << "get HOTKEY_ADD_WEB " << web_views_thread_id << std::endl;
+		std::cout << "APP: get HOTKEY_ADD_WEB " << web_views_thread_id << std::endl;
 		if (in_standalone_mode) {
-			std::cout << "APP:"
-			          << "create default web view" << std::endl;
+			std::cout << "APP: create default web view" << std::endl;
 			web_view_overlay_settings n;
 			n.x = 100;
 			n.y = 100;
@@ -73,20 +73,41 @@ void smg_overlays::process_hotkeys(MSG& msg)
 
 			create_web_view_window(n);
 		}
+		ret = true;
 	} break;
 
 	case HOTKEY_QUIT: {
-		if (!quiting)
-		{
-			quiting = true;
-			//todo close and clean correctly 
-			//deregister hotkeys
-			//call DestroyWindow for all overlay windows 
-			//catch wm_destroy
-			//check if its last destoyed window and check quit_flag (we can close all windows and still stay running )
+		if (!quiting) {
+			quit();
 		}
+		ret = true;
 	} break;
 	};
+
+	return ret;
+}
+
+void smg_overlays::quit()
+{
+	std::cout << "APP: quit " << std::endl;
+	quiting = true;
+	deregister_hotkeys();
+		
+	BOOL ret = PostThreadMessage(web_views_thread_id, WM_WEBVIEW_CLOSE_THREAD, NULL, NULL);
+	if (!ret) {
+		//todo force stop that thread
+	}
+
+	update_settings();
+	app_settings.write();
+
+	std::for_each(
+	    showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) 
+	{ 
+		PostMessage(0, WM_WEBVIEW_CLOSE, n->id, 0);
+	});
+
+	//it's not all. after last windows will be destroyed then thread quits
 }
 
 int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
@@ -103,8 +124,7 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 	new_web_view_window->set_rect(overlay_rect);
 
 	new_web_view_window->url = n.url;
-	std::cout << "APP:"
-	          << "create new webview " << n.url << std::endl;
+	std::cout << "APP: create new webview " << n.url << std::endl;
 
 	if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0) {
 		new_web_view_window->url = n.url;
@@ -158,17 +178,12 @@ void smg_overlays::on_update_timer()
 
 void smg_overlays::deinit()
 {
-	update_settings();
-	app_settings.write();
-
-	std::cout << "APP:"
-	          << "exit from app " << std::endl;
+	std::cout << "APP: deinit " << std::endl;
 }
 
 void smg_overlays::hide_overlays()
 {
-	std::cout << "APP:"
-	          << "hide_overlays " << std::endl;
+	std::cout << "APP: hide_overlays " << std::endl;
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
 		ShowWindow(n->overlay_hwnd, SW_HIDE);
@@ -241,6 +256,16 @@ void smg_overlays::register_hotkeys()
 	RegisterHotKey(NULL, HOTKEY_CATCH_APP, MOD_ALT, 0x50);       // catch a'P'p window
 }
 
+void smg_overlays::deregister_hotkeys()
+{
+	UnregisterHotKey(NULL, HOTKEY_SHOW_OVERLAYS);   //'S'how
+	UnregisterHotKey(NULL, HOTKEY_HIDE_OVERLAYS);   //'H'ide all
+	UnregisterHotKey(NULL, HOTKEY_ADD_WEB);         // add 'W'ebview
+	UnregisterHotKey(NULL, HOTKEY_UPDATE_OVERLAYS); //'U'pdate
+	UnregisterHotKey(NULL, HOTKEY_QUIT);            //'Q'uit
+	UnregisterHotKey(NULL, HOTKEY_CATCH_APP);       // catch a'P'p window
+}
+
 void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
 {
 	std::shared_ptr<overlay_window> work_overlay = get_overlay_by_id(overlay_id);
@@ -284,17 +309,56 @@ std::shared_ptr<overlay_window> smg_overlays::get_overlay_by_id(int overlay_id)
 	return ret;
 }
 
+std::shared_ptr<overlay_window> smg_overlays::get_overlay_by_window(HWND overlay_hwnd)
+{
+	std::shared_ptr<overlay_window> ret;
+	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+
+	std::list<std::shared_ptr<overlay_window>>::iterator findIter =
+	    std::find_if(showing_windows.begin(), showing_windows.end(), [&overlay_hwnd](std::shared_ptr<overlay_window>& n) {
+		    return overlay_hwnd == n->overlay_hwnd;
+	    });
+
+	if (findIter != showing_windows.end()) {
+		ret = *findIter;
+	}
+
+	return ret;
+}
+
 bool smg_overlays::remove_overlay(std::shared_ptr<overlay_window> overlay)
 {
+	std::cout << "APP: RemoveOverlay status " << (int)overlay->status << std::endl;
 	if (overlay->status != overlay_status::destroing) {
-		overlay->status = overlay_status::destroing;
 		overlay->clean_resources();
 
-		std::unique_lock<std::shared_mutex> lock(overlays_list_access);
-		showing_windows.remove_if([&overlay](std::shared_ptr<overlay_window>& n) { return (overlay->id == n->id); });
 		return true;
 	}
 	return false;
+}
+
+bool smg_overlays::on_window_destroy(HWND window)
+{
+	auto overlay = get_overlay_by_window(window);
+	std::cout << "APP: on_window_destroy and overlay found " << (overlay != nullptr) << std::endl;
+	bool removed = false;
+	if (overlay != nullptr) {
+		std::cout << "APP: overlay status was " << (int)overlay->status << std::endl;
+		if (overlay->status == overlay_status::destroing) {
+
+			std::unique_lock<std::shared_mutex> lock(overlays_list_access);
+			showing_windows.remove_if([&overlay](std::shared_ptr<overlay_window>& n) { return (overlay->id == n->id); });
+			removed = true;
+		}
+	}
+
+	std::cout << "APP: overlays count " << showing_windows.size() << " and quiting " << quiting << std::endl;
+	if (showing_windows.size() == 0 && quiting) {
+		PostQuitMessage(0);
+	} else {
+	}
+
+	return removed;
 }
 
 std::vector<int> smg_overlays::get_ids()
@@ -311,13 +375,20 @@ std::vector<int> smg_overlays::get_ids()
 	return ret;
 }
 
-smg_overlays::smg_overlays( )
+std::shared_ptr<smg_overlays> smg_overlays::get_instance()
+{
+	if (instance == nullptr) {
+		instance = std::make_shared<smg_overlays>();
+	}
+	return instance;
+}
+
+smg_overlays::smg_overlays()
 {
 	showing_overlays = false;
 	quiting = false;
 
-	std::cout << "APP:"
-	          << "start application " << std::endl;
+	std::cout << "APP: start application " << std::endl;
 
 	if (!app_settings.read()) {
 		app_settings.default_init();
