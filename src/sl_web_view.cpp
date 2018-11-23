@@ -160,7 +160,7 @@ DWORD WINAPI web_views_thread_func(void* data)
 			web_view_overlay_settings* new_window_params = reinterpret_cast<web_view_overlay_settings*>(msg.lParam);
 
 			std::shared_ptr<web_view_wnd> new_wnd = std::make_shared<web_view_wnd>((int)msg.wParam, new_window_params->url);
-			std::cout << "WEBVIEW: WM_WEBVIEW_CREATE" << new_wnd->overlay_id << ", " << new_wnd->url << std::endl;
+			std::cout << "WEBVIEW: WM_WEBVIEW_CREATE " << new_wnd->overlay_id << ", " << new_wnd->url << std::endl;
 			web_views.push_back(new_wnd);
 			create_container_window(new_wnd, new_window_params);
 			delete new_window_params;

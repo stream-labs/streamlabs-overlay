@@ -23,12 +23,10 @@ void smg_settings::default_init() {}
 
 bool smg_settings::read()
 {
-	std::cout << "APP:"
-	          << "read settings from file " << config_file_name << ", settings ver " << settings_version << std::endl;
+	std::cout << "APP: read settings from file " << config_file_name << ", settings ver " << settings_version << std::endl;
 	std::ifstream infile(config_file_name);
 	if (infile.fail()) {
-		std::cout << "APP:"
-		          << "read settings failed " << std::endl;
+		std::cout << "APP: read settings failed " << std::endl;
 		return false;
 	}
 
@@ -59,8 +57,7 @@ bool smg_settings::read()
 
 void smg_settings::write()
 {
-	std::cout << "APP:"
-	          << "write settings to file " << config_file_name << std::endl;
+	std::cout << "APP: write settings to file " << config_file_name << std::endl;
 
 	std::ofstream outfile(config_file_name);
 	outfile << apps_names.size() << std::endl;

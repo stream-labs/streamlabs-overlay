@@ -41,4 +41,4 @@ class smg_settings
 	smg_settings();
 };
 
-extern smg_settings app_settings;
+extern std::shared_ptr<smg_settings> app_settings;

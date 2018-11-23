@@ -8,10 +8,13 @@
 #include "sl_overlays_settings.h"
 #include "sl_web_view.h"
 
-smg_settings app_settings;
+std::shared_ptr< smg_settings> app_settings;
 
 HANDLE overlays_thread = nullptr;
 DWORD overlays_thread_id = 0;
+sl_overlay_thread_state thread_state = sl_overlay_thread_state::destoyed;
+std::mutex thread_state_mutex;
+
 BOOL g_bDblBuffered = FALSE;
 
 int OVERLAY_UPDATE_TIMER = 0;
@@ -28,20 +31,25 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLi
 
 int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
+	thread_state_mutex.lock();
+	thread_state = sl_overlay_thread_state::starting;
+
 	in_standalone_mode = true;
 	overlays_thread = GetModuleHandle(NULL);
 	overlays_thread_id = GetCurrentThreadId();
+
+	thread_state_mutex.unlock();
 
 	return overlay_thread_func(NULL);
 }
 
 DWORD WINAPI overlay_thread_func(void* data)
 {
-	std::shared_ptr<smg_overlays> app;
-	app = smg_overlays::get_instance();
+	app_settings = std::make_shared<smg_settings>();
 
+	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
+	
 	web_views_hInstance = GetModuleHandle(NULL);
-
 	web_views_thread = CreateThread(nullptr, 0, web_views_thread_func, nullptr, 0, &web_views_thread_id);
 	if (web_views_thread) {
 		// Optionally do stuff, such as wait on the thread.
@@ -59,7 +67,11 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 		app->init();
 
-		OVERLAY_UPDATE_TIMER = SetTimer(0, 0, app_settings.redraw_timeout, (TIMERPROC) nullptr);
+		OVERLAY_UPDATE_TIMER = SetTimer(0, 0, app_settings->redraw_timeout, (TIMERPROC) nullptr);
+
+		thread_state_mutex.lock();
+		thread_state = sl_overlay_thread_state::runing;
+		thread_state_mutex.unlock();
 
 		// Main message loop
 		MSG msg;
@@ -109,6 +121,13 @@ DWORD WINAPI overlay_thread_func(void* data)
 				}
 				catched = true;
 			} break;
+			case WM_OVERLAY_WINDOW_DESTOYED: {
+			
+				std::cout << "APP: WM_OVERLAY_WINDOW_DESTOYED " << (int)msg.wParam << std::endl;
+				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
+				app->on_overlay_destroy(overlay);
+				}
+				break;
 			case WM_HOTKEY: {
 				catched = app->process_hotkeys(msg);
 
@@ -134,17 +153,20 @@ DWORD WINAPI overlay_thread_func(void* data)
 			BufferedPaintUnInit();
 
 		KillTimer(0, OVERLAY_UPDATE_TIMER);
+		OVERLAY_UPDATE_TIMER = 0;
 
 		CoUninitialize();
 	}
 
-	//todo send message to webview thread to quit it too
-
-	//todo clean global var
-
 	app->deinit(); //todo clean singleton in case some one start thread another time after stop
-	
+
 	std::cout << "APP: exit from thread " << std::endl;
+
+	thread_state_mutex.lock();
+	overlays_thread = nullptr;
+	overlays_thread_id = 0;
+	thread_state = sl_overlay_thread_state::destoyed;
+	thread_state_mutex.unlock();
 
 	return 0;
 }

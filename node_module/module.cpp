@@ -1,4 +1,3 @@
-//#include <node.h>
 #include <node_api.h>
 
 #include <iostream>
@@ -23,7 +22,7 @@ namespace overlays_node
 
 	napi_value GetStatus(napi_env env, napi_callback_info args)
 	{
-		std::string thread_status = "nop"; // created, starting, runing, stopping, stopped
+		std::string thread_status = get_thread_status_name();		
 		napi_status status;
 
 		napi_value ret;

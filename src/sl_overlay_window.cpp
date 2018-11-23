@@ -30,7 +30,7 @@ overlay_window::overlay_window()
 {
 	static int id_counter = 128;
 	id = id_counter++;
-	use_method = window_grab_method::print;
+	use_method = sl_window_capture_method::print;
 	orig_handle = nullptr;
 	overlay_hwnd = nullptr;
 	hdc = nullptr;
@@ -58,6 +58,8 @@ void overlay_window::clean_resources()
 		if (overlay_hwnd != nullptr) {
 			std::cout << "APP: clean_resources close overlay window hwnd " << overlay_hwnd << std::endl;
 			DestroyWindow(overlay_hwnd);
+		} else {
+			PostMessage(0, WM_OVERLAY_WINDOW_DESTOYED, id, NULL);
 		}
 	}
 }
@@ -115,13 +117,13 @@ bool overlay_window::get_window_screenshot()
 			DeleteObject(new_hbmp);
 		} else {
 			switch (use_method) {
-			case window_grab_method::bitblt:
+			case sl_window_capture_method::bitblt:
 				ret = BitBlt(new_hdc, 0, 0, new_width, new_height, hdcScreen, 0, 0, SRCCOPY);
 				break;
-			case window_grab_method::print:
+			case sl_window_capture_method::print:
 				ret = PrintWindow(orig_handle, new_hdc, 0);
 				break;
-			case window_grab_method::message_print:
+			case sl_window_capture_method::message_print:
 				LRESULT msg_ret = SendMessage(
 				    orig_handle,
 				    WM_PAINT,
@@ -196,7 +198,7 @@ bool web_view_window::save_state_to_settings()
 	wnd_settings.width = client_rect.right - client_rect.left;
 	wnd_settings.height = client_rect.bottom - client_rect.top;
 
-	app_settings.web_pages.push_back(wnd_settings);
+	app_settings->web_pages.push_back(wnd_settings);
 	return true;
 }
 

@@ -21,7 +21,7 @@ class overlay_window
 	virtual bool set_rect(RECT& new_rect);
 	virtual bool apply_new_rect(RECT& new_rect);
 
-	window_grab_method use_method;
+	sl_window_capture_method use_method;
 	overlay_status status;
 
 	bool get_window_screenshot();

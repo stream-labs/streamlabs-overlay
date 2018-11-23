@@ -43,6 +43,7 @@ class smg_overlays
 
 	bool remove_overlay(std::shared_ptr<overlay_window> overlay);
 	bool on_window_destroy(HWND window);
+	bool on_overlay_destroy(std::shared_ptr<overlay_window> overlay);
 
 	std::vector<int> get_ids();
 
