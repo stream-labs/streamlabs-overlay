@@ -138,7 +138,7 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 	new_web_view_window->set_rect(overlay_rect);
 
 	new_web_view_window->url = n.url;
-	std::cout << "APP: create new webview " << n.url << std::endl;
+	std::cout << "APP: create new webview " << n.url << ", x " << n.x << " y " << n.y << ", size " << n.width << " x " << n.height << std::endl;
 
 	if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0) {
 		new_web_view_window->url = n.url;
@@ -160,13 +160,7 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 		showing_windows.push_back(new_web_view_window);
 	}
 
-	web_view_overlay_settings* new_window_params = new web_view_overlay_settings();
-	new_window_params->x = n.y;
-	new_window_params->y = n.y;
-	new_window_params->width = n.width;
-	new_window_params->height = n.height;
-	new_window_params->url = new_web_view_window->url;
-
+	web_view_overlay_settings* new_window_params = new web_view_overlay_settings(n);
 	BOOL ret = PostThreadMessage(
 	    web_views_thread_id, WM_WEBVIEW_CREATE, new_web_view_window->id, reinterpret_cast<LPARAM>(new_window_params));
 	if (!ret) {
@@ -570,8 +564,7 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 				    0,
 				    SRCCOPY);
 				if (!ret) {
-					std::cout << "APP:"
-					          << "draw_overlay_gdi had issue " << GetLastError() << std::endl;
+					std::cout << "APP: draw_overlay_gdi had issue " << GetLastError() << std::endl;
 				}
 			}
 		});

@@ -73,7 +73,7 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	} break;
 	case WM_SIZE: {
-		std::cout << "WEBVIEW: WM_SIZE " << std::endl;
+		std::cout << "WEBVIEW: WM_SIZE " << LOWORD(lParam) << " x "<< HIWORD(lParam) << std::endl;
 		HWND web_view_hwnd = nullptr;
 
 		std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_container(hwnd);
@@ -229,16 +229,27 @@ DWORD WINAPI web_views_thread_func(void* data)
 
 void create_container_window(std::shared_ptr<web_view_wnd> n, web_view_overlay_settings* new_window_params)
 {
+	RECT window_rect;
+	window_rect.left = new_window_params->x;
+	window_rect.top = new_window_params->y;
+	window_rect.right = new_window_params->x + new_window_params->width;
+	window_rect.bottom = new_window_params->y + new_window_params->height;
+	
+	std::cout << "WEBVIEW: create container x " << new_window_params->x << " y " << new_window_params->y  << ", size "
+	          << new_window_params->width << " x " << new_window_params->height << std::endl;
+
+	AdjustWindowRect( &window_rect,  WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN, false);
+	
 	HWND hMain; // Our main window
 	hMain = CreateWindowEx(
 	    0,
 	    _T("Webview"),
 	    _T("Webview Window"),
-	    WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
-	    new_window_params->x,
-	    new_window_params->y,
-	    new_window_params->width,
-	    new_window_params->height,
+	    WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN  , //WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+	    window_rect.left,
+	    window_rect.top,
+	    window_rect.right - window_rect.left,
+	    window_rect.bottom - window_rect.top,
 	    NULL,
 	    NULL,
 	    web_views_hInstance,

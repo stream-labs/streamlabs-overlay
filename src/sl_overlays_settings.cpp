@@ -98,7 +98,7 @@ void web_view_overlay_settings::read(std::ifstream& infile)
 	std::getline(infile, line);
 	std::istringstream y_line(line);
 	y_line >> y;
-
+	
 	std::getline(infile, line);
 	std::istringstream width_line(line);
 	width_line >> width;
@@ -110,7 +110,6 @@ void web_view_overlay_settings::read(std::ifstream& infile)
 	std::getline(infile, line);
 	url = line;
 
-	std::cout << "APP:"
-	          << "read webview from config " << x << ", " << y << ", " << width << ", " << height << ", " << url
+	std::cout << "APP: read webview from config " << x << ", " << y << ", " << width << ", " << height << ", " << url
 	          << std::endl;
 }
