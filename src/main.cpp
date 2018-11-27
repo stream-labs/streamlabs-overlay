@@ -8,7 +8,7 @@
 #include "sl_overlays_settings.h"
 #include "sl_web_view.h"
 
-std::shared_ptr< smg_settings> app_settings;
+std::shared_ptr<smg_settings> app_settings;
 
 HANDLE overlays_thread = nullptr;
 DWORD overlays_thread_id = 0;
@@ -17,7 +17,7 @@ std::mutex thread_state_mutex;
 
 BOOL g_bDblBuffered = FALSE;
 
-int OVERLAY_UPDATE_TIMER = 0;
+UINT_PTR OVERLAY_UPDATE_TIMER = 0;
 bool in_standalone_mode = false;
 
 //  Regular entry to the app
@@ -48,14 +48,16 @@ DWORD WINAPI overlay_thread_func(void* data)
 	app_settings = std::make_shared<smg_settings>();
 
 	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
-	
+
 	web_views_hInstance = GetModuleHandle(NULL);
 	web_views_thread = CreateThread(nullptr, 0, web_views_thread_func, nullptr, 0, &web_views_thread_id);
 	if (web_views_thread) {
-		// Optionally do stuff, such as wait on the thread.
+
+	} else {
+		//todo starting webview thread failed. posibly app still can work but without webviews.
 	}
 
-	//  Mark that this process is DPI aware.
+	// Mark that this process is DPI aware.
 	SetProcessDPIAware();
 
 	// Init COM and double-buffered painting
@@ -122,12 +124,11 @@ DWORD WINAPI overlay_thread_func(void* data)
 				catched = true;
 			} break;
 			case WM_OVERLAY_WINDOW_DESTOYED: {
-			
+
 				std::cout << "APP: WM_OVERLAY_WINDOW_DESTOYED " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				app->on_overlay_destroy(overlay);
-				}
-				break;
+			} break;
 			case WM_HOTKEY: {
 				catched = app->process_hotkeys(msg);
 
@@ -160,9 +161,17 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 	app->deinit(); //todo clean singleton in case some one start thread another time after stop
 
-	std::cout << "APP: exit from thread " << std::endl;
+	WaitForSingleObject(web_views_thread, 1000 * 15); // wait for 15sec max till webview thread closed
+	CloseHandle(web_views_thread);
+	web_views_thread = 0;
 
+	std::cout << "APP: exit from thread " << std::endl;
+	
 	thread_state_mutex.lock();
+	if (! in_standalone_mode)
+	{
+		CloseHandle(overlays_thread);
+	}
 	overlays_thread = nullptr;
 	overlays_thread_id = 0;
 	thread_state = sl_overlay_thread_state::destoyed;
@@ -197,11 +206,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// Don't do any erasing here.  It's done in WM_PAINT to avoid flicker.
 		return 1;
 	} break;
- 
+
 	case WM_QUIT: {
 		std::cout << "APP: WndProc WM_QUIT for " << hWnd << std::endl;
-	}
-		break;
+	} break;
 	case WM_PAINT: {
 		smg_overlays::get_instance()->draw_overlay_gdi(hWnd, g_bDblBuffered);
 		return 0;

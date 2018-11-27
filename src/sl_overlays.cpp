@@ -84,7 +84,7 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 	case HOTKEY_QUIT: {
 		thread_state_mutex.lock();
 
-		std::cout << "APP: HOTKEY_QUIT " << (int)thread_state  << std::endl;
+		std::cout << "APP: HOTKEY_QUIT " << (int)thread_state << std::endl;
 		if (thread_state != sl_overlay_thread_state::runing) {
 			thread_state_mutex.unlock();
 		} else {
@@ -109,17 +109,21 @@ void smg_overlays::quit()
 	quiting = true;
 	deregister_hotkeys();
 
+	update_settings();
+	app_settings->write();
+
 	BOOL ret = PostThreadMessage(web_views_thread_id, WM_WEBVIEW_CLOSE_THREAD, NULL, NULL);
 	if (!ret) {
 		//todo force stop that thread
 	}
 
-	update_settings();
-	app_settings->write();
-
-	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-		PostMessage(0, WM_WEBVIEW_CLOSE, n->id, 0);
-	});
+	if (showing_windows.size() != 0) {
+		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
+			PostMessage(0, WM_WEBVIEW_CLOSE, n->id, 0);
+		});
+	} else {
+		on_overlay_destroy(nullptr);
+	}
 
 	//it's not all. after last windows will be destroyed then thread quits
 }
@@ -138,7 +142,8 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 	new_web_view_window->set_rect(overlay_rect);
 
 	new_web_view_window->url = n.url;
-	std::cout << "APP: create new webview " << n.url << ", x " << n.x << " y " << n.y << ", size " << n.width << " x " << n.height << std::endl;
+	std::cout << "APP: create new webview " << n.url << ", x " << n.x << " y " << n.y << ", size " << n.width << " x "
+	          << n.height << std::endl;
 
 	if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0) {
 		new_web_view_window->url = n.url;

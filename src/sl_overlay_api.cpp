@@ -22,9 +22,13 @@ int WINAPI start_overlays_thread()
 
 		overlays_thread = CreateThread(nullptr, 0, overlay_thread_func, nullptr, 0, &overlays_thread_id);
 		if (overlays_thread) {
-			// Optionally do stuff, such as wait on the thread.
+			return 1;
+		} else {
+			thread_state_mutex.lock();
+			thread_state = sl_overlay_thread_state::destoyed;
+			thread_state_mutex.unlock();
+			return 0;
 		}
-		return 1;
 	}
 }
 
@@ -62,7 +66,7 @@ std::string get_thread_status_name()
 		ret = "destoyed";
 		break;
 	}
-	return ret; 
+	return ret;
 }
 
 int WINAPI get_overlays_count()

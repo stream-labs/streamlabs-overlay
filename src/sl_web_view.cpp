@@ -73,7 +73,7 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	} break;
 	case WM_SIZE: {
-		std::cout << "WEBVIEW: WM_SIZE " << LOWORD(lParam) << " x "<< HIWORD(lParam) << std::endl;
+		std::cout << "WEBVIEW: WM_SIZE " << LOWORD(lParam) << " x " << HIWORD(lParam) << std::endl;
 		HWND web_view_hwnd = nullptr;
 
 		std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_container(hwnd);
@@ -104,7 +104,7 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 	} break;
 	case WM_CLOSE: {
-		std::cout << "WEBVIEW: WM_CLOSE for " << hwnd  << std::endl;
+		std::cout << "WEBVIEW: WM_CLOSE for " << hwnd << std::endl;
 	} break;
 	case WM_DESTROY: {
 		std::cout << "WEBVIEW: WM_DESTROY for " << hwnd << std::endl;
@@ -112,19 +112,23 @@ LRESULT CALLBACK PlainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (closed_window != nullptr) {
 			std::cout << "WEBVIEW: webview object found and be deleted " << std::endl;
 			closed_window->container = nullptr;
-			std::cout << "WEBVIEW: web_views size " << web_views.size() << std::endl;
+
 			web_views.remove_if(
 			    [closed_window](std::shared_ptr<web_view_wnd>& n) { return (closed_window->overlay_id == n->overlay_id); });
 			closed_window->close_windows();
-			std::cout << "WEBVIEW: web_views size " << web_views.size() << std::endl;
+
 			PostThreadMessage(overlays_thread_id, WM_WEBVIEW_CLOSED, closed_window->overlay_id, NULL);
+		} else {
+			std::cout << "WEBVIEW: WM_DESTROY for webview object not found " << std::endl;
 		}
-		if (quiting)
-		{
-			if( web_views.size() == 0)
-			{
+
+		if (quiting) {
+			std::cout << "WEBVIEW: WM_DESTROY and web_views size " << web_views.size() << std::endl;
+			if (web_views.size() == 0) {
 				PostQuitMessage(0);
 			}
+		} else {
+			std::cout << "WEBVIEW: WM_DESTROY and not quiting " << std::endl;
 		}
 
 	} break;
@@ -172,11 +176,18 @@ DWORD WINAPI web_views_thread_func(void* data)
 			if (web_view_window != nullptr) {
 				std::cout << "WEBVIEW: window found " << std::endl;
 				web_views.remove_if([web_view_window](std::shared_ptr<web_view_wnd>& n) {
-					std::cout << "WEBVIEW: remove window from list" << (web_view_window->overlay_id == n->overlay_id)
+					std::cout << "WEBVIEW: remove window from list " << (web_view_window->overlay_id == n->overlay_id)
 					          << std::endl;
 					return (web_view_window->overlay_id == n->overlay_id);
 				});
 				web_view_window->close_windows();
+			} else {
+				std::cout << "WEBVIEW: window not found " << std::endl;
+				if (quiting) {
+					if (web_views.size() == 0) {
+						PostQuitMessage(0);
+					}
+				}
 			}
 		} break;
 		case WM_WEBVIEW_SET_URL: {
@@ -207,12 +218,10 @@ DWORD WINAPI web_views_thread_func(void* data)
 		} break;
 		case WM_WEBVIEW_CLOSE_THREAD: {
 			std::cout << "WEBVIEW: WM_WEBVIEW_CLOSE_THREAD" << std::endl;
-			if (quiting == false) 
-			{
+			if (quiting == false) {
 				//destroy all windows without notifying overlay thread
-				//todo but windows will be closed by 
-				if (web_views.size() == 0)
-				{
+				//todo but windows will be closed by
+				if (web_views.size() == 0) {
 					PostQuitMessage(0);
 				}
 			}
@@ -234,18 +243,20 @@ void create_container_window(std::shared_ptr<web_view_wnd> n, web_view_overlay_s
 	window_rect.top = new_window_params->y;
 	window_rect.right = new_window_params->x + new_window_params->width;
 	window_rect.bottom = new_window_params->y + new_window_params->height;
-	
-	std::cout << "WEBVIEW: create container x " << new_window_params->x << " y " << new_window_params->y  << ", size "
+
+	std::cout << "WEBVIEW: create container x " << new_window_params->x << " y " << new_window_params->y << ", size "
 	          << new_window_params->width << " x " << new_window_params->height << std::endl;
 
-	AdjustWindowRect( &window_rect,  WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN, false);
-	
+	AdjustWindowRect(
+	    &window_rect, WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN, false);
+
 	HWND hMain; // Our main window
 	hMain = CreateWindowEx(
 	    0,
 	    _T("Webview"),
 	    _T("Webview Window"),
-	    WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN  , //WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+	    WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX |
+	        WS_CLIPCHILDREN, //WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 	    window_rect.left,
 	    window_rect.top,
 	    window_rect.right - window_rect.left,
