@@ -219,12 +219,13 @@ DWORD WINAPI web_views_thread_func(void* data)
 		case WM_WEBVIEW_CLOSE_THREAD: {
 			std::cout << "WEBVIEW: WM_WEBVIEW_CLOSE_THREAD" << std::endl;
 			if (quiting == false) {
+				quiting = true;
 				//destroy all windows without notifying overlay thread
 				//todo but windows will be closed by
 				if (web_views.size() == 0) {
 					PostQuitMessage(0);
 				}
-			}
+			} 
 		} break;
 		};
 
