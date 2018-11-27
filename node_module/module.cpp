@@ -22,7 +22,7 @@ namespace overlays_node
 
 	napi_value GetStatus(napi_env env, napi_callback_info args)
 	{
-		std::string thread_status = get_thread_status_name();		
+		std::string thread_status = get_thread_status_name();
 		napi_status status;
 
 		napi_value ret;
@@ -243,9 +243,56 @@ namespace overlays_node
 			char* url = new char[512];
 			size_t result;
 			status = napi_get_value_string_utf8(env, argv[1], url, 256, &result);
-			std::cout << "APP:"
-			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
+			std::cout << "APP: AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
 			overlay_id = set_webview_url(overlay_id, url);
+		}
+
+		napi_value ret;
+		status = napi_create_int32(env, overlay_id, &ret);
+		if (status != napi_ok)
+			return nullptr;
+		return ret;
+	}
+
+	napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
+	{
+		napi_status status;
+		size_t argc = 2;
+		napi_value argv[2];
+		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
+		int overlay_id = -1;
+
+		if (argc == 2) {
+			int overlay_id;
+			status = napi_get_value_int32(env, argv[0], &overlay_id);
+
+			int overlay_transparency;
+			status = napi_get_value_int32(env, argv[1], &overlay_transparency);
+			std::cout << "APP: SetOverlayTransparency " << argc << ", " << overlay_transparency << std::endl;
+			overlay_id = set_overlay_transparency(overlay_id, overlay_transparency);
+		}
+
+		napi_value ret;
+		status = napi_create_int32(env, overlay_id, &ret);
+		if (status != napi_ok)
+			return nullptr;
+		return ret;
+	}
+
+	napi_value CallOverlayReload(napi_env env, napi_callback_info args)
+	{
+		napi_status status;
+		size_t argc = 1;
+		napi_value argv[1];
+		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
+		int overlay_id = -1;
+
+		if (argc == 1) {
+			int overlay_id;
+			status = napi_get_value_int32(env, argv[0], &overlay_id);
+			std::cout << "APP: CallOverlayReload " << argc << std::endl;
+			//overlay_id = call_webview_roload(overlay_id);
+			//todo make call_webview_roload
 		}
 
 		napi_value ret;
@@ -344,6 +391,20 @@ namespace overlays_node
 		if (status != napi_ok)
 			return nullptr;
 
+		status = napi_create_function(env, nullptr, 0, CallOverlayReload, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
+		status = napi_set_named_property(env, exports, "call_overlay_reload", fn);
+		if (status != napi_ok)
+			return nullptr;
+
+		status = napi_create_function(env, nullptr, 0, SetOverlayTransparency, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
+		status = napi_set_named_property(env, exports, "set_overlay_transparency", fn);
+		if (status != napi_ok)
+			return nullptr;
+
 		status = napi_create_function(env, nullptr, 0, RemoveOverlay, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
@@ -358,7 +419,6 @@ namespace overlays_node
 		if (status != napi_ok)
 			return nullptr;
 
-		//set transparency
 		return exports;
 	}
 

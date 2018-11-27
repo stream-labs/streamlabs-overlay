@@ -112,14 +112,14 @@ void smg_overlays::quit()
 	update_settings();
 	app_settings->write();
 
-	BOOL ret = PostThreadMessage(web_views_thread_id, WM_WEBVIEW_CLOSE_THREAD, NULL, NULL);
+	BOOL ret = PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_CLOSE_THREAD, NULL, NULL);
 	if (!ret) {
 		//todo force stop that thread
 	}
 
 	if (showing_windows.size() != 0) {
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			PostMessage(0, WM_WEBVIEW_CLOSE, n->id, 0);
+			PostMessage(0, WM_SLO_WEBVIEW_CLOSE, n->id, 0);
 		});
 	} else {
 		on_overlay_destroy(nullptr);
@@ -167,7 +167,7 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 
 	web_view_overlay_settings* new_window_params = new web_view_overlay_settings(n);
 	BOOL ret = PostThreadMessage(
-	    web_views_thread_id, WM_WEBVIEW_CREATE, new_web_view_window->id, reinterpret_cast<LPARAM>(new_window_params));
+	    web_views_thread_id, WM_SLO_WEBVIEW_CREATE, new_web_view_window->id, reinterpret_cast<LPARAM>(new_window_params));
 	if (!ret) {
 		delete new_window_params;
 		// todo failed to create web view probably have to remove
@@ -530,7 +530,7 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 		}
 	}
 	if (window_catched) {
-		PostMessage(NULL, WM_WINDOW_CREATED, found_window->id, reinterpret_cast<LPARAM>(&(found_window->orig_handle)));
+		PostMessage(NULL, WM_SLO_SOURCE_CREATED, found_window->id, reinterpret_cast<LPARAM>(&(found_window->orig_handle)));
 	}
 	return TRUE;
 }

@@ -82,23 +82,23 @@ DWORD WINAPI overlay_thread_func(void* data)
 			bool catched = false;
 
 			switch (msg.message) {
-			case WM_WEBVIEW_CREATED:
+			case WM_SLO_WEBVIEW_CREATED:
 				app->original_window_ready((int)msg.wParam, *(reinterpret_cast<HWND*>(msg.lParam)));
 				catched = true;
 				break;
-			case WM_WEBVIEW_CLOSED: {
+			case WM_SLO_WEBVIEW_CLOSED: {
 				std::cout << "APP: WM_WEBVIEW_CLOSED " << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
 				catched = true;
 			} break;
-			case WM_WEBVIEW_CLOSE: {
+			case WM_SLO_WEBVIEW_CLOSE: {
 				std::cout << "APP: WM_WEBVIEW_CLOSE " << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
 				catched = true;
 			} break;
-			case WM_WEBVIEW_SET_POSITION: {
+			case WM_SLO_OVERLAY_POSITION: {
 				std::cout << "APP: WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				RECT* new_rect = reinterpret_cast<RECT*>(msg.lParam);
@@ -110,7 +110,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 				}
 				catched = true;
 			} break;
-			case WM_WEBVIEW_SET_URL: {
+			case WM_SLO_WEBVIEW_SET_URL: {
 				std::cout << "APP: WM_WEBVIEW_SET_URL " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				char* new_url = reinterpret_cast<char*>(msg.lParam);
@@ -123,11 +123,20 @@ DWORD WINAPI overlay_thread_func(void* data)
 				}
 				catched = true;
 			} break;
-			case WM_OVERLAY_WINDOW_DESTOYED: {
+			case WM_SLO_OVERLAY_TRANSPARENCY: {
+				std::cout << "APP: WM_SLO_OVERLAY_TRANSPARENCY " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
+				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 
+				if (overlay != nullptr) {
+					overlay->set_transparency((int)msg.lParam );
+				} else {}
+				catched = true;
+			} break;
+			case WM_SLO_OVERLAY_WINDOW_DESTOYED: {
 				std::cout << "APP: WM_OVERLAY_WINDOW_DESTOYED " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				app->on_overlay_destroy(overlay);
+				catched = true;
 			} break;
 			case WM_HOTKEY: {
 				catched = app->process_hotkeys(msg);
@@ -166,10 +175,9 @@ DWORD WINAPI overlay_thread_func(void* data)
 	web_views_thread = 0;
 
 	std::cout << "APP: exit from thread " << std::endl;
-	
+
 	thread_state_mutex.lock();
-	if (! in_standalone_mode)
-	{
+	if (!in_standalone_mode) {
 		CloseHandle(overlays_thread);
 	}
 	overlays_thread = nullptr;

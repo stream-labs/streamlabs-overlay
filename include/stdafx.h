@@ -43,14 +43,14 @@ Stand alone app. - control by hot keys.
 Node module. - control by node module api. 
 */
 
-enum class sl_window_capture_method 
+enum class sl_window_capture_method
 {
 	bitblt,
 	print,
 	message_print
 };
 
-enum class sl_overlay_thread_state : int 
+enum class sl_overlay_thread_state : int
 {
 	starting = 0x0020,
 	runing = 0x0040,
@@ -65,40 +65,45 @@ const int HOTKEY_QUIT = 4;
 const int HOTKEY_ADD_WEB = 5;
 const int HOTKEY_CATCH_APP = 6;
 
-#define WM_WEBVIEW_CREATE (WM_USER + 32)
+#define WM_SLO_WEBVIEW_CREATE (WM_USER + 32)
 //command for web view thread to create web view
 //wParam id
 //lParam url
 
-#define WM_WEBVIEW_CLOSE (WM_USER + 33)
+#define WM_SLO_WEBVIEW_CLOSE (WM_USER + 33)
 //command for web view thread to close web view
 //wParam id
 
-#define WM_WEBVIEW_SET_URL (WM_USER + 34)
+#define WM_SLO_WEBVIEW_SET_URL (WM_USER + 34)
 //command for web view thread to set url
 //wParam id
 //lParam url
 
-#define WM_WEBVIEW_SET_POSITION (WM_USER + 35)
+#define WM_SLO_OVERLAY_TRANSPARENCY (WM_USER + 35)
+//command for overlay thread to set overlay transparency
+//wParam id
+//lParam transparency
+
+#define WM_SLO_OVERLAY_POSITION (WM_USER + 36)
 //command for web view thread to set overlay position and size
 //wParam id
 //lParam LPRECT. have to delete it after recive
 
-#define WM_WEBVIEW_CREATED (WM_USER + 36)
+#define WM_SLO_WEBVIEW_CREATED (WM_USER + 38)
 //signal for overlay thread about webview created
 //wParam id
 //lParam hwnd
 
-#define WM_WEBVIEW_CLOSED (WM_USER + 37)
+#define WM_SLO_WEBVIEW_CLOSED (WM_USER + 39)
 //signal for overlay thread about webview closed
 //wParam id
 
-#define WM_WINDOW_CREATED (WM_USER + 38)
+#define WM_SLO_SOURCE_CREATED (WM_USER + 40)
 //signal for overlay thread about source window created and can be used to make overlay for it
 
-#define WM_OVERLAY_WINDOW_DESTOYED (WM_USER + 39)
-//signal for overlay thread what overlya do not have window anymore and can be deleted 
+#define WM_SLO_OVERLAY_WINDOW_DESTOYED (WM_USER + 41)
+//signal for overlay thread what overlya do not have window anymore and can be deleted
 //wParam id
 
-#define WM_WEBVIEW_CLOSE_THREAD (WM_USER + 40)
+#define WM_SLO_WEBVIEW_CLOSE_THREAD (WM_USER + 42)
 //thread should be closed, all resources released, global vars cleaned

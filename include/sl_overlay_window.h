@@ -1,8 +1,8 @@
 #pragma once
-#include "stdafx.h"
 #include <mutex>
+#include "stdafx.h"
 
-enum class overlay_status:int
+enum class overlay_status : int
 {
 	creating = 1,
 	source_ready,
@@ -28,10 +28,8 @@ class overlay_window
 
 	virtual bool save_state_to_settings();
 	virtual std::string get_url();
-	virtual void set_url(char* url)
-	{
-		delete[] url;
-	};
+	virtual void set_url(char* url);
+	virtual void set_transparency(int transparency);
 	virtual bool ready_to_create_overlay();
 	HWND orig_handle;
 	HBITMAP hbmp;

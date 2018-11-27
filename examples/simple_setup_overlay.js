@@ -37,6 +37,21 @@ function step_finish()
 	setTimeout(script_finished, 2000);
 }
 
+function step_4() 
+{
+	console.log('--------------- step_4');
+	console.log('');
+
+	console.log('Call get overlays ids');
+	var overlays_ids = streamlabs_overlays.get_overlays_ids();
+	console.log(overlays_ids);
+
+	console.log('Call get overlay info ' + overlays_ids[0]);
+	streamlabs_overlays.get_overlay_info(overlays_ids[0]);
+	
+	setTimeout(step_finish, 5000);
+}
+
 function step_3() 
 {
 	console.log('--------------- step_3');
@@ -46,10 +61,10 @@ function step_3()
 	var overlays_ids = streamlabs_overlays.get_overlays_ids();
 	console.log(overlays_ids);
 
-	console.log('Call get overlay info ' + overlays_ids[0]);
-	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
-	
-	setTimeout(step_finish, 5000);
+	console.log('Call set overlay transparency 20/255');
+	streamlabs_overlays.set_overlay_transparency(overlays_ids[0], 20);
+
+	setTimeout(step_4, 5000);
 }
 
 function step_2() 
@@ -65,10 +80,13 @@ function step_2()
 	console.log(streamlabs_overlays.get_overlay_info(overlays_ids[0]));
 
 	console.log('Call set overlay position');
-	console.log(streamlabs_overlays.set_overlay_position(overlays_ids[0], 500, 500, 600, 200));
+	streamlabs_overlays.set_overlay_position(overlays_ids[0], 500, 500, 600, 200);
 
 	console.log('Call set overlay url');
-	console.log(streamlabs_overlays.set_overlay_url(overlays_ids[0], "http://bing.com/"));
+	streamlabs_overlays.set_overlay_url(overlays_ids[0], "http://bing.com/");
+
+	console.log('Call set overlay transparency off');
+	streamlabs_overlays.set_overlay_transparency(overlays_ids[0], 255);
 		
 	setTimeout(step_3, 5000);
 }
