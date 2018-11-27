@@ -69,8 +69,7 @@ namespace overlays_node
 			char* url = new char[512];
 			size_t result;
 			status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
-			std::cout << "APP:"
-			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
+			std::cout << "APP: AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
 			crated_overlay_id = add_webview(url);
 		}
 
@@ -92,8 +91,7 @@ namespace overlays_node
 			char* url = new char[512];
 			size_t result;
 			status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
-			std::cout << "APP:"
-			          << "AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
+			std::cout << "APP: AddOverlayEx " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
 
 			int x;
 			status = napi_get_value_int32(env, argv[1], &x);
@@ -122,8 +120,7 @@ namespace overlays_node
 		int32_t overlay_id;
 		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
-		std::cout << "APP:"
-		          << "RemoveOverlay " << overlay_id << std::endl;
+		std::cout << "APP: RemoveOverlay " << overlay_id << std::endl;
 		remove_overlay(overlay_id);
 
 		return nullptr;
@@ -137,8 +134,7 @@ namespace overlays_node
 		int32_t overlay_id;
 		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
-		std::cout << "APP:"
-		          << "GetOverlayInfo look for " << overlay_id << std::endl;
+		std::cout << "APP: GetOverlayInfo look for " << overlay_id << std::endl;
 		std::shared_ptr<overlay_window> requested_overlay = get_overlays()->get_overlay_by_id(overlay_id);
 
 		if (requested_overlay == nullptr) {
@@ -243,7 +239,7 @@ namespace overlays_node
 			char* url = new char[512];
 			size_t result;
 			status = napi_get_value_string_utf8(env, argv[1], url, 256, &result);
-			std::cout << "APP: AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
+			std::cout << "APP: AddOverlay " << url << ", " << std::string(url).size() << std::endl;
 			overlay_id = set_webview_url(overlay_id, url);
 		}
 
@@ -268,7 +264,7 @@ namespace overlays_node
 
 			int overlay_transparency;
 			status = napi_get_value_int32(env, argv[1], &overlay_transparency);
-			std::cout << "APP: SetOverlayTransparency " << argc << ", " << overlay_transparency << std::endl;
+			std::cout << "APP: SetOverlayTransparency " << overlay_transparency << std::endl;
 			overlay_id = set_overlay_transparency(overlay_id, overlay_transparency);
 		}
 
@@ -290,9 +286,8 @@ namespace overlays_node
 		if (argc == 1) {
 			int overlay_id;
 			status = napi_get_value_int32(env, argv[0], &overlay_id);
-			std::cout << "APP: CallOverlayReload " << argc << std::endl;
-			//overlay_id = call_webview_roload(overlay_id);
-			//todo make call_webview_roload
+			std::cout << "APP: CallOverlayReload " << std::endl;
+			overlay_id = call_webview_roload(overlay_id);
 		}
 
 		napi_value ret;

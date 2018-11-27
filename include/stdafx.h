@@ -89,6 +89,10 @@ const int HOTKEY_CATCH_APP = 6;
 //wParam id
 //lParam LPRECT. have to delete it after recive
 
+#define WM_SLO_WEBVIEW_RELOAD (WM_USER + 37)
+//command for web view thread to reload current web page 
+//wParam id
+
 #define WM_SLO_WEBVIEW_CREATED (WM_USER + 38)
 //signal for overlay thread about webview created
 //wParam id

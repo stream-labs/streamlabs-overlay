@@ -13,9 +13,10 @@ int WINAPI hide_overlays();
 
 int WINAPI add_webview(const char* url);
 int WINAPI add_webview(const char* url, int x, int y, int width, int height);
-bool WINAPI set_webview_position(int id, int x, int y, int width, int height);
-bool WINAPI set_webview_url(int id, char* url);
-bool WINAPI set_overlay_transparency(int id, int transparency);
+int WINAPI set_webview_position(int id, int x, int y, int width, int height);
+int WINAPI set_webview_url(int id, char* url);
+int WINAPI set_overlay_transparency(int id, int transparency);
+int WINAPI call_webview_roload(int id);
 std::shared_ptr<smg_overlays> WINAPI get_overlays();
 int WINAPI get_overlays_count();
 int WINAPI remove_overlay(int id);

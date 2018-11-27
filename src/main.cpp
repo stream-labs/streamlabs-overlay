@@ -78,7 +78,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 		// Main message loop
 		MSG msg;
 		while (GetMessage(&msg, nullptr, 0, 0)) {
-			//std::cout << "APP:"  << "wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
+			//std::cout << "APP: wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
 			bool catched = false;
 
 			switch (msg.message) {
@@ -110,6 +110,13 @@ DWORD WINAPI overlay_thread_func(void* data)
 				}
 				catched = true;
 			} break;
+			case WM_SLO_WEBVIEW_RELOAD: {
+				std::cout << "APP: WM_SLO_WEBVIEW_RELOAD " << (int)msg.wParam << std::endl;
+				PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_RELOAD, msg.wParam, NULL);
+				
+				catched = true;
+			} break;
+				
 			case WM_SLO_WEBVIEW_SET_URL: {
 				std::cout << "APP: WM_WEBVIEW_SET_URL " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);

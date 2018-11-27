@@ -165,9 +165,7 @@ bool overlay_window::get_window_screenshot()
 				}
 				updated = true;
 			} else {
-				std::cout << "APP:"
-				          << "get_window_screenshot failed to "
-				             "get bitmap from orig window "
+				std::cout << "APP: get_window_screenshot failed to get bitmap from orig window "
 				          << GetLastError() << std::endl;
 				if (!keep_gdi) {
 					DeleteDC(new_hdc);

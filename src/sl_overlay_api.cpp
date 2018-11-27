@@ -153,13 +153,13 @@ int WINAPI add_webview(const char* url)
 	return add_webview(url, 100, 100, 400, 300);
 }
 
-bool WINAPI set_webview_position(int id, int x, int y, int width, int height)
+int WINAPI set_webview_position(int id, int x, int y, int width, int height)
 {
 	thread_state_mutex.lock();
 	if (thread_state != sl_overlay_thread_state::runing) {
 		thread_state_mutex.unlock();
 
-		return false;
+		return -1;
 	} else {
 		RECT* n = new RECT;
 		n->left = x;
@@ -172,53 +172,73 @@ bool WINAPI set_webview_position(int id, int x, int y, int width, int height)
 
 		if (!ret) {
 			delete n;
-			return false;
+			return -1;
 		}
 
-		return true;
+		return id;
 	}
 }
 
-bool WINAPI set_webview_url(int id, char* url)
+int WINAPI set_webview_url(int id, char* url)
 {
 	thread_state_mutex.lock();
 	if (thread_state != sl_overlay_thread_state::runing) {
 		thread_state_mutex.unlock();
 		delete[] url;
-		return 0;
+		return -1;
 	} else {
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_WEBVIEW_SET_URL, id, reinterpret_cast<LPARAM>(url));
 		thread_state_mutex.unlock();
 
 		if (!ret) {
 			delete[] url;
-			return false;
+			return -1;
 		}
 
-		return true;
+		return id;
 	}
 
-	return true;
+	return id;
 }
 
-bool WINAPI set_overlay_transparency(int id, int transparency)
+int WINAPI set_overlay_transparency(int id, int transparency)
 {
 	thread_state_mutex.lock();
 	if (thread_state != sl_overlay_thread_state::runing) {
 		thread_state_mutex.unlock();
-		return 0;
+		return -1;
 	} else {
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_TRANSPARENCY, id, (LPARAM)(transparency));
 		thread_state_mutex.unlock();
 
 		if (!ret) {
-			return false;
+			return -1;
 		}
 
-		return true;
+		return id;
 	}
 
-	return true;
+	return id;
+}
+
+int WINAPI call_webview_roload(int id)
+{
+	thread_state_mutex.lock();
+	if (thread_state != sl_overlay_thread_state::runing) {
+		thread_state_mutex.unlock();
+		return -1;
+	} else {
+		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_WEBVIEW_RELOAD, id, NULL);
+		thread_state_mutex.unlock();
+
+		if (!ret) {
+			return -1;
+		}
+
+		return id;
+	}
+
+	return id;
 }
 
 std::shared_ptr<smg_overlays> get_overlays()

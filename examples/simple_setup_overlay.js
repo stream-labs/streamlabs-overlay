@@ -64,6 +64,9 @@ function step_3()
 	console.log('Call set overlay transparency 20/255');
 	streamlabs_overlays.set_overlay_transparency(overlays_ids[0], 20);
 
+	console.log('Call reload overlay page');
+	streamlabs_overlays.call_overlay_reload(overlays_ids[0]);
+
 	setTimeout(step_4, 5000);
 }
 
