@@ -21,9 +21,11 @@ node-gyp build
 - msbuild (vs studio make tools )
 
 ### Module use examples
-  Simple api calls 
+  Examples to show api usage for simple usecases. 
 ```
-node example\simple_load_module.js
+node example\simple_add_remove_overlays.js
+node example\simple_setup_overlay.js
+node example\simple_thread_stress_text.js
 ```
   Simple UI example in 'example\electron_ui'
 
@@ -48,6 +50,8 @@ To create, setup and remove overlay
 - `add_overlay_ex(url, x, y, width, height)` return overlay id 
 - `set_overlay_position(overlay_id, x, y, width, height)`
 - `set_overlay_url(overlay_id, url)`
+- `set_overlay_transparency(overlay_id, transparency)` from 0 to 255 like in SetLayeredWindowAttributes 
+- `call_overlay_reload(overlay_id)` send web view a command to reload current page
 - `remove_overlay(overlay_id)`
 
 ## stand alone app 
