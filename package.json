@@ -3,6 +3,7 @@
   "private": true,
   "description": "Streamlabs Game Overlay module",
   "main": "index.js",
+  "typings": "typings.d.ts",
   "author": {
     "name": "Streamlabs",
     "url": "https://streamlabs.com"
@@ -29,12 +30,19 @@
     "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz",
     "host": "https://streamlabs-overlay-binary.s3-us-east-1.amazonaws.com"
   },
+  "prettier": {
+    "singleQuote": true,
+    "printWidth": 100,
+    "endOfLine": "lf",
+    "trailingComma": "all"
+  },
   "dependencies": {
     "nan": "^2.12.1",
     "node-pre-gyp": "^0.12.0"
   },
   "devDependencies": {
     "aws-sdk": "^2.x",
+    "prettier": "^1.16.4",
     "standard-version": "^5.0.1"
   }
 }

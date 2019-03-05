@@ -319,98 +319,91 @@ namespace overlays_node
 		status = napi_create_function(env, nullptr, 0, GetStatus, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "get_status", fn);
+		status = napi_set_named_property(env, exports, "getStatus", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, GetOverlaysCount, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "get_overlays_count", fn);
+		status = napi_set_named_property(env, exports, "getCount", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, GetOverlaysIDs, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "get_overlays_ids", fn);
+		status = napi_set_named_property(env, exports, "getIds", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, GetOverlayInfo, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "get_overlay_info", fn);
+		status = napi_set_named_property(env, exports, "getInfo", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, ShowOverlays, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "show_overlays", fn);
+		status = napi_set_named_property(env, exports, "show", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, HideOverlays, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "hide_overlays", fn);
+		status = napi_set_named_property(env, exports, "hide", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, AddOverlay, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "add_overlay", fn);
+		status = napi_set_named_property(env, exports, "add", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, AddOverlayEx, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "add_overlay_ex", fn);
+		status = napi_set_named_property(env, exports, "addEx", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, SetOverlayPosition, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "set_overlay_position", fn);
+		status = napi_set_named_property(env, exports, "setPosition", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, SetOverlayUrl, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "set_overlay_url", fn);
+		status = napi_set_named_property(env, exports, "setUrl", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, CallOverlayReload, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "call_overlay_reload", fn);
+		status = napi_set_named_property(env, exports, "reload", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, SetOverlayTransparency, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "set_overlay_transparency", fn);
+		status = napi_set_named_property(env, exports, "setTransparency", fn);
 		if (status != napi_ok)
 			return nullptr;
 
 		status = napi_create_function(env, nullptr, 0, RemoveOverlay, nullptr, &fn);
 		if (status != napi_ok)
 			return nullptr;
-		status = napi_set_named_property(env, exports, "remove_overlay", fn);
-		if (status != napi_ok)
-			return nullptr;
-
-		status = napi_create_function(env, nullptr, 0, GetStatus, nullptr, &fn);
-		if (status != napi_ok)
-			return nullptr;
-		status = napi_set_named_property(env, exports, "get_status", fn);
+		status = napi_set_named_property(env, exports, "remove", fn);
 		if (status != napi_ok)
 			return nullptr;
 
