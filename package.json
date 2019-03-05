@@ -1,0 +1,40 @@
+{
+  "name": "streamlabs-overlay",
+  "private": true,
+  "description": "Streamlabs Game Overlay module",
+  "main": "index.js",
+  "author": {
+    "name": "Streamlabs",
+    "url": "https://streamlabs.com"
+  },
+  "version": "1.0.0",
+  "license": "SEE LICENSE IN COPYRIGHT LAW",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/stream-labs/streamlabs-overlay"
+  },
+  "scripts": {
+    "install": "node-pre-gyp install --fallback-to-build",
+    "pack": "node-pre-gyp package",
+    "release": "standard-version",
+    "test": "node index.js"
+  },
+  "binary": {
+    "module_name": "streamlabs_overlay",
+    "module_path": "./build/{configuration}/{node_abi}-{platform}-{arch}/",
+    "remote_path": "./{module_name}/v{version}/{configuration}/",
+    "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz",
+    "host": "https://streamlabs-overlay-binary.s3-us-east-1.amazonaws.com"
+  },
+  "dependencies": {
+    "nan": "^2.12.1",
+    "node-pre-gyp": "^0.12.0"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.x",
+    "standard-version": "^5.0.1"
+  }
+}
