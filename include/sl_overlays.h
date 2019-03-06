@@ -33,6 +33,7 @@ class smg_overlays
 	void create_overlay_window_class();
 
 	int create_web_view_window(web_view_overlay_settings& n);
+	int create_web_view_window(HWND hwnd);
 
 	void hide_overlays();
 	void create_windows_for_apps();

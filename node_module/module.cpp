@@ -112,6 +112,35 @@ namespace overlays_node
 		return ret;
 	}
 
+	napi_value AddOverlayHWND(napi_env env, napi_callback_info args)
+	{
+		napi_status status;
+		size_t argc = 1;
+		napi_value argv[1];
+		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
+		int crated_overlay_id = -1;
+		if (argc == 1) {
+			void* incoming_array = nullptr;
+			size_t array_lenght = 0;
+			status = napi_get_arraybuffer_info(env, argv[0], &incoming_array, &array_lenght);
+
+			if (incoming_array != nullptr ) {
+				std::cout << "APP: AddOverlayHWND " << argc << std::endl;
+				
+				crated_overlay_id = add_webview(incoming_array, array_lenght);
+				incoming_array = nullptr;
+			} else {
+				std::cout << "APP: AddOverlayHWND failed to get hwnd" << argc << std::endl;
+			}
+		}
+
+		napi_value ret;
+		status = napi_create_int32(env, crated_overlay_id, &ret);
+		if (status != napi_ok)
+			return nullptr;
+		return ret;
+	}
+
 	napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 	{
 		napi_status status;
@@ -369,6 +398,13 @@ namespace overlays_node
 		if (status != napi_ok)
 			return nullptr;
 		status = napi_set_named_property(env, exports, "addEx", fn);
+		if (status != napi_ok)
+			return nullptr;
+
+		status = napi_create_function(env, nullptr, 0, AddOverlayHWND, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
+		status = napi_set_named_property(env, exports, "addHWND", fn);
 		if (status != napi_ok)
 			return nullptr;
 

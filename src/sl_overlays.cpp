@@ -74,7 +74,7 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 			n.y = 100;
 			n.width = 400;
 			n.height = 400;
-			n.url = "http://mail.ru";
+			n.url = "https://google.com";
 
 			create_web_view_window(n);
 		}
@@ -175,6 +175,22 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 	}
 
 	return new_web_view_window->id;
+}
+
+int smg_overlays::create_web_view_window(HWND hwnd)
+{
+	std::shared_ptr<overlay_window> new_overlay_window = std::make_shared<overlay_window>();
+	new_overlay_window->orig_handle = hwnd;
+	new_overlay_window->get_window_screenshot();
+	{
+		std::unique_lock<std::shared_mutex> lock(overlays_list_access);
+		showing_windows.push_back(new_overlay_window);
+		create_window_for_overlay(new_overlay_window);
+	}
+
+	PostMessage(0, WM_SLO_SOURCE_CREATED, new_overlay_window->id, reinterpret_cast<LPARAM>(&(new_overlay_window->orig_handle)));
+
+	return new_overlay_window->id;
 }
 
 void smg_overlays::on_update_timer()
