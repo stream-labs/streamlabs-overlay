@@ -148,17 +148,16 @@ int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 	}
 }
 
-int WINAPI add_webview(const void* hwnd, size_t array_size)
+int WINAPI add_webview(const void* hwnd_array, size_t array_size)
 {
 	int ret = -1;
-	if (hwnd != nullptr && array_size == sizeof(HWND)) {
+	if (hwnd_array != nullptr && array_size == sizeof(HWND)) {
 		thread_state_mutex.lock();
 		if (thread_state != sl_overlay_thread_state::runing) {
 			thread_state_mutex.unlock();
 			return -1;
 		} else {
 			HWND hwnd;
-			const uint8_t hwnd_array[] = {0x12, 0x0C, 0x11, 0x00, 0x00, 0x00, 0x00};
 			memcpy(&hwnd, hwnd_array, sizeof(HWND));
 
 			int ret = smg_overlays::get_instance()->create_web_view_window(hwnd);
