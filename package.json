@@ -1,5 +1,5 @@
 {
-  "name": "streamlabs-overlay",
+  "name": "@streamlabs/game-overlay",
   "private": true,
   "description": "Streamlabs Game Overlay module",
   "main": "index.js",
@@ -41,6 +41,7 @@
     "node-pre-gyp": "^0.12.0"
   },
   "devDependencies": {
+    "@types/node": "^11.10.4",
     "aws-sdk": "^2.x",
     "prettier": "^1.16.4",
     "standard-version": "^5.0.1"

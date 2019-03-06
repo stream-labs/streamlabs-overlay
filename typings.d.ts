@@ -1,3 +1,4 @@
+/// <reference types="node" />
 /** A unique identifier for an overlay **/
 export type OverlayId = string;
 
@@ -19,6 +20,9 @@ export type OverlayInfo = {
   /** Vertical position of the window */
   y: number;
 };
+
+/** Native windows handle (WinAPI), encoded as a Node Buffer **/
+export type HWND = Buffer;
 
 /**
  * Status of the overlay thread
@@ -97,6 +101,20 @@ export function addEx(
   width: number,
   height: number,
 ): OverlayId;
+
+/**
+ * Add an overlay to an existing window.
+ *
+ * @param hwnd The native Windows handle of the window to be set as an overlay
+ * @returns ID of the overlay that was created
+ * @see {HWND}
+ * @example
+ * const win = new BrowserWindow({});
+ * win.loadURL('https://streamlabs.com');
+ * const hwnd = win.getNativeWindowHandle();
+ * overlay.addHWND(hwnd);
+ */
+export function addHWND(hwnd: HWND): OverlayInfo;
 
 /**
  * Set overlay's position
