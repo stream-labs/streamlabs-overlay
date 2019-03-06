@@ -111,3 +111,6 @@ const int HOTKEY_CATCH_APP = 6;
 
 #define WM_SLO_WEBVIEW_CLOSE_THREAD (WM_USER + 42)
 //thread should be closed, all resources released, global vars cleaned
+
+#define WM_SLO_HWND_SOURCE_READY (WM_USER + 43)
+//signal for overlay thread that it can create window for new overlay 

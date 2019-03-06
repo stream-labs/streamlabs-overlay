@@ -181,14 +181,15 @@ int smg_overlays::create_web_view_window(HWND hwnd)
 {
 	std::shared_ptr<overlay_window> new_overlay_window = std::make_shared<overlay_window>();
 	new_overlay_window->orig_handle = hwnd;
+	//new_overlay_window->use_method = sl_window_capture_method::bitblt;
 	new_overlay_window->get_window_screenshot();
+
 	{
 		std::unique_lock<std::shared_mutex> lock(overlays_list_access);
 		showing_windows.push_back(new_overlay_window);
-		create_window_for_overlay(new_overlay_window);
 	}
 
-	PostMessage(0, WM_SLO_SOURCE_CREATED, new_overlay_window->id, reinterpret_cast<LPARAM>(&(new_overlay_window->orig_handle)));
+	PostThreadMessage(overlays_thread_id, WM_SLO_HWND_SOURCE_READY, new_overlay_window->id, reinterpret_cast<LPARAM>(&(new_overlay_window->orig_handle)));
 
 	return new_overlay_window->id;
 }
@@ -215,7 +216,10 @@ void smg_overlays::hide_overlays()
 	std::cout << "APP: hide_overlays " << std::endl;
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-		ShowWindow(n->overlay_hwnd, SW_HIDE);
+		if(n->overlay_hwnd != 0)
+		{
+			ShowWindow(n->overlay_hwnd, SW_HIDE);
+		}
 	});
 }
 

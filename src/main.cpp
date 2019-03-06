@@ -149,6 +149,12 @@ DWORD WINAPI overlay_thread_func(void* data)
 				catched = app->process_hotkeys(msg);
 
 			} break;
+			case WM_SLO_HWND_SOURCE_READY: {
+				std::cout << "APP: WM_SLO_HWND_SOURCE_READY " << (int)msg.wParam << std::endl;
+				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
+				app->create_window_for_overlay(overlay);
+				catched = true;
+			} break;
 			case WM_TIMER:
 				//std::cout << "APP: WM_TIMER id = " << (int)msg.wParam << std::endl;
 				if ((int)msg.wParam == OVERLAY_UPDATE_TIMER) {

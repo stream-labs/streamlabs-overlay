@@ -1,21 +1,23 @@
 const { app, BrowserWindow} = require("electron")
-const streamlabs_overlays = require('../index')
+//const streamlabs_overlays = require('../index')
 
 let win
-streamlabs_overlays.start();
+//streamlabs_overlays.start();
+//app.disableHardwareAcceleration();
 
 function createWindow() {
+
     win = new BrowserWindow({ width: 800, height: 600 })
-  
+    
     win.loadURL(`https://google.com`)
   
     let hwnd = win.getNativeWindowHandle();
     console.log(hwnd);
-    streamlabs_overlays.addHWND(hwnd);
+    //streamlabs_overlays.addHWND(hwnd);
 
     win.on("closed", () => {
       win = null
-      streamlabs_overlays.stop();
+      //streamlabs_overlays.stop();
     })
   }
   

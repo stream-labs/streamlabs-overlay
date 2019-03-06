@@ -110,6 +110,8 @@ bool overlay_window::get_window_screenshot()
 		int new_height = client_rect.bottom - client_rect.top;
 		RECT cur_rect = get_rect();
 
+		//std::cout << "APP: get_window_screenshot new_x " << new_x << ", new_y " << new_y << ", new_width " << new_width << ", new_height " << new_height << std::endl;
+
 		HDC new_hdc = nullptr;
 		HBITMAP new_hbmp = nullptr;
 		bool keep_gdi = false;
@@ -173,6 +175,8 @@ bool overlay_window::get_window_screenshot()
 				}
 			}
 		}
+	} else {
+		//std::cout << "APP: get_window_screenshot failed to get rect from orig window " << GetLastError() << std::endl;
 	}
 
 	if (overlay_hwnd) {

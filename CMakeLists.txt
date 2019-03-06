@@ -20,6 +20,6 @@ if(WIN32)
    set_target_properties(streamlabs_overlay_app PROPERTIES LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:WINDOWS")
 endif(WIN32)
 
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT streamlabs_overlay)
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT streamlabs_overlay_app)
 target_include_directories(streamlabs_overlay_app PRIVATE include webform)
 install(TARGETS streamlabs_overlay_app DESTINATION bin)
