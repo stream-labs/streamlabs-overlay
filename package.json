@@ -1,5 +1,5 @@
 {
-  "name": "streamlabs-overlay",
+  "name": "@streamlabs/game-overlay",
   "private": true,
   "description": "Streamlabs Game Overlay module",
   "main": "index.js",
