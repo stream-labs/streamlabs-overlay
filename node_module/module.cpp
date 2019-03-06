@@ -122,7 +122,7 @@ namespace overlays_node
 		if (argc == 1) {
 			void* incoming_array = nullptr;
 			size_t array_lenght = 0;
-			status = napi_get_arraybuffer_info(env, argv[0], &incoming_array, &array_lenght);
+			status = napi_get_buffer_info(env, argv[0], &incoming_array, &array_lenght);
 
 			if (incoming_array != nullptr ) {
 				std::cout << "APP: AddOverlayHWND " << argc << std::endl;
