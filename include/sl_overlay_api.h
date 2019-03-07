@@ -13,8 +13,8 @@ int WINAPI hide_overlays();
 
 int WINAPI add_webview(const char* url);
 int WINAPI add_webview(const char* url, int x, int y, int width, int height);
-int WINAPI add_webview(const void* hwnd_array, size_t array_size);
-int WINAPI set_webview_position(int id, int x, int y, int width, int height);
+int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size);
+int WINAPI set_overlay_position(int id, int x, int y, int width, int height);
 int WINAPI set_webview_url(int id, char* url);
 int WINAPI set_overlay_transparency(int id, int transparency);
 int WINAPI call_webview_roload(int id);

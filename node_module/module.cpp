@@ -127,7 +127,7 @@ namespace overlays_node
 			if (incoming_array != nullptr ) {
 				std::cout << "APP: AddOverlayHWND " << argc << std::endl;
 				
-				crated_overlay_id = add_webview(incoming_array, array_lenght);
+				crated_overlay_id = add_overlay_by_hwnd(incoming_array, array_lenght);
 				incoming_array = nullptr;
 			} else {
 				std::cout << "APP: AddOverlayHWND failed to get hwnd" << argc << std::endl;
@@ -243,7 +243,7 @@ namespace overlays_node
 			int height;
 			status = napi_get_value_int32(env, argv[4], &height);
 
-			function_ret = set_webview_position(id, x, y, width, height);
+			function_ret = set_overlay_position(id, x, y, width, height);
 		}
 
 		napi_value ret;

@@ -148,7 +148,7 @@ int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 	}
 }
 
-int WINAPI add_webview(const void* hwnd_array, size_t array_size)
+int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 {
 	int ret = -1;
 	//if (hwnd_array != nullptr && array_size == sizeof(HWND)) {
@@ -160,7 +160,7 @@ int WINAPI add_webview(const void* hwnd_array, size_t array_size)
 			HWND hwnd;
 			memcpy(&hwnd, hwnd_array, sizeof(HWND));
 
-			ret = smg_overlays::get_instance()->create_web_view_window(hwnd);
+			ret = smg_overlays::get_instance()->create_overlay_window_by_hwnd(hwnd);
 
 			thread_state_mutex.unlock();
 		}
@@ -173,7 +173,7 @@ int WINAPI add_webview(const char* url)
 	return add_webview(url, 100, 100, 400, 300);
 }
 
-int WINAPI set_webview_position(int id, int x, int y, int width, int height)
+int WINAPI set_overlay_position(int id, int x, int y, int width, int height)
 {
 	thread_state_mutex.lock();
 	if (thread_state != sl_overlay_thread_state::runing) {

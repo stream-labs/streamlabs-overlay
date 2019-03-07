@@ -14,12 +14,14 @@ class overlay_window
 {
 	protected:
 	RECT rect;
+	bool manual_position;
 	std::mutex rect_access;
 
 	public:
 	RECT get_rect();
 	virtual bool set_rect(RECT& new_rect);
 	virtual bool apply_new_rect(RECT& new_rect);
+	virtual bool set_new_position(int x, int y);
 
 	sl_window_capture_method use_method;
 	overlay_status status;
@@ -57,6 +59,7 @@ class web_view_window : public overlay_window
 	virtual std::string get_url();
 	virtual void set_url(char* new_url);
 	virtual bool apply_new_rect(RECT& new_rect);
+	virtual bool set_new_position(int x, int y);
 };
 
 class app_window : public overlay_window

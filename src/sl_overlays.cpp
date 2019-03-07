@@ -177,7 +177,7 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 	return new_web_view_window->id;
 }
 
-int smg_overlays::create_web_view_window(HWND hwnd)
+int smg_overlays::create_overlay_window_by_hwnd(HWND hwnd)
 {
 	std::shared_ptr<overlay_window> new_overlay_window = std::make_shared<overlay_window>();
 	new_overlay_window->orig_handle = hwnd;

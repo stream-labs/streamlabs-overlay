@@ -47,7 +47,7 @@ overlay_window::overlay_window()
 	overlay_hwnd = nullptr;
 	hdc = nullptr;
 	hbmp = nullptr;
-
+	manual_position = false;
 	status = overlay_status::creating;
 }
 
@@ -85,7 +85,28 @@ RECT overlay_window::get_rect()
 
 bool overlay_window::apply_new_rect(RECT& new_rect)
 {
-	return set_rect(new_rect);
+	return set_new_position(new_rect.left, new_rect.top);
+}
+
+bool overlay_window::set_new_position(int x, int y)
+{
+	RECT ret = get_rect();
+	
+	int shift = ret.left-x;
+	ret.left-=shift;
+	ret.right-=shift;
+
+	shift = ret.top-y;
+	ret.top-=shift;
+	ret.bottom-=shift;
+	
+	manual_position = true;	
+
+	if (overlay_hwnd) {
+		MoveWindow(overlay_hwnd, x, y, ret.right-ret.left, ret.bottom-ret.top, FALSE);
+	}
+
+	return set_rect(ret);
 }
 
 bool overlay_window::set_rect(RECT& new_rect)
@@ -155,14 +176,31 @@ bool overlay_window::get_window_screenshot()
 					hdc = new_hdc;
 					hbmp = new_hbmp;
 				}
+				if(manual_position)
+				{
+					// if we have 
+					if ( new_width == client_rect.right-client_rect.left &&
+						new_height == client_rect.bottom-client_rect.top) {
+					} else {
+						RECT new_rect = cur_rect;
+						new_rect.right = cur_rect.left + new_width; 
+						new_rect.bottom = cur_rect.top + new_height;
+						set_rect(new_rect);
 
-				if (client_rect.left == cur_rect.left && client_rect.right == cur_rect.right &&
-				    client_rect.top == cur_rect.top && client_rect.bottom == cur_rect.bottom) {
+						if (overlay_hwnd) {
+							MoveWindow(overlay_hwnd, new_rect.left, new_rect.top, new_width, new_height, FALSE);
+						}
+					}
+
 				} else {
-					set_rect(client_rect);
+					if (client_rect.left == cur_rect.left && client_rect.right == cur_rect.right &&
+						client_rect.top == cur_rect.top && client_rect.bottom == cur_rect.bottom) {
+					} else {
+						set_rect(client_rect);
 
-					if (overlay_hwnd) {
-						MoveWindow(overlay_hwnd, new_x, new_y, new_width, new_height, FALSE);
+						if (overlay_hwnd) {
+							MoveWindow(overlay_hwnd, new_x, new_y, new_width, new_height, FALSE);
+						}
 					}
 				}
 				updated = true;
@@ -254,3 +292,9 @@ bool web_view_window::apply_new_rect(RECT& new_rect)
 
 	return true;
 }
+
+bool web_view_window::set_new_position(int x, int y)
+{
+	return false;
+}
+
