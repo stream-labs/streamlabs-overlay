@@ -114,7 +114,7 @@ export function addEx(
  * const hwnd = win.getNativeWindowHandle();
  * overlay.addHWND(hwnd);
  */
-export function addHWND(hwnd: HWND): OverlayInfo;
+export function addHWND(hwnd: HWND): OverlayId;
 
 /**
  * Set overlay's position
