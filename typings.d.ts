@@ -150,9 +150,10 @@ export function reload(id: OverlayId): void;
 /**
  * Set an overlay's transparency
  *
+ * @param overlayId ID of the overlay to set the transparency for
  * @param transparency A positive integer from 0-255 indicating the transparency to set the overlay to, where 255 indicates opaque
  */
-export function setTransparency(transparency: number): void;
+export function setTransparency(overlayId: OverlayId, transparency: number): void;
 
 /**
  * Remove an overlay
