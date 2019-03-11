@@ -268,8 +268,41 @@ namespace overlays_node
 			char* url = new char[512];
 			size_t result;
 			status = napi_get_value_string_utf8(env, argv[1], url, 256, &result);
-			std::cout << "APP: AddOverlay " << url << ", " << std::string(url).size() << std::endl;
+			std::cout << "APP: SetOverlayUrl " << url << ", " << std::string(url).size() << std::endl;
 			overlay_id = set_webview_url(overlay_id, url);
+		}
+
+		napi_value ret;
+		status = napi_create_int32(env, overlay_id, &ret);
+		if (status != napi_ok)
+			return nullptr;
+		return ret;
+	}
+
+	napi_value PaintOverlay(napi_env env, napi_callback_info args)
+	{
+		napi_status status;
+		size_t argc = 2;
+		napi_value argv[2];
+		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
+		int overlay_id = -1;
+
+		if (argc == 2) {
+			int overlay_id;
+			status = napi_get_value_int32(env, argv[0], &overlay_id);
+
+			void* incoming_array = nullptr;
+			size_t array_lenght = 0;
+			status = napi_get_buffer_info(env, argv[1], &incoming_array, &array_lenght);
+
+			if (incoming_array != nullptr ) {
+				std::cout << "APP: PaintOverlay " << argc << ", image buffer size " << array_lenght << std::endl;
+				
+				paint_overlay_with_image(overlay_id, incoming_array, array_lenght);
+				incoming_array = nullptr;
+			} else {
+				std::cout << "APP: PaintOverlay failed to get buffer" << argc << std::endl;
+			}
 		}
 
 		napi_value ret;
@@ -419,6 +452,13 @@ namespace overlays_node
 		if (status != napi_ok)
 			return nullptr;
 		status = napi_set_named_property(env, exports, "setUrl", fn);
+		if (status != napi_ok)
+			return nullptr;
+
+		status = napi_create_function(env, nullptr, 0, PaintOverlay, nullptr, &fn);
+		if (status != napi_ok)
+			return nullptr;
+		status = napi_set_named_property(env, exports, "paintOverlay", fn);
 		if (status != napi_ok)
 			return nullptr;
 

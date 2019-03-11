@@ -151,8 +151,8 @@ int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 {
 	int ret = -1;
-	//if (hwnd_array != nullptr && array_size == sizeof(HWND)) {
-	if(true) {
+	if (hwnd_array != nullptr && array_size == sizeof(HWND)) 
+	{
 		thread_state_mutex.lock();
 		if (thread_state != sl_overlay_thread_state::runing) {
 			thread_state_mutex.unlock();
@@ -162,6 +162,29 @@ int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 
 			ret = smg_overlays::get_instance()->create_overlay_window_by_hwnd(hwnd);
 
+			thread_state_mutex.unlock();
+		}
+	}
+	return ret;
+}
+
+int WINAPI paint_overlay_with_image(int overlay_id, const void* image_array, size_t array_size)
+{
+	int ret = -1;
+	if(true) {
+		thread_state_mutex.lock();
+		if (thread_state != sl_overlay_thread_state::runing) {
+			thread_state_mutex.unlock();
+		} else {
+			/*
+			std::shared_ptr<overlay_window> overlay =  smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
+			if (overlay != nullptr) {
+				overlay->set_image_from_buffer(image_array, array_size);
+			} else {}
+
+			//todo 
+			//BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(n));
+			*/
 			thread_state_mutex.unlock();
 		}
 	}
