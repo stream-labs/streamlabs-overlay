@@ -2,6 +2,7 @@ const streamlabs_overlays = require('../index')
 
 console.log('Call start');
 streamlabs_overlays.start();
+console.log('status =' + streamlabs_overlays.getStatus() + ';');
 
 function script_finished() {
 	console.log('--------------- script_finished');

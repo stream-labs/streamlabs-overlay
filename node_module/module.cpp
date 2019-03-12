@@ -26,7 +26,7 @@ namespace overlays_node
 		napi_status status;
 
 		napi_value ret;
-		status = napi_create_string_utf8(env, thread_status.c_str(), thread_status.size() + 1, &ret);
+		status = napi_create_string_utf8(env, thread_status.c_str(), thread_status.size(), &ret);
 
 		if (status != napi_ok)
 			return nullptr;
