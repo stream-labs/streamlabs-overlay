@@ -40,6 +40,7 @@ overlay_window::~overlay_window()
 
 overlay_window::overlay_window()
 {
+	update_from_original = true;
 	static int id_counter = 128;
 	id = id_counter++;
 	use_method = sl_window_capture_method::print;
@@ -116,8 +117,41 @@ bool overlay_window::set_rect(RECT& new_rect)
 	return true;
 }
 
+bool  overlay_window::paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
+{
+	std::cout << "APP: paint_window_from_buffer array_size = " << array_size << ", w " << width << ", h " << height  << std::endl;
+	// HDC new_hdc = nullptr;
+	// HBITMAP new_hbmp = nullptr;
+	// int new_width = width;
+	// int new_height = height;
+	
+	// HDC hdcScreen = GetDC(orig_handle);
+	// new_hdc = CreateCompatibleDC(hdcScreen);
+	// new_hbmp = CreateCompatibleBitmap(hdcScreen, new_width, new_height);
+	// SelectObject(new_hdc, new_hbmp);
+	if(hbmp != nullptr)
+	{
+		LONG workedout = SetBitmapBits(hbmp, width * height * 4, image_array);
+		std::cout << "APP: paint_window_from_buffer workedout = " << workedout << std::endl;
+		//ShowWindow(overlay_hwnd, SW_SHOWNA);
+		if (!IsWindowVisible(overlay_hwnd)) {
+				ShowWindow(overlay_hwnd, SW_SHOWNA);
+		}
+		update_from_original = false;
+	} else {
+		std::cout << "APP: paint_window_from_buffer no hbmp " << std::endl;
+	}
+
+	return true;
+}
+
 bool overlay_window::get_window_screenshot()
 {
+	if( !update_from_original )
+	{
+		return true;
+	}
+
 	bool updated = false;
 	BOOL ret = false;
 	RECT client_rect = {0};

@@ -282,23 +282,27 @@ namespace overlays_node
 	napi_value PaintOverlay(napi_env env, napi_callback_info args)
 	{
 		napi_status status;
-		size_t argc = 2;
-		napi_value argv[2];
+		size_t argc = 4;
+		napi_value argv[4];
 		status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 		int overlay_id = -1;
 
-		if (argc == 2) {
-			int overlay_id;
+		if (argc == 4) {
+			int width = 0;
+			int height = 0;
 			status = napi_get_value_int32(env, argv[0], &overlay_id);
+			status = napi_get_value_int32(env, argv[1], &width);
+			status = napi_get_value_int32(env, argv[2], &height);
 
 			void* incoming_array = nullptr;
 			size_t array_lenght = 0;
-			status = napi_get_buffer_info(env, argv[1], &incoming_array, &array_lenght);
+			status = napi_get_buffer_info(env, argv[3], &incoming_array, &array_lenght);
+			
 
 			if (incoming_array != nullptr ) {
-				std::cout << "APP: PaintOverlay " << argc << ", image buffer size " << array_lenght << std::endl;
+				std::cout << "APP: PaintOverlay " << argc << ", image buffer size " << array_lenght << ", w " <<width<< ", h " << height << std::endl;
 				
-				paint_overlay_with_image(overlay_id, incoming_array, array_lenght);
+				paint_overlay_from_buffer(overlay_id, incoming_array, array_lenght, width, height);
 				incoming_array = nullptr;
 			} else {
 				std::cout << "APP: PaintOverlay failed to get buffer" << argc << std::endl;

@@ -18,6 +18,7 @@ class overlay_window
 	std::mutex rect_access;
 
 	public:
+	bool update_from_original;
 	RECT get_rect();
 	virtual bool set_rect(RECT& new_rect);
 	virtual bool apply_new_rect(RECT& new_rect);
@@ -27,6 +28,7 @@ class overlay_window
 	overlay_status status;
 
 	bool get_window_screenshot();
+	virtual bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height);
 
 	virtual bool save_state_to_settings();
 	virtual std::string get_url();
@@ -60,9 +62,12 @@ class web_view_window : public overlay_window
 	virtual void set_url(char* new_url);
 	virtual bool apply_new_rect(RECT& new_rect);
 	virtual bool set_new_position(int x, int y);
+	
+	virtual bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height){ return false;};
 };
 
 class app_window : public overlay_window
 {
 	public:
+	virtual bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height){return false;};
 };

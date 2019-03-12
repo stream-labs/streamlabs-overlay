@@ -1,6 +1,6 @@
 /// <reference types="node" />
 /** A unique identifier for an overlay **/
-export type OverlayId = string;
+export type OverlayId = number;
 
 /** URL of the overlay's content **/
 export type OverlayUrl = string;
@@ -154,6 +154,13 @@ export function reload(id: OverlayId): void;
  * @param transparency A positive integer from 0-255 indicating the transparency to set the overlay to, where 255 indicates opaque
  */
 export function setTransparency(overlayId: OverlayId, transparency: number): void;
+
+/**
+ * Set an overlay's transparency
+ *
+ *  @param overlayId ID of the overlay to set
+ */
+export function paintOverlay(overlayId: OverlayId, width: number, height: number, image: Buffer);
 
 /**
  * Remove an overlay

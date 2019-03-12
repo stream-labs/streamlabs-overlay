@@ -199,7 +199,7 @@ void smg_overlays::on_update_timer()
 	if (showing_overlays) {
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			if (n->get_window_screenshot()) {
+			if (n->update_from_original && n->get_window_screenshot() || !n->update_from_original) {
 				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
 			}
 		});

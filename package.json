@@ -44,6 +44,7 @@
     "@types/node": "^11.10.4",
     "aws-sdk": "^2.x",
     "prettier": "^1.16.4",
+    "electron": "^2.0.16",
     "standard-version": "^5.0.1"
   }
 }
