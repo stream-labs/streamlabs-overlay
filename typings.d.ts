@@ -31,11 +31,11 @@ export type HWND = Buffer;
  * These aren't typos on our end, backend sends this, I can probably look at it later; still, is C.
  * Workaround via enum, do not use these values directly.
  */
-export enum OverlayThreadStatus {
-  Starting = 'starting',
-  Running = 'runing',
-  Stopping = 'stopping',
-  Destroyed = 'destoyed',
+export const enum OverlayThreadStatus {
+  Starting = 'starting ',
+  Running = 'runing ',
+  Stopping = 'stopping ',
+  Destroyed = 'destoyed ',
 }
 
 /**
