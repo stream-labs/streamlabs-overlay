@@ -8,7 +8,7 @@
     "name": "Streamlabs",
     "url": "https://streamlabs.com"
   },
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "SEE LICENSE IN COPYRIGHT LAW",
   "engines": {
     "node": ">= 10"
@@ -18,7 +18,7 @@
     "url": "git://github.com/stream-labs/streamlabs-overlay"
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build",
+    "install": "node-pre-gyp install --fallback-to-build --msvs_version=2017",
     "pack": "node-pre-gyp package",
     "release": "standard-version",
     "test": "node index.js"
