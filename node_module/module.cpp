@@ -68,7 +68,8 @@ napi_value AddOverlay(napi_env env, napi_callback_info args)
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	int crated_overlay_id = -1;
 
-	if (argc == 1) {
+	if (argc == 1)
+	{
 		char* url = new char[512];
 		size_t result;
 		status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
@@ -90,7 +91,8 @@ napi_value AddOverlayEx(napi_env env, napi_callback_info args)
 	napi_value argv[5];
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	int crated_overlay_id = -1;
-	if (argc == 5) {
+	if (argc == 5)
+	{
 		char* url = new char[512];
 		size_t result;
 		status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
@@ -122,17 +124,20 @@ napi_value AddOverlayHWND(napi_env env, napi_callback_info args)
 	napi_value argv[1];
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	int crated_overlay_id = -1;
-	if (argc == 1) {
+	if (argc == 1)
+	{
 		void* incoming_array = nullptr;
 		size_t array_lenght = 0;
 		status = napi_get_buffer_info(env, argv[0], &incoming_array, &array_lenght);
 
-		if (incoming_array != nullptr) {
+		if (incoming_array != nullptr)
+		{
 			std::cout << "APP: AddOverlayHWND " << argc << std::endl;
 
 			crated_overlay_id = add_overlay_by_hwnd(incoming_array, array_lenght);
 			incoming_array = nullptr;
-		} else {
+		} else
+		{
 			std::cout << "APP: AddOverlayHWND failed to get hwnd" << argc << std::endl;
 		}
 	}
@@ -163,30 +168,31 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 {
 	user_input_callback_info.set_return = callback_method_func_set_return;
 	user_input_callback_info.fail = callback_method_func_fail;
-	
+
 	napi_status status;
-    size_t argc = 1;
+	size_t argc = 1;
 	napi_value argv[1];
 	napi_value js_this;
 	napi_value js_callback;
 	napi_valuetype is_function = napi_undefined;
 
 	status = napi_get_cb_info(env, args, &argc, argv, &js_this, 0);
-	if (status == napi_ok) 
+	if (status == napi_ok)
 	{
-		//check if js side of callback is valid 
+		//check if js side of callback is valid
 		status = napi_get_prototype(env, argv[0], &js_callback);
-		if (status == napi_ok) 
+		if (status == napi_ok)
 		{
 			status = napi_typeof(env, js_callback, &is_function);
 		}
 	}
-	
-	if (is_function == napi_function) 
+
+	if (is_function == napi_function)
 	{
-		//save reference and go to creating threadsafe function 
+		//save reference and go to creating threadsafe function
 		status = napi_create_reference(env, argv[0], 0, &user_input_callback_info.js_this);
-		if (status == napi_ok) {
+		if (status == napi_ok)
+		{
 
 			status = user_input_callback_init(&user_input_callback_info, env, args, "func");
 		}
@@ -221,9 +227,11 @@ napi_value GetOverlayInfo(napi_env env, napi_callback_info args)
 	std::cout << "APP: GetOverlayInfo look for " << overlay_id << std::endl;
 	std::shared_ptr<overlay_window> requested_overlay = get_overlays()->get_overlay_by_id(overlay_id);
 
-	if (requested_overlay == nullptr) {
+	if (requested_overlay == nullptr)
+	{
 		return nullptr;
-	} else {
+	} else
+	{
 		napi_value ret;
 		status = napi_create_object(env, &ret);
 		if (status != napi_ok)
@@ -234,7 +242,8 @@ napi_value GetOverlayInfo(napi_env env, napi_callback_info args)
 		status = napi_set_named_property(env, ret, "id", id);
 
 		std::string url_str = requested_overlay->get_url();
-		if (url_str.size() != 0) {
+		if (url_str.size() != 0)
+		{
 			napi_value url;
 			status = napi_create_string_utf8(env, url_str.c_str(), url_str.size() + 1, &url);
 			status = napi_set_named_property(env, ret, "url", url);
@@ -267,7 +276,8 @@ napi_value GetOverlaysIDs(napi_env env, napi_callback_info args)
 	napi_value ret;
 	napi_status status;
 	status = napi_create_array(env, &ret);
-	for (int i = 0; i < ids.size(); i++) {
+	for (int i = 0; i < ids.size(); i++)
+	{
 		napi_value id;
 		napi_create_int32(env, ids[i], &id);
 		napi_set_element(env, ret, i, id);
@@ -285,7 +295,8 @@ napi_value SetOverlayPosition(napi_env env, napi_callback_info args)
 	napi_value argv[5];
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	int function_ret = -1;
-	if (argc == 5) {
+	if (argc == 5)
+	{
 		int id;
 		status = napi_get_value_int32(env, argv[0], &id);
 
@@ -316,7 +327,8 @@ napi_value SetOverlayUrl(napi_env env, napi_callback_info args)
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	int overlay_id = -1;
 
-	if (argc == 2) {
+	if (argc == 2)
+	{
 		int overlay_id;
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
 
@@ -342,7 +354,8 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	int overlay_id = -1;
 
-	if (argc == 4) {
+	if (argc == 4)
+	{
 		int width = 0;
 		int height = 0;
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
@@ -353,13 +366,15 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 		size_t array_lenght = 0;
 		status = napi_get_buffer_info(env, argv[3], &incoming_array, &array_lenght);
 
-		if (incoming_array != nullptr) {
+		if (incoming_array != nullptr)
+		{
 			std::cout << "APP: PaintOverlay " << argc << ", image buffer size " << array_lenght << ", w " << width << ", h "
 			          << height << std::endl;
 
 			paint_overlay_from_buffer(overlay_id, incoming_array, array_lenght, width, height);
 			incoming_array = nullptr;
-		} else {
+		} else
+		{
 			std::cout << "APP: PaintOverlay failed to get buffer" << argc << std::endl;
 		}
 	}
@@ -379,7 +394,8 @@ napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	int overlay_id = -1;
 
-	if (argc == 2) {
+	if (argc == 2)
+	{
 		int overlay_id;
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
 
@@ -404,7 +420,8 @@ napi_value CallOverlayReload(napi_env env, napi_callback_info args)
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	int overlay_id = -1;
 
-	if (argc == 1) {
+	if (argc == 1)
+	{
 		int overlay_id;
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
 		std::cout << "APP: CallOverlayReload " << std::endl;

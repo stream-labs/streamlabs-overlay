@@ -14,17 +14,21 @@ extern sl_overlay_thread_state thread_state;
 int WINAPI start_overlays_thread()
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::destoyed) {
+	if (thread_state != sl_overlay_thread_state::destoyed)
+	{
 		thread_state_mutex.unlock();
 		return 0;
-	} else {
+	} else
+	{
 		thread_state = sl_overlay_thread_state::starting;
 		thread_state_mutex.unlock();
 
 		overlays_thread = CreateThread(nullptr, 0, overlay_thread_func, nullptr, 0, &overlays_thread_id);
-		if (overlays_thread) {
+		if (overlays_thread)
+		{
 			return 1;
-		} else {
+		} else
+		{
 			thread_state_mutex.lock();
 			thread_state = sl_overlay_thread_state::destoyed;
 			thread_state_mutex.unlock();
@@ -36,10 +40,12 @@ int WINAPI start_overlays_thread()
 int WINAPI stop_overlays_thread()
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		return 0;
-	} else {
+	} else
+	{
 		thread_state = sl_overlay_thread_state::stopping;
 		thread_state_mutex.unlock();
 
@@ -53,7 +59,8 @@ std::string get_thread_status_name()
 {
 	std::lock_guard<std::mutex> lock(thread_state_mutex);
 	std::string ret = "nop";
-	switch (thread_state) {
+	switch (thread_state)
+	{
 	case sl_overlay_thread_state::starting:
 		ret = "starting";
 		break;
@@ -73,10 +80,12 @@ std::string get_thread_status_name()
 int WINAPI get_overlays_count()
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		return 0;
-	} else {
+	} else
+	{
 		int ret = smg_overlays::get_instance()->get_count();
 
 		thread_state_mutex.unlock();
@@ -87,10 +96,12 @@ int WINAPI get_overlays_count()
 int WINAPI show_overlays()
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		return 0;
-	} else {
+	} else
+	{
 		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_SHOW_OVERLAYS, 0);
 
 		thread_state_mutex.unlock();
@@ -101,10 +112,12 @@ int WINAPI show_overlays()
 int WINAPI hide_overlays()
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		return 0;
-	} else {
+	} else
+	{
 		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_HIDE_OVERLAYS, 0);
 
 		thread_state_mutex.unlock();
@@ -115,10 +128,12 @@ int WINAPI hide_overlays()
 int WINAPI remove_overlay(int id)
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		return 0;
-	} else {
+	} else
+	{
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_WEBVIEW_CLOSE, id, NULL);
 
 		thread_state_mutex.unlock();
@@ -137,7 +152,8 @@ int WINAPI set_callback_for_user_input(int (*ptr)(int))
 int WINAPI use_callback_for_user_input()
 {
 	static int send = 1122;
-	if (callback_ptr != nullptr) {
+	if (callback_ptr != nullptr)
+	{
 		callback_ptr(send);
 		//callback_ptr = nullptr;
 		send += 123;
@@ -155,11 +171,13 @@ int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 	n.url = std::string(url);
 
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		delete[] url;
 		return -1;
-	} else {
+	} else
+	{
 		int ret = smg_overlays::get_instance()->create_web_view_window(n);
 
 		thread_state_mutex.unlock();
@@ -171,11 +189,14 @@ int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 {
 	int ret = -1;
-	if (hwnd_array != nullptr && array_size == sizeof(HWND)) {
+	if (hwnd_array != nullptr && array_size == sizeof(HWND))
+	{
 		thread_state_mutex.lock();
-		if (thread_state != sl_overlay_thread_state::runing) {
+		if (thread_state != sl_overlay_thread_state::runing)
+		{
 			thread_state_mutex.unlock();
-		} else {
+		} else
+		{
 			HWND hwnd;
 			memcpy(&hwnd, hwnd_array, sizeof(HWND));
 
@@ -190,14 +211,18 @@ int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, size_t array_size, int width, int height)
 {
 	int ret = -1;
-	if (true) {
+	if (true)
+	{
 		thread_state_mutex.lock();
-		if (thread_state != sl_overlay_thread_state::runing) {
+		if (thread_state != sl_overlay_thread_state::runing)
+		{
 			thread_state_mutex.unlock();
-		} else {
+		} else
+		{
 
 			std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
-			if (overlay != nullptr) {
+			if (overlay != nullptr)
+			{
 				overlay->paint_window_from_buffer(image_array, array_size, width, height);
 				//todo
 				//BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(n));
@@ -216,11 +241,13 @@ int WINAPI add_webview(const char* url)
 int WINAPI set_overlay_position(int id, int x, int y, int width, int height)
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 
 		return -1;
-	} else {
+	} else
+	{
 		RECT* n = new RECT;
 		n->left = x;
 		n->top = y;
@@ -230,7 +257,8 @@ int WINAPI set_overlay_position(int id, int x, int y, int width, int height)
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(n));
 		thread_state_mutex.unlock();
 
-		if (!ret) {
+		if (!ret)
+		{
 			delete n;
 			return -1;
 		}
@@ -242,15 +270,18 @@ int WINAPI set_overlay_position(int id, int x, int y, int width, int height)
 int WINAPI set_webview_url(int id, char* url)
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		delete[] url;
 		return -1;
-	} else {
+	} else
+	{
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_WEBVIEW_SET_URL, id, reinterpret_cast<LPARAM>(url));
 		thread_state_mutex.unlock();
 
-		if (!ret) {
+		if (!ret)
+		{
 			delete[] url;
 			return -1;
 		}
@@ -264,14 +295,17 @@ int WINAPI set_webview_url(int id, char* url)
 int WINAPI set_overlay_transparency(int id, int transparency)
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		return -1;
-	} else {
+	} else
+	{
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_TRANSPARENCY, id, (LPARAM)(transparency));
 		thread_state_mutex.unlock();
 
-		if (!ret) {
+		if (!ret)
+		{
 			return -1;
 		}
 
@@ -284,14 +318,17 @@ int WINAPI set_overlay_transparency(int id, int transparency)
 int WINAPI call_webview_roload(int id)
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		return -1;
-	} else {
+	} else
+	{
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_WEBVIEW_RELOAD, id, NULL);
 		thread_state_mutex.unlock();
 
-		if (!ret) {
+		if (!ret)
+		{
 			return -1;
 		}
 
@@ -304,10 +341,12 @@ int WINAPI call_webview_roload(int id)
 std::shared_ptr<smg_overlays> get_overlays()
 {
 	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing) {
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
 		thread_state_mutex.unlock();
 		return nullptr;
-	} else {
+	} else
+	{
 		thread_state_mutex.unlock();
 
 		return smg_overlays::get_instance();
