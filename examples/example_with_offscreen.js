@@ -27,7 +27,7 @@ function createWindow() {
 //      console.log(dirty);
 //      console.log(image.getBitmap().length);
 //      console.log(image.getBitmap().byteLength);
-      fs.writeFileSync('c:\\work\\temp\\ps1.png', image.toPNG());
+      //fs.writeFileSync('c:\\work\\temp\\ps1.png', image.toPNG());
     })          
     
     win.webContents.setFrameRate(1);

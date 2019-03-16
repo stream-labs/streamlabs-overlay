@@ -25,6 +25,7 @@ class smg_overlays
 
 	smg_overlays();
 	virtual ~smg_overlays(){};
+	void init();
 	void deinit();
 
 	void original_window_ready(int overlay_id, HWND orig_window);
@@ -34,28 +35,34 @@ class smg_overlays
 
 	int create_web_view_window(web_view_overlay_settings& n);
 	int create_overlay_window_by_hwnd(HWND hwnd);
-
-	void hide_overlays();
 	void create_windows_for_apps();
 
 	size_t get_count();
 	std::shared_ptr<overlay_window> get_overlay_by_id(int overlay_id);
 	std::shared_ptr<overlay_window> get_overlay_by_window(HWND overlay_window);
+	std::vector<int> get_ids();
 
 	bool remove_overlay(std::shared_ptr<overlay_window> overlay);
 	bool on_window_destroy(HWND window);
 	bool on_overlay_destroy(std::shared_ptr<overlay_window> overlay);
 
-	std::vector<int> get_ids();
+	void hide_overlays();
+	void quit();
 
-	void init();
+	//redirect user input
+	HIMC our_IMC = nullptr;
+	HIMC original_IMC = nullptr;
+	bool is_intercepting = false;
+	HWND game_hwnd = nullptr;
+	void hook_user_input();
+	void unhook_user_input();
 
+	//hotkeys
 	void register_hotkeys();
 	void deregister_hotkeys();
 	bool process_hotkeys(MSG& msg);
 
-	void quit();
-
+	//events
 	void on_update_timer();
 
 	BOOL process_found_window(HWND hwnd, LPARAM param);

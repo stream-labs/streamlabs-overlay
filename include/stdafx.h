@@ -64,6 +64,8 @@ const int HOTKEY_UPDATE_OVERLAYS = 3;
 const int HOTKEY_QUIT = 4;
 const int HOTKEY_ADD_WEB = 5;
 const int HOTKEY_CATCH_APP = 6;
+const int HOTKEY_TAKE_INPUT = 7;
+const int HOTKEY_RELEASE_INPUT = 8;
 
 #define WM_SLO_WEBVIEW_CREATE (WM_USER + 32)
 //command for web view thread to create web view

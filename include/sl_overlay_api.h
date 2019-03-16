@@ -22,3 +22,6 @@ int WINAPI call_webview_roload(int id);
 std::shared_ptr<smg_overlays> WINAPI get_overlays();
 int WINAPI get_overlays_count();
 int WINAPI remove_overlay(int id);
+
+int WINAPI set_callback_for_user_input(int (*ptr)(int ));
+int WINAPI use_callback_for_user_input();

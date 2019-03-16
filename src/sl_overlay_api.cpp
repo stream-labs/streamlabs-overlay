@@ -1,8 +1,8 @@
 #include "sl_overlay_api.h"
 
+#include "sl_overlay_window.h"
 #include "sl_overlays.h"
 #include "sl_overlays_settings.h"
-#include "sl_overlay_window.h"
 
 extern HANDLE overlays_thread;
 extern DWORD overlays_thread_id;
@@ -126,6 +126,25 @@ int WINAPI remove_overlay(int id)
 	}
 }
 
+static int (*callback_ptr)(int) = nullptr;
+int WINAPI set_callback_for_user_input(int (*ptr)(int))
+{
+	callback_ptr = ptr;
+
+	return 0;
+}
+
+int WINAPI use_callback_for_user_input()
+{
+	static int send = 1122;
+	if (callback_ptr != nullptr) {
+		callback_ptr(send);
+		//callback_ptr = nullptr;
+		send += 123;
+	}
+	return 0;
+}
+
 int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 {
 	web_view_overlay_settings n;
@@ -152,8 +171,7 @@ int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 {
 	int ret = -1;
-	if (hwnd_array != nullptr && array_size == sizeof(HWND)) 
-	{
+	if (hwnd_array != nullptr && array_size == sizeof(HWND)) {
 		thread_state_mutex.lock();
 		if (thread_state != sl_overlay_thread_state::runing) {
 			thread_state_mutex.unlock();
@@ -172,17 +190,16 @@ int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, size_t array_size, int width, int height)
 {
 	int ret = -1;
-	if(true) {
+	if (true) {
 		thread_state_mutex.lock();
 		if (thread_state != sl_overlay_thread_state::runing) {
 			thread_state_mutex.unlock();
 		} else {
-			
-			std::shared_ptr<overlay_window> overlay =  smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
-			if(overlay != nullptr)
-			{
+
+			std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
+			if (overlay != nullptr) {
 				overlay->paint_window_from_buffer(image_array, array_size, width, height);
-				//todo 
+				//todo
 				//BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(n));
 			}
 			thread_state_mutex.unlock();

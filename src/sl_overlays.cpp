@@ -8,9 +8,12 @@
 #include "sl_overlays_settings.h"
 #include "sl_web_view.h"
 
-//#include "..\include\sl_overlays.h"
+#include "sl_overlay_api.h"
+
 #include "tlhelp32.h"
 #pragma comment(lib, "uxtheme.lib")
+
+#pragma comment(lib, "imm32.lib")
 
 wchar_t const g_szWindowClass[] = L"overlays";
 std::shared_ptr<smg_overlays> smg_overlays::instance = nullptr;
@@ -97,6 +100,13 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 		}
 		ret = true;
 
+	} break;
+
+	case HOTKEY_TAKE_INPUT: {
+		hook_user_input();
+	} break;
+	case HOTKEY_RELEASE_INPUT: {
+		unhook_user_input();
 	} break;
 	};
 
@@ -189,13 +199,19 @@ int smg_overlays::create_overlay_window_by_hwnd(HWND hwnd)
 		showing_windows.push_back(new_overlay_window);
 	}
 
-	PostThreadMessage(overlays_thread_id, WM_SLO_HWND_SOURCE_READY, new_overlay_window->id, reinterpret_cast<LPARAM>(&(new_overlay_window->orig_handle)));
+	PostThreadMessage(
+	    overlays_thread_id,
+	    WM_SLO_HWND_SOURCE_READY,
+	    new_overlay_window->id,
+	    reinterpret_cast<LPARAM>(&(new_overlay_window->orig_handle)));
 
 	return new_overlay_window->id;
 }
 
 void smg_overlays::on_update_timer()
 {
+	std::cout << "APP: on update timer = " << use_callback_for_user_input() << std::endl;
+	 
 	if (showing_overlays) {
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
@@ -216,8 +232,7 @@ void smg_overlays::hide_overlays()
 	std::cout << "APP: hide_overlays " << std::endl;
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-		if(n->overlay_hwnd != 0)
-		{
+		if (n->overlay_hwnd != 0) {
 			ShowWindow(n->overlay_hwnd, SW_HIDE);
 		}
 	});
@@ -279,6 +294,102 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 	}
 }
 
+HHOOK msg_hook = nullptr;
+HHOOK llkeyboard_hook = nullptr;
+
+LRESULT CALLBACK CallWndMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	std::cout << "APP: CallWndMsgProc " << wParam << std::endl;
+
+	return CallNextHookEx(msg_hook, nCode, wParam, lParam);
+}
+
+LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode >= 0) {
+		KBDLLHOOKSTRUCT* event = (KBDLLHOOKSTRUCT*)lParam;
+		std::cout << "APP: CallWndRetProc " << event->vkCode << std::endl;
+		
+		//todo 
+		//check if we in intercepting state 
+		//check if game window is on top 
+		//we have to give user ways to exit like Esc or Tab  
+		if (event->vkCode == VK_UP) {
+			//send events to our window 
+			   //pack to WM_MESSAGE and send to orig_hwnd
+			return -1;
+		} 
+	}
+	return CallNextHookEx(llkeyboard_hook, nCode, wParam, lParam);
+}
+
+void smg_overlays::hook_user_input()
+{
+ 	std::cout << "APP: hook_user_input " << std::endl;
+
+	if (!is_intercepting) {
+
+		game_hwnd = GetForegroundWindow();
+		if (game_hwnd != nullptr) {
+
+			if(true){ //print window title 
+				TCHAR title[256];
+				GetWindowText(game_hwnd, title, 256);
+				std::wstring title_wstr(title);
+				std::string title_str(title_wstr.begin(), title_wstr.end());
+				std::cout << "APP: hook_user_input catch window - " << title_str << std::endl;
+			}
+
+			//DWORD threadId = ::GetWindowThreadProcessId(game_hwnd, nullptr);
+			//msg_hook = SetWindowsHookEx(WH_GETMESSAGE, CallWndMsgProc, NULL, threadId);
+			llkeyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
+			
+			//todo intercept mouse 
+			//GetMouseRawData
+
+			our_IMC = ImmCreateContext();
+			if (our_IMC) {
+				original_IMC = ImmAssociateContext(game_hwnd, our_IMC);
+				if (!original_IMC) {
+					game_hwnd = nullptr;
+					ImmDestroyContext(our_IMC);
+					our_IMC = nullptr;
+				} else {
+					is_intercepting = true;
+				}
+			} else {
+				game_hwnd = nullptr;
+			}
+			std::cout << "APP: Input hooked" << std::endl;
+		}
+	}
+}
+
+void smg_overlays::unhook_user_input()
+{
+	std::cout << "APP: unhook_user_input " << std::endl;
+	if (is_intercepting) {
+		if (msg_hook != nullptr) {
+			UnhookWindowsHookEx(msg_hook);
+			msg_hook = nullptr;
+		}
+		if (llkeyboard_hook != nullptr) {
+			UnhookWindowsHookEx(llkeyboard_hook);
+			llkeyboard_hook = nullptr;
+		}
+
+		if (our_IMC) {
+			ImmReleaseContext(game_hwnd, our_IMC);
+			ImmDestroyContext(our_IMC);
+			our_IMC = nullptr;
+			game_hwnd = nullptr;
+		}
+
+		std::cout << "APP: Input unhooked" << std::endl;
+		is_intercepting = false;
+	}
+}
+
 void smg_overlays::register_hotkeys()
 {
 	RegisterHotKey(NULL, HOTKEY_SHOW_OVERLAYS, MOD_ALT, 0x53);   //'S'how
@@ -287,6 +398,9 @@ void smg_overlays::register_hotkeys()
 	RegisterHotKey(NULL, HOTKEY_UPDATE_OVERLAYS, MOD_ALT, 0x55); //'U'pdate
 	RegisterHotKey(NULL, HOTKEY_QUIT, MOD_ALT, 0x51);            //'Q'uit
 	RegisterHotKey(NULL, HOTKEY_CATCH_APP, MOD_ALT, 0x50);       // catch a'P'p window
+
+	RegisterHotKey(NULL, HOTKEY_TAKE_INPUT, MOD_ALT, 0x54);    // game 'T'ake input
+	RegisterHotKey(NULL, HOTKEY_RELEASE_INPUT, MOD_ALT, 0x52); // game 'R'elease input
 }
 
 void smg_overlays::deregister_hotkeys()
@@ -297,6 +411,9 @@ void smg_overlays::deregister_hotkeys()
 	UnregisterHotKey(NULL, HOTKEY_UPDATE_OVERLAYS); //'U'pdate
 	UnregisterHotKey(NULL, HOTKEY_QUIT);            //'Q'uit
 	UnregisterHotKey(NULL, HOTKEY_CATCH_APP);       // catch a'P'p window
+
+	UnregisterHotKey(NULL, HOTKEY_TAKE_INPUT);
+	UnregisterHotKey(NULL, HOTKEY_RELEASE_INPUT);
 }
 
 void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
