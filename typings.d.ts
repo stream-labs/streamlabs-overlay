@@ -32,10 +32,10 @@ export type HWND = Buffer;
  * Workaround via enum, do not use these values directly.
  */
 export const enum OverlayThreadStatus {
-  Starting = 'starting ',
-  Running = 'runing ',
-  Stopping = 'stopping ',
-  Destroyed = 'destoyed ',
+  Starting = 'starting',
+  Running = 'runing',
+  Stopping = 'stopping',
+  Destroyed = 'destoyed',
 }
 
 /**
