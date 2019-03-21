@@ -23,5 +23,6 @@ std::shared_ptr<smg_overlays> WINAPI get_overlays();
 int WINAPI get_overlays_count();
 int WINAPI remove_overlay(int id);
 
-int WINAPI set_callback_for_user_input(int (*ptr)(int ));
-int WINAPI use_callback_for_user_input();
+int WINAPI set_callback_for_user_input(int (*ptr)(WPARAM, LPARAM));
+int WINAPI use_callback_for_user_input(WPARAM wParam, LPARAM lParam);
+int WINAPI switch_overlays_user_input(bool mode_active);

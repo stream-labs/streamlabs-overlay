@@ -35,7 +35,7 @@ function step_2()
 {
 	console.log('--------------- step_2');
 	console.log('');
-
+	streamlabs_overlays.toInteractive();
 	setTimeout(step_3, 5000);
 }
 
@@ -50,8 +50,12 @@ function step_1()
     console.log('--------------- step_1');
 	console.log('');
 	console.log('Call to Interactive');
-	streamlabs_overlays.toInteractive( (test_text1, test_text2) => {
-		console.log('CallInteractive '+test_text1+', ' +test_text2 );
+	streamlabs_overlays.initInteractive( (test_text1, test_text2, test_text3) => {
+		console.log('CallInteractive: '+ test_text1 +', '+ test_text2+', '+ test_text3);
+		if(test_text3 == 38)
+		{
+			streamlabs_overlays.toInteractive();
+		}
 		return 1112233;
 	} );
 

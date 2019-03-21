@@ -141,22 +141,33 @@ int WINAPI remove_overlay(int id)
 	}
 }
 
-static int (*callback_ptr)(int) = nullptr;
-int WINAPI set_callback_for_user_input(int (*ptr)(int))
+static int (*callback_ptr)(WPARAM , LPARAM ) = nullptr;
+
+int WINAPI set_callback_for_user_input(int(*ptr)(WPARAM, LPARAM))
 {
 	callback_ptr = ptr;
 
 	return 0;
 }
 
-int WINAPI use_callback_for_user_input()
+int WINAPI switch_overlays_user_input(bool mode_active)
 {
-	static int send = 1122;
+	BOOL ret; 
+	if(mode_active)
+	{
+		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_TAKE_INPUT, 0);
+	} else {
+		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_RELEASE_INPUT, 0);
+	}
+
+	return 0;
+}
+
+int WINAPI use_callback_for_user_input(WPARAM wParam, LPARAM lParam)
+{
 	if (callback_ptr != nullptr)
 	{
-		callback_ptr(send);
-		//callback_ptr = nullptr;
-		send += 123;
+		callback_ptr(wParam, lParam);
 	}
 	return 0;
 }

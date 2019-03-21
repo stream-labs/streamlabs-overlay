@@ -31,19 +31,25 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 {
 	bool ret = false;
 	std::cout << "APP: process_hotkeys id " << msg.wParam << std::endl;
-	switch (msg.wParam) {
-	case HOTKEY_CATCH_APP: {
+	switch (msg.wParam)
+	{
+	case HOTKEY_CATCH_APP:
+	{
 		HWND top_window = GetForegroundWindow();
-		if (top_window != nullptr) {
+		if (top_window != nullptr)
+		{
 			unsigned long process_id = 0;
 			GetWindowThreadProcessId(top_window, &process_id);
 			std::cout << "APP: catch app " << process_id << ", " << top_window << std::endl;
 			EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
 		}
 		ret = true;
-	} break;
-	case HOTKEY_SHOW_OVERLAYS: {
-		if (showing_overlays) {
+	}
+	break;
+	case HOTKEY_SHOW_OVERLAYS:
+	{
+		if (showing_overlays)
+		{
 			// need to hide befor show. or show can be ignored.
 			showing_overlays = false;
 			hide_overlays();
@@ -52,25 +58,33 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 		std::cout << "APP: show overlays " << std::endl;
 		showing_overlays = true;
 		ret = true;
-	} break;
-	case HOTKEY_HIDE_OVERLAYS: {
+	}
+	break;
+	case HOTKEY_HIDE_OVERLAYS:
+	{
 		showing_overlays = false;
 
 		hide_overlays();
 		ret = true;
-	} break;
-	case HOTKEY_UPDATE_OVERLAYS: {
-		if (showing_overlays) {
+	}
+	break;
+	case HOTKEY_UPDATE_OVERLAYS:
+	{
+		if (showing_overlays)
+		{
 			std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 			std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
 				n->get_window_screenshot();
 			});
 		}
 		ret = true;
-	} break;
-	case HOTKEY_ADD_WEB: {
+	}
+	break;
+	case HOTKEY_ADD_WEB:
+	{
 		std::cout << "APP: get HOTKEY_ADD_WEB " << web_views_thread_id << std::endl;
-		if (in_standalone_mode) {
+		if (in_standalone_mode)
+		{
 			std::cout << "APP: create default web view" << std::endl;
 			web_view_overlay_settings n;
 			n.x = 100;
@@ -82,32 +96,41 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 			create_web_view_window(n);
 		}
 		ret = true;
-	} break;
+	}
+	break;
 
-	case HOTKEY_QUIT: {
+	case HOTKEY_QUIT:
+	{
 		thread_state_mutex.lock();
 
 		std::cout << "APP: HOTKEY_QUIT " << (int)thread_state << std::endl;
-		if (thread_state != sl_overlay_thread_state::runing) {
+		if (thread_state != sl_overlay_thread_state::runing)
+		{
 			thread_state_mutex.unlock();
-		} else {
+		} else
+		{
 			thread_state = sl_overlay_thread_state::stopping;
 			thread_state_mutex.unlock();
 		}
 
-		if (!quiting) {
+		if (!quiting)
+		{
 			quit();
 		}
 		ret = true;
+	}
+	break;
 
-	} break;
-
-	case HOTKEY_TAKE_INPUT: {
+	case HOTKEY_TAKE_INPUT:
+	{
 		hook_user_input();
-	} break;
-	case HOTKEY_RELEASE_INPUT: {
+	}
+	break;
+	case HOTKEY_RELEASE_INPUT:
+	{
 		unhook_user_input();
-	} break;
+	}
+	break;
 	};
 
 	return ret;
@@ -123,15 +146,18 @@ void smg_overlays::quit()
 	app_settings->write();
 
 	BOOL ret = PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_CLOSE_THREAD, NULL, NULL);
-	if (!ret) {
+	if (!ret)
+	{
 		//todo force stop that thread
 	}
 
-	if (showing_windows.size() != 0) {
+	if (showing_windows.size() != 0)
+	{
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
 			PostMessage(0, WM_SLO_WEBVIEW_CLOSE, n->id, 0);
 		});
-	} else {
+	} else
+	{
 		on_overlay_destroy(nullptr);
 	}
 
@@ -155,9 +181,11 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 	std::cout << "APP: create new webview " << n.url << ", x " << n.x << " y " << n.y << ", size " << n.width << " x "
 	          << n.height << std::endl;
 
-	if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0) {
+	if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0)
+	{
 		new_web_view_window->url = n.url;
-	} else {
+	} else
+	{
 		WCHAR buffer[MAX_PATH];
 		GetCurrentDirectory(MAX_PATH, buffer);
 		std::wstring ws(buffer);
@@ -178,7 +206,8 @@ int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
 	web_view_overlay_settings* new_window_params = new web_view_overlay_settings(n);
 	BOOL ret = PostThreadMessage(
 	    web_views_thread_id, WM_SLO_WEBVIEW_CREATE, new_web_view_window->id, reinterpret_cast<LPARAM>(new_window_params));
-	if (!ret) {
+	if (!ret)
+	{
 		delete new_window_params;
 		// todo failed to create web view probably have to remove
 		// overlay or something
@@ -210,12 +239,14 @@ int smg_overlays::create_overlay_window_by_hwnd(HWND hwnd)
 
 void smg_overlays::on_update_timer()
 {
-	std::cout << "APP: on update timer = " << use_callback_for_user_input() << std::endl;
-	 
-	if (showing_overlays) {
+	std::cout << "APP: on update timer = " << std::endl;
+
+	if (showing_overlays)
+	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			if (n->update_from_original && n->get_window_screenshot() || !n->update_from_original) {
+			if (n->update_from_original && n->get_window_screenshot() || !n->update_from_original)
+			{
 				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
 			}
 		});
@@ -232,7 +263,8 @@ void smg_overlays::hide_overlays()
 	std::cout << "APP: hide_overlays " << std::endl;
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-		if (n->overlay_hwnd != 0) {
+		if (n->overlay_hwnd != 0)
+		{
 			ShowWindow(n->overlay_hwnd, SW_HIDE);
 		}
 	});
@@ -261,7 +293,8 @@ void smg_overlays::create_windows_overlays()
 
 void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& overlay)
 {
-	if (overlay->overlay_hwnd == nullptr && overlay->ready_to_create_overlay()) {
+	if (overlay->overlay_hwnd == nullptr && overlay->ready_to_create_overlay())
+	{
 		DWORD const dwStyle = WS_POPUP; // no border or title bar
 		DWORD const dwStyleEx =
 		    WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT; // transparent, topmost, with no taskbar
@@ -270,10 +303,13 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 		overlay->overlay_hwnd =
 		    CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
 
-		if (overlay->overlay_hwnd) {
-			if (app_settings->use_color_key) {
+		if (overlay->overlay_hwnd)
+		{
+			if (app_settings->use_color_key)
+			{
 				SetLayeredWindowAttributes(overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_COLORKEY);
-			} else {
+			} else
+			{
 				SetLayeredWindowAttributes(overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), app_settings->transparency, LWA_ALPHA);
 			}
 			RECT overlay_rect = overlay->get_rect();
@@ -285,9 +321,11 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 			    overlay_rect.right - overlay_rect.left,
 			    overlay_rect.bottom - overlay_rect.top,
 			    SWP_NOREDRAW);
-			if (showing_overlays) {
+			if (showing_overlays)
+			{
 				ShowWindow(overlay->overlay_hwnd, SW_SHOW);
-			} else {
+			} else
+			{
 				ShowWindow(overlay->overlay_hwnd, SW_HIDE);
 			}
 		}
@@ -296,6 +334,7 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 
 HHOOK msg_hook = nullptr;
 HHOOK llkeyboard_hook = nullptr;
+HHOOK llmouse_hook = nullptr;
 
 LRESULT CALLBACK CallWndMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -306,33 +345,64 @@ LRESULT CALLBACK CallWndMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	if (nCode >= 0) {
+	if (nCode >= 0)
+	{
 		KBDLLHOOKSTRUCT* event = (KBDLLHOOKSTRUCT*)lParam;
-		std::cout << "APP: CallWndRetProc " << event->vkCode << std::endl;
-		
-		//todo 
-		//check if we in intercepting state 
-		//check if game window is on top 
-		//we have to give user ways to exit like Esc or Tab  
-		if (event->vkCode == VK_UP) {
-			//send events to our window 
-			   //pack to WM_MESSAGE and send to orig_hwnd
+		std::cout << "APP: LowLevelKeyboardProc " << event->vkCode << ", " << event->dwExtraInfo << std::endl;
+
+		//todo
+		//check if we in intercepting state
+		//check if game window is on top
+		//we have to give user ways to exit like Esc or Tab
+		if (event->vkCode == VK_ESCAPE)
+		{
+		}
+
+		if (event->vkCode >= VK_SPACE && event->vkCode <= VK_HELP || event->vkCode >= 'A' && event->vkCode <= 'Z')
+		{
+			//send events to our window
+			//pack to WM_MESSAGE and send to orig_hwnd
+			use_callback_for_user_input(wParam, lParam);
 			return -1;
-		} 
+		}
 	}
 	return CallNextHookEx(llkeyboard_hook, nCode, wParam, lParam);
 }
 
+LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode >= 0)
+	{
+		MSLLHOOKSTRUCT* event = (MSLLHOOKSTRUCT*)lParam;
+		std::cout << "APP: LowLevelMouseProc " << event->pt.x << ", "<< event->pt.y << ", " << event->dwExtraInfo << std::endl;
+
+		//todo
+		//check if we in intercepting state
+		//check if game window is on top
+		//we have to give user ways to exit like Esc or Tab
+		//if (event->vkCode == VK_UP)
+		{
+			//send events to our window
+			//pack to WM_MESSAGE and send to orig_hwnd
+			use_callback_for_user_input(wParam, lParam);
+			return -1;
+		}
+	}
+	return CallNextHookEx(llmouse_hook, nCode, wParam, lParam);
+}
+
 void smg_overlays::hook_user_input()
 {
- 	std::cout << "APP: hook_user_input " << std::endl;
+	std::cout << "APP: hook_user_input " << std::endl;
 
-	if (!is_intercepting) {
-
+	if (!is_intercepting)
+	{
 		game_hwnd = GetForegroundWindow();
-		if (game_hwnd != nullptr) {
+		if (game_hwnd != nullptr)
+		{
 
-			if(true){ //print window title 
+			if (true)
+			{ //print window title
 				TCHAR title[256];
 				GetWindowText(game_hwnd, title, 256);
 				std::wstring title_wstr(title);
@@ -343,23 +413,28 @@ void smg_overlays::hook_user_input()
 			//DWORD threadId = ::GetWindowThreadProcessId(game_hwnd, nullptr);
 			//msg_hook = SetWindowsHookEx(WH_GETMESSAGE, CallWndMsgProc, NULL, threadId);
 			llkeyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
-			
-			//todo intercept mouse 
+			llmouse_hook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
+			//todo intercept mouse
 			//GetMouseRawData
 
 			our_IMC = ImmCreateContext();
-			if (our_IMC) {
+			if (our_IMC)
+			{
 				original_IMC = ImmAssociateContext(game_hwnd, our_IMC);
-				if (!original_IMC) {
+				if (!original_IMC)
+				{
 					game_hwnd = nullptr;
 					ImmDestroyContext(our_IMC);
 					our_IMC = nullptr;
 				} else {
 					is_intercepting = true;
 				}
-			} else {
+			} else
+			{
 				game_hwnd = nullptr;
 			}
+			is_intercepting = true;
+
 			std::cout << "APP: Input hooked" << std::endl;
 		}
 	}
@@ -368,17 +443,26 @@ void smg_overlays::hook_user_input()
 void smg_overlays::unhook_user_input()
 {
 	std::cout << "APP: unhook_user_input " << std::endl;
-	if (is_intercepting) {
-		if (msg_hook != nullptr) {
+	if (is_intercepting)
+	{
+		if (msg_hook != nullptr)
+		{
 			UnhookWindowsHookEx(msg_hook);
 			msg_hook = nullptr;
 		}
-		if (llkeyboard_hook != nullptr) {
+		if (llkeyboard_hook != nullptr)
+		{
 			UnhookWindowsHookEx(llkeyboard_hook);
 			llkeyboard_hook = nullptr;
 		}
+		if (llmouse_hook != nullptr)
+		{
+			UnhookWindowsHookEx(llmouse_hook);
+			llmouse_hook = nullptr;
+		}
 
-		if (our_IMC) {
+		if (our_IMC)
+		{
 			ImmReleaseContext(game_hwnd, our_IMC);
 			ImmDestroyContext(our_IMC);
 			our_IMC = nullptr;
@@ -419,7 +503,8 @@ void smg_overlays::deregister_hotkeys()
 void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
 {
 	std::shared_ptr<overlay_window> work_overlay = get_overlay_by_id(overlay_id);
-	if (work_overlay != nullptr) {
+	if (work_overlay != nullptr)
+	{
 		work_overlay->orig_handle = orig_window;
 		create_window_for_overlay(work_overlay);
 	}
@@ -452,7 +537,8 @@ std::shared_ptr<overlay_window> smg_overlays::get_overlay_by_id(int overlay_id)
 		    return overlay_id == n->id;
 	    });
 
-	if (findIter != showing_windows.end()) {
+	if (findIter != showing_windows.end())
+	{
 		ret = *findIter;
 	}
 
@@ -469,7 +555,8 @@ std::shared_ptr<overlay_window> smg_overlays::get_overlay_by_window(HWND overlay
 		    return overlay_hwnd == n->overlay_hwnd;
 	    });
 
-	if (findIter != showing_windows.end()) {
+	if (findIter != showing_windows.end())
+	{
 		ret = *findIter;
 	}
 
@@ -479,7 +566,8 @@ std::shared_ptr<overlay_window> smg_overlays::get_overlay_by_window(HWND overlay
 bool smg_overlays::remove_overlay(std::shared_ptr<overlay_window> overlay)
 {
 	std::cout << "APP: RemoveOverlay status " << (int)overlay->status << std::endl;
-	if (overlay->status != overlay_status::destroing) {
+	if (overlay->status != overlay_status::destroing)
+	{
 		overlay->clean_resources();
 
 		return true;
@@ -498,9 +586,11 @@ bool smg_overlays::on_window_destroy(HWND window)
 bool smg_overlays::on_overlay_destroy(std::shared_ptr<overlay_window> overlay)
 {
 	bool removed = false;
-	if (overlay != nullptr) {
+	if (overlay != nullptr)
+	{
 		std::cout << "APP: overlay status was " << (int)overlay->status << std::endl;
-		if (overlay->status == overlay_status::destroing) {
+		if (overlay->status == overlay_status::destroing)
+		{
 			std::unique_lock<std::shared_mutex> lock(overlays_list_access);
 			showing_windows.remove_if([&overlay](std::shared_ptr<overlay_window>& n) { return (overlay->id == n->id); });
 			removed = true;
@@ -508,10 +598,11 @@ bool smg_overlays::on_overlay_destroy(std::shared_ptr<overlay_window> overlay)
 	}
 
 	std::cout << "APP: overlays count " << showing_windows.size() << " and quiting " << quiting << std::endl;
-	if (showing_windows.size() == 0 && quiting) {
+	if (showing_windows.size() == 0 && quiting)
+	{
 		PostQuitMessage(0);
-	} else {
-	}
+	} else
+	{}
 
 	return removed;
 }
@@ -532,7 +623,8 @@ std::vector<int> smg_overlays::get_ids()
 
 std::shared_ptr<smg_overlays> smg_overlays::get_instance()
 {
-	if (instance == nullptr) {
+	if (instance == nullptr)
+	{
 		instance = std::make_shared<smg_overlays>();
 	}
 	return instance;
@@ -545,7 +637,8 @@ smg_overlays::smg_overlays()
 
 	std::cout << "APP: start application " << std::endl;
 
-	if (!app_settings->read()) {
+	if (!app_settings->read())
+	{
 		app_settings->default_init();
 		// app_settings.test_init();
 	}
@@ -561,7 +654,8 @@ void smg_overlays::init()
 		create_web_view_window(n);
 	});
 
-	if (in_standalone_mode) {
+	if (in_standalone_mode)
+	{
 		register_hotkeys();
 	}
 }
@@ -574,17 +668,23 @@ bool FindRunningProcess(const WCHAR* process_name_part)
 	PROCESSENTRY32 pe32;
 	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
-	if (hProcessSnap == INVALID_HANDLE_VALUE) {
+	if (hProcessSnap == INVALID_HANDLE_VALUE)
+	{
 		procRunning = false;
-	} else {
+	} else
+	{
 		pe32.dwSize = sizeof(PROCESSENTRY32);
-		if (Process32First(hProcessSnap, &pe32)) {
-			while (true) {
-				if (StrStrW(pe32.szExeFile, process_name_part) != nullptr) {
+		if (Process32First(hProcessSnap, &pe32))
+		{
+			while (true)
+			{
+				if (StrStrW(pe32.szExeFile, process_name_part) != nullptr)
+				{
 					unsigned long process_id = pe32.th32ProcessID;
 					EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
 				}
-				if (!Process32Next(hProcessSnap, &pe32)) {
+				if (!Process32Next(hProcessSnap, &pe32))
+				{
 					break;
 				}
 			}
@@ -601,20 +701,25 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 	bool window_ok = false;
 	bool window_catched = false;
 	std::shared_ptr<overlay_window> found_window = nullptr;
-	if (param != NULL) {
+	if (param != NULL)
+	{
 		unsigned long process_id = 0;
 		GetWindowThreadProcessId(hwnd, &process_id);
-		if (*((unsigned long*)param) == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd))) {
+		if (*((unsigned long*)param) == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
+		{
 			window_ok = true;
 		}
-	} else {
+	} else
+	{
 		int written = GetWindowTextA(hwnd, buffer, 128);
-		if (written && strstr(buffer, "Notepad.") != nullptr) {
+		if (written && strstr(buffer, "Notepad.") != nullptr)
+		{
 			window_ok = true;
 		}
 	}
 
-	if (window_ok) {
+	if (window_ok)
+	{
 		WINDOWINFO wi;
 		GetWindowInfo(hwnd, &wi);
 		int y = wi.rcWindow.bottom - wi.rcWindow.top;
@@ -623,20 +728,23 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 		int written = GetWindowTextA(hwnd, buffer, 128);
 	}
 
-	if (window_ok) {
+	if (window_ok)
+	{
 		bool we_have_it = false;
 
 		{
 			std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 			std::for_each(
 			    showing_windows.begin(), showing_windows.end(), [&hwnd, &we_have_it](std::shared_ptr<overlay_window>& n) {
-				    if (n->orig_handle == hwnd) {
+				    if (n->orig_handle == hwnd)
+				    {
 					    we_have_it = true;
 				    }
 			    });
 		}
 
-		if (!we_have_it) {
+		if (!we_have_it)
+		{
 			found_window = std::make_shared<overlay_window>();
 			found_window->orig_handle = hwnd;
 			found_window->get_window_screenshot();
@@ -661,12 +769,14 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 			    app_settings->apps_names.begin(), app_settings->apps_names.end(), [&file_name](const std::string& v) {
 				    return v.compare(file_name) == 0;
 			    });
-			if (findIter == app_settings->apps_names.end()) {
+			if (findIter == app_settings->apps_names.end())
+			{
 				app_settings->apps_names.push_back(file_name);
 			}
 		}
 	}
-	if (window_catched) {
+	if (window_catched)
+	{
 		PostMessage(NULL, WM_SLO_SOURCE_CREATED, found_window->id, reinterpret_cast<LPARAM>(&(found_window->orig_handle)));
 	}
 	return TRUE;
@@ -681,11 +791,13 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 	GetClientRect(hWnd, &rc);
 	HDC hdc = BeginPaint(hWnd, &ps);
 
-	if (g_bDblBuffered) {
+	if (g_bDblBuffered)
+	{
 		// Get doublebuffered DC
 		HDC hdcMem;
 		hBufferedPaint = BeginBufferedPaint(hdc, &rc, BPBF_COMPOSITED, NULL, &hdcMem);
-		if (hBufferedPaint) {
+		if (hBufferedPaint)
+		{
 			hdc = hdcMem;
 		}
 	}
@@ -693,7 +805,8 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
-			if (hWnd == n->overlay_hwnd) {
+			if (hWnd == n->overlay_hwnd)
+			{
 				RECT overlay_rect = n->get_rect();
 				BOOL ret = BitBlt(
 				    hdc,
@@ -705,14 +818,16 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 				    0,
 				    0,
 				    SRCCOPY);
-				if (!ret) {
+				if (!ret)
+				{
 					std::cout << "APP: draw_overlay_gdi had issue " << GetLastError() << std::endl;
 				}
 			}
 		});
 	}
 
-	if (hBufferedPaint) {
+	if (hBufferedPaint)
+	{
 		// end painting
 		BufferedPaintMakeOpaque(hBufferedPaint, nullptr);
 		EndBufferedPaint(hBufferedPaint, TRUE);

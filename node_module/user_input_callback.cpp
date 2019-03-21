@@ -5,11 +5,21 @@
 #include "sl_overlay_api.h"
 
 callback_method_t user_input_callback_info;
-
-void callback_method_zero(callback_method_t* method)
+struct wm_event_t
 {
-	memset(method, 0, sizeof(*method));
+	WPARAM wParam;
+	LPARAM lParam;
+	
+	wm_event_t(WPARAM _wParam, LPARAM _lParam):wParam(_wParam), lParam(_lParam){}
+};
+
+
+callback_method_t::callback_method_t()
+{
+	ready = false;
+	intercept_active = false;
 }
+
 
 void callback_method_reset(callback_method_t* method)
 {
@@ -18,7 +28,6 @@ void callback_method_reset(callback_method_t* method)
 	method->success = false;
 	method->error = 0;
 	method->result_int = 0;
-	method->parameter = 0;
 }
 
 napi_status callback_method_call_tsf(callback_method_t* method, bool block)
@@ -109,7 +118,7 @@ napi_status callback_method_t::set_args_and_call_callback(napi_env env, napi_val
 		status = napi_get_reference_value(env, user_input_callback_info.js_this, &js_this);
 		if (status == napi_ok)
 		{
-			status = napi_call_function(env, js_this, callback, argc, argv, result);
+			status = napi_call_function(env, js_this, callback, argc_to_cb, argv_to_cb, result);
 		}
 	}
 	return status;
@@ -183,13 +192,64 @@ void callback_method_threadsafe_callback(napi_env env, napi_value callback, void
 napi_status callback_method_t::set_callback_args_values(napi_env env)
 {
 	std::cout << "APP: callback_method_func_get_args" << std::endl;
-	napi_status status;
+	napi_status status = napi_ok;
 
-	argc = 2;
-	status = napi_create_int32(env, parameter - 100, &argv[0]);
+	std::shared_ptr<wm_event_t> event;
+
+	{
+		std::lock_guard<std::mutex > lock(send_queue_mutex);
+		event = to_send.front();
+		to_send.pop();
+	}
+
+	argc_to_cb = 3;
+
+	bool send_key = false;
+	bool send_mouse = false;
+	std::string event_type = "unknown";
+	switch(event->wParam)
+	{
+		case WM_KEYDOWN:
+			event_type = "keyDown";
+			send_key = true;
+			break;
+		case WM_KEYUP:
+			event_type = "keyUp";
+			send_key = true;
+			break;
+		case WM_CHAR:
+			event_type = "char";
+			send_key = true;
+			break;
+		default:
+			break;
+	};
+	
 	if (status == napi_ok)
 	{
-		status = napi_create_int32(env, parameter + 100, &argv[1]);
+		status = napi_create_string_utf8(env, event_type.c_str(), event_type.size(), &argv_to_cb[0]);
+	}
+
+	if( send_key )
+	{
+		if (status == napi_ok)
+		{
+			LPKBDLLHOOKSTRUCT key = (LPKBDLLHOOKSTRUCT)event->lParam;
+			status = napi_create_int32(env, key->vkCode, &argv_to_cb[1]);
+			status = napi_create_int32(env, key->vkCode, &argv_to_cb[2]);
+		}
+	}
+
+	if (send_mouse)
+	{
+		if (status == napi_ok)
+		{
+			status = napi_create_int32(env, 100, &argv_to_cb[1]);
+		}
+		if (status == napi_ok)
+		{
+			status = napi_create_int32(env, 100, &argv_to_cb[2]);
+		}
 	}
 
 	return status;
@@ -207,39 +267,42 @@ napi_value callback_method_func_fail(napi_env env, napi_callback_info info)
 
 static void example_finalize(napi_env env, void* data, void* hint) {}
 
-int use_callback(int parameter)
+int use_callback(WPARAM wParam, LPARAM lParam)
 {
-	std::cout << "APP: use_callback with " << parameter << std::endl;
+	std::cout << "APP: use_callback with " << std::endl;
 
 	int ret = -1;
 
 	callback_method_t* method = &user_input_callback_info;
 	if (method != nullptr)
 	{
-		if (!method->initialized)
-		{
-			method->parameter = parameter;
 
-			if (callback_method_call_tsf(method, false) != napi_ok)
-			{
-				return -1;
-			} else
-			{
-				ret = 1;
-			}
+		{
+			std::lock_guard<std::mutex > lock(method->send_queue_mutex);
+			method->to_send.push(std::make_shared<wm_event_t>(wParam, lParam));
 		}
-
-		if (method->completed)
+		while (method->to_send.size() > 0)
 		{
-			if (method->success)
+			if (!method->initialized)
 			{
-				if (method->parameter == parameter)
+				if (callback_method_call_tsf(method, false) != napi_ok)
 				{
-					ret = method->result_int;
+					ret = -1;
+				} else
+				{
+					ret = 1;
 				}
 			}
 
-			callback_method_reset(method);
+			if (method->completed)
+			{
+				if (method->success)
+				{
+					ret = method->result_int;
+				}
+
+				callback_method_reset(method);
+			}
 		}
 	}
 

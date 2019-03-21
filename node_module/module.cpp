@@ -164,8 +164,34 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 }
 
 extern callback_method_t user_input_callback_info;
+
 napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 {
+	if (!user_input_callback_info.ready)
+	{
+		return nullptr;
+	}
+
+	napi_status status;
+
+	user_input_callback_info.intercept_active = !user_input_callback_info.intercept_active;
+	switch_overlays_user_input(user_input_callback_info.intercept_active);
+
+	std::cout << "APP: SwitchToInteractive " << user_input_callback_info.intercept_active << std::endl;
+
+	return nullptr;
+}
+
+napi_value InitInteractive(napi_env env, napi_callback_info args)
+{
+	std::cout << "APP: InitInteractive " << std::endl;
+	if (user_input_callback_info.ready)
+	{
+		return nullptr;
+	}
+
+	user_input_callback_info.ready = true;
+
 	user_input_callback_info.set_return = callback_method_func_set_return;
 	user_input_callback_info.fail = callback_method_func_fail;
 
@@ -197,21 +223,6 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 			status = user_input_callback_init(&user_input_callback_info, env, args, "func");
 		}
 	}
-
-	std::cout << "APP: SwitchToInteractive init ret = " << status << std::endl;
-
-	/*
-		status = napi_get_cb_info(env, args, &argc, argv, 0, 0);
-		
-	    napi_value js_callback;
-	    napi_value return_val;
-	    napi_value global;
-	    status = napi_get_global(env, &global);
-
-	    js_callback = argv[0];
-	    status = napi_call_function(env, global, js_callback, 0, 0, &return_val);
-	    std::cout << "APP: SwitchToInteractive init ret = " << status << std::endl;
-	*/
 
 	return nullptr;
 }
@@ -563,6 +574,13 @@ napi_value init(napi_env env, napi_value exports)
 	if (status != napi_ok)
 		return nullptr;
 	status = napi_set_named_property(env, exports, "toInteractive", fn);
+	if (status != napi_ok)
+		return nullptr;
+
+	status = napi_create_function(env, nullptr, 0, InitInteractive, nullptr, &fn);
+	if (status != napi_ok)
+		return nullptr;
+	status = napi_set_named_property(env, exports, "initInteractive", fn);
 	if (status != napi_ok)
 		return nullptr;
 

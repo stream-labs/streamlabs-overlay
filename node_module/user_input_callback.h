@@ -5,13 +5,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <queue>
+#include <memory>
 
 #define NAPI_EXPERIMENTAL 1
-#include < node_api.h >
+#include <node_api.h>
+
+struct wm_event_t;
 
 struct callback_method_t
 {
-	std::mutex mutex;
 	napi_ref js_this;
 
 	napi_threadsafe_function threadsafe_function;
@@ -20,7 +23,6 @@ struct callback_method_t
 	bool success;
 
 	int result_int;
-	int parameter;
 
 	int error;
 	napi_value result;
@@ -31,9 +33,16 @@ struct callback_method_t
 
 	napi_status set_args_and_call_callback(napi_env env, napi_value callback, napi_value* result);
 
-	size_t argc;
-	napi_value argv[2];
+	bool ready;
+	bool intercept_active;
+	std::mutex send_queue_mutex;
+	std::queue<std::shared_ptr<wm_event_t>> to_send;
+
+	size_t argc_to_cb;
+	napi_value argv_to_cb[3];
 	napi_status set_callback_args_values(napi_env env);
+	
+	callback_method_t();
 };
 
 extern callback_method_t user_input_callback_info;
