@@ -2,50 +2,47 @@
 #include <errno.h>
 #include <iostream>
 
-#include "sl_overlay_api.h"
+callback_keyboard_method_t user_keyboard_callback_info;
+callback_mouse_method_t user_mouse_callback_info;
 
-callback_method_t user_input_callback_info;
 struct wm_event_t
 {
 	WPARAM wParam;
 	LPARAM lParam;
-	
-	wm_event_t(WPARAM _wParam, LPARAM _lParam):wParam(_wParam), lParam(_lParam){}
-};
 
+	wm_event_t(WPARAM _wParam, LPARAM _lParam) : wParam(_wParam), lParam(_lParam) {}
+};
 
 callback_method_t::callback_method_t()
 {
 	ready = false;
-	intercept_active = false;
 }
 
-
-void callback_method_reset(callback_method_t* method)
+void callback_method_t::callback_method_reset()
 {
-	method->initialized = false;
-	method->completed = false;
-	method->success = false;
-	method->error = 0;
-	method->result_int = 0;
+	initialized = false;
+	completed = false;
+	success = false;
+	error = 0;
+	result_int = 0;
 }
 
-napi_status callback_method_call_tsf(callback_method_t* method, bool block)
+napi_status callback_method_t::callback_method_call_tsf(bool block)
 {
 	std::cout << "APP: callback_method_call_tsf " << std::endl;
 
-	method->initialized = true;
-	method->completed = false;
-	method->success = false;
+	initialized = true;
+	completed = false;
+	success = false;
 
 	napi_status status;
 
-	status = napi_call_threadsafe_function(method->threadsafe_function, 0, block ? napi_tsfn_blocking : napi_tsfn_nonblocking);
+	status = napi_call_threadsafe_function(threadsafe_function, 0, block ? napi_tsfn_blocking : napi_tsfn_nonblocking);
 	if (status == napi_ok)
 	{
 		if (block)
 		{
-			while (!method->completed)
+			while (!completed)
 			{
 			}
 		}
@@ -108,20 +105,32 @@ napi_value callback_method_fail(callback_method_t* method, napi_env env, napi_ca
 
 napi_status callback_method_t::set_args_and_call_callback(napi_env env, napi_value callback, napi_value* result)
 {
-	napi_value js_this;
+	napi_value local_this;
 	napi_status status;
 	std::cout << "APP: set_args_and_call_callback" << std::endl;
 
 	status = set_callback_args_values(env);
 	if (status == napi_ok)
 	{
-		status = napi_get_reference_value(env, user_input_callback_info.js_this, &js_this);
+		status = napi_get_reference_value(env, js_this, &local_this);
 		if (status == napi_ok)
 		{
-			status = napi_call_function(env, js_this, callback, argc_to_cb, argv_to_cb, result);
+			status = napi_call_function(env, local_this, callback, get_argc_to_cb(), get_argv_to_cb(), result);
 		}
 	}
 	return status;
+}
+
+bool is_intercept_active = false;
+bool callback_method_t::set_intercept_active(bool new_state)
+{
+	is_intercept_active = new_state;
+	return new_state;
+}
+
+bool callback_method_t::get_intercept_active()
+{
+	return is_intercept_active;
 }
 
 void callback_method_threadsafe_callback(napi_env env, napi_value callback, void* in_context, void* data)
@@ -189,15 +198,15 @@ void callback_method_threadsafe_callback(napi_env env, napi_value callback, void
 	}
 }
 
-napi_status callback_method_t::set_callback_args_values(napi_env env)
+napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 {
-	std::cout << "APP: callback_method_func_get_args" << std::endl;
+	std::cout << "APP: callback_keyboard_method_t::set_callback_args_values" << std::endl;
 	napi_status status = napi_ok;
 
 	std::shared_ptr<wm_event_t> event;
 
 	{
-		std::lock_guard<std::mutex > lock(send_queue_mutex);
+		std::lock_guard<std::mutex> lock(send_queue_mutex);
 		event = to_send.front();
 		to_send.pop();
 	}
@@ -205,32 +214,33 @@ napi_status callback_method_t::set_callback_args_values(napi_env env)
 	argc_to_cb = 3;
 
 	bool send_key = false;
-	bool send_mouse = false;
+
 	std::string event_type = "unknown";
-	switch(event->wParam)
+
+	switch (event->wParam)
 	{
-		case WM_KEYDOWN:
-			event_type = "keyDown";
-			send_key = true;
-			break;
-		case WM_KEYUP:
-			event_type = "keyUp";
-			send_key = true;
-			break;
-		case WM_CHAR:
-			event_type = "char";
-			send_key = true;
-			break;
-		default:
-			break;
+	case WM_KEYDOWN:
+		event_type = "keyDown";
+		send_key = true;
+		break;
+	case WM_KEYUP:
+		event_type = "keyUp";
+		send_key = true;
+		break;
+	case WM_CHAR:
+		event_type = "char";
+		send_key = true;
+		break;
+	default:
+		break;
 	};
-	
+
 	if (status == napi_ok)
 	{
 		status = napi_create_string_utf8(env, event_type.c_str(), event_type.size(), &argv_to_cb[0]);
 	}
 
-	if( send_key )
+	if (send_key)
 	{
 		if (status == napi_ok)
 		{
@@ -238,6 +248,56 @@ napi_status callback_method_t::set_callback_args_values(napi_env env)
 			status = napi_create_int32(env, key->vkCode, &argv_to_cb[1]);
 			status = napi_create_int32(env, key->vkCode, &argv_to_cb[2]);
 		}
+	}
+
+
+	if (!send_key)
+	{
+		status = napi_create_int32(env, 0, &argv_to_cb[1]);
+		status = napi_create_int32(env, 0, &argv_to_cb[2]);
+	}
+
+	return status;
+}
+
+napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
+{
+	std::cout << "APP:  callback_mouse_method_t::set_callback_args_values" << std::endl;
+	napi_status status = napi_ok;
+
+	std::shared_ptr<wm_event_t> event;
+
+	{
+		std::lock_guard<std::mutex> lock(send_queue_mutex);
+		event = to_send.front();
+		to_send.pop();
+	}
+
+	argc_to_cb = 4;
+
+	bool send_mouse = false;
+	std::string event_type = "unknown";
+	std::string mouse_modifiers = "";
+
+	switch (event->wParam)
+	{
+	
+	case WM_MOUSEMOVE:
+		event_type = "mouseMove";
+		send_mouse = true;
+		break;
+	case WM_LBUTTONDOWN:
+		event_type = "mouseDown";
+		mouse_modifiers = "leftButtonDown";
+		send_mouse = true;
+		break;
+	default:
+		break;
+	};
+
+	if (status == napi_ok)
+	{
+		status = napi_create_string_utf8(env, event_type.c_str(), event_type.size(), &argv_to_cb[0]);
 	}
 
 	if (send_mouse)
@@ -252,58 +312,99 @@ napi_status callback_method_t::set_callback_args_values(napi_env env)
 		}
 	}
 
+	if ( !send_mouse)
+	{
+		status = napi_create_int32(env, 0, &argv_to_cb[1]);
+		status = napi_create_int32(env, 0, &argv_to_cb[2]);
+	}
+
 	return status;
 }
 
-napi_value callback_method_func_set_return(napi_env env, napi_callback_info info)
+napi_value keyboard_callback_return(napi_env env, napi_callback_info info)
 {
-	return callback_method_set_return_int(&user_input_callback_info, env, info);
+	return callback_method_set_return_int(&user_keyboard_callback_info, env, info);
 }
 
-napi_value callback_method_func_fail(napi_env env, napi_callback_info info)
+napi_value keyboard_callback_fail(napi_env env, napi_callback_info info)
 {
-	return callback_method_fail(&user_input_callback_info, env, info);
+	return callback_method_fail(&user_keyboard_callback_info, env, info);
+}
+
+napi_value mouse_callback_return(napi_env env, napi_callback_info info)
+{
+	return callback_method_set_return_int(&user_mouse_callback_info, env, info);
+}
+
+napi_value mouse_callback_fail(napi_env env, napi_callback_info info)
+{
+	return callback_method_fail(&user_mouse_callback_info, env, info);
 }
 
 static void example_finalize(napi_env env, void* data, void* hint) {}
 
-int use_callback(WPARAM wParam, LPARAM lParam)
+int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 {
 	std::cout << "APP: use_callback with " << std::endl;
 
 	int ret = -1;
 
-	callback_method_t* method = &user_input_callback_info;
+	{
+		std::lock_guard<std::mutex> lock(send_queue_mutex);
+		to_send.push(std::make_shared<wm_event_t>(wParam, lParam));
+	}
+	while (to_send.size() > 0)
+	{
+		if (!initialized)
+		{
+			if (callback_method_call_tsf(false) != napi_ok)
+			{
+				ret = -1;
+			} else
+			{
+				ret = 1;
+			}
+		}
+
+		if (completed)
+		{
+			if (success)
+			{
+				ret = result_int;
+			}
+
+			callback_method_reset();
+		}
+	}
+
+	return ret;
+}
+
+int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
+{
+	std::cout << "APP: use_callback with " << std::endl;
+
+	int ret = -1;
+
+	callback_method_t* method = &user_keyboard_callback_info;
 	if (method != nullptr)
 	{
+		ret = method->use_callback(wParam, lParam);
+	}
 
-		{
-			std::lock_guard<std::mutex > lock(method->send_queue_mutex);
-			method->to_send.push(std::make_shared<wm_event_t>(wParam, lParam));
-		}
-		while (method->to_send.size() > 0)
-		{
-			if (!method->initialized)
-			{
-				if (callback_method_call_tsf(method, false) != napi_ok)
-				{
-					ret = -1;
-				} else
-				{
-					ret = 1;
-				}
-			}
+	return ret;
+}
 
-			if (method->completed)
-			{
-				if (method->success)
-				{
-					ret = method->result_int;
-				}
+int use_callback_mouse(WPARAM wParam, LPARAM lParam)
+{
+	std::cout << "APP: use_callback with " << std::endl;
 
-				callback_method_reset(method);
-			}
-		}
+	int ret = -1;
+
+	callback_method_t* method = &user_mouse_callback_info;
+	if (method != nullptr)
+	{
+		ret = method->use_callback(wParam, lParam);
 	}
 
 	return ret;
@@ -314,31 +415,31 @@ void callback_finalize(napi_env env, void* data, void* hint)
 	std::cout << "APP: callback_finalize " << std::endl;
 }
 
-napi_status user_input_callback_init(callback_method_t* method, napi_env env, napi_callback_info info, const char* name)
+napi_status callback_method_t::callback_init(napi_env env, napi_callback_info info, const char* name)
 {
 	size_t argc = 1;
 	napi_value argv[1];
 	napi_value async_name;
-	napi_value set_return;
-	napi_value fail;
+	napi_value local_return;
+	napi_value local_fail;
 	napi_status status;
 
 	status = napi_get_cb_info(env, info, &argc, argv, NULL, 0);
 	if (status == napi_ok)
 	{
-		status = napi_create_function(env, "set_return", NAPI_AUTO_LENGTH, method->set_return, NULL, &set_return);
+		status = napi_create_function(env, "set_return", NAPI_AUTO_LENGTH, set_return, NULL, &local_return);
 		if (status == napi_ok)
 		{
-			status = napi_create_reference(env, set_return, 0, &method->set_return_ref);
+			status = napi_create_reference(env, local_return, 0, &set_return_ref);
 		}
 	}
 
 	if (status == napi_ok)
 	{
-		status = napi_create_function(env, "fail", NAPI_AUTO_LENGTH, method->fail, NULL, &fail);
+		status = napi_create_function(env, "fail", NAPI_AUTO_LENGTH, fail, NULL, &local_fail);
 		if (status == napi_ok)
 		{
-			status = napi_create_reference(env, fail, 0, &method->fail_ref);
+			status = napi_create_reference(env, local_fail, 0, &fail_ref);
 		}
 	}
 
@@ -358,17 +459,27 @@ napi_status user_input_callback_init(callback_method_t* method, napi_env env, na
 		    1,
 		    0,
 		    callback_finalize,
-		    method,
+		    this,
 		    callback_method_threadsafe_callback,
-		    &method->threadsafe_function);
+		    &threadsafe_function);
 
 		std::cout << "APP: user_input_callback_method_init status = " << status << std::endl;
 
 		if (status == napi_ok)
 		{
-			set_callback_for_user_input(&use_callback);
+			set_callback();
 		}
 	}
 
 	return status;
+}
+
+void callback_mouse_method_t::set_callback()
+{
+	set_callback_for_mouse_input(&use_callback_mouse);
+}
+
+void callback_keyboard_method_t::set_callback()
+{
+	set_callback_for_keyboard_input(&use_callback_keyboard);
 }

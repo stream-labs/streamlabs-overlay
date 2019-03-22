@@ -163,37 +163,37 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 	return nullptr;
 }
 
-extern callback_method_t user_input_callback_info;
+extern callback_keyboard_method_t user_keyboard_callback_info;
 
 napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 {
-	if (!user_input_callback_info.ready)
+	if (!user_keyboard_callback_info.ready)
 	{
 		return nullptr;
 	}
 
 	napi_status status;
 
-	user_input_callback_info.intercept_active = !user_input_callback_info.intercept_active;
-	switch_overlays_user_input(user_input_callback_info.intercept_active);
+	callback_method_t::set_intercept_active( !callback_method_t::get_intercept_active() );
+	switch_overlays_user_input(callback_method_t::get_intercept_active());
 
-	std::cout << "APP: SwitchToInteractive " << user_input_callback_info.intercept_active << std::endl;
+	std::cout << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
 
 	return nullptr;
 }
 
-napi_value InitInteractive(napi_env env, napi_callback_info args)
+napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 {
-	std::cout << "APP: InitInteractive " << std::endl;
-	if (user_input_callback_info.ready)
+	std::cout << "APP: SetKeyboardCallback " << std::endl;
+	if (user_keyboard_callback_info.ready)
 	{
 		return nullptr;
 	}
 
-	user_input_callback_info.ready = true;
+	user_keyboard_callback_info.ready = true;
 
-	user_input_callback_info.set_return = callback_method_func_set_return;
-	user_input_callback_info.fail = callback_method_func_fail;
+	user_keyboard_callback_info.set_return = keyboard_callback_return;
+	user_keyboard_callback_info.fail = keyboard_callback_fail;
 
 	napi_status status;
 	size_t argc = 1;
@@ -216,11 +216,55 @@ napi_value InitInteractive(napi_env env, napi_callback_info args)
 	if (is_function == napi_function)
 	{
 		//save reference and go to creating threadsafe function
-		status = napi_create_reference(env, argv[0], 0, &user_input_callback_info.js_this);
+		status = napi_create_reference(env, argv[0], 0, &user_keyboard_callback_info.js_this);
 		if (status == napi_ok)
 		{
 
-			status = user_input_callback_init(&user_input_callback_info, env, args, "func");
+			status = user_keyboard_callback_info.callback_init( env, args, "func_keyboard");
+		}
+	}
+
+	return nullptr;
+}
+
+napi_value SetMouseCallback(napi_env env, napi_callback_info args)
+{
+	std::cout << "APP: SetMouseCallback " << std::endl;
+	if (user_mouse_callback_info.ready)
+	{
+		return nullptr;
+	}
+
+	user_mouse_callback_info.ready = true;
+
+	user_mouse_callback_info.set_return = mouse_callback_return;
+	user_mouse_callback_info.fail = mouse_callback_fail;
+
+	napi_status status;
+	size_t argc = 1;
+	napi_value argv[1];
+	napi_value js_this;
+	napi_value js_callback;
+	napi_valuetype is_function = napi_undefined;
+
+	status = napi_get_cb_info(env, args, &argc, argv, &js_this, 0);
+	if (status == napi_ok)
+	{
+		//check if js side of callback is valid
+		status = napi_get_prototype(env, argv[0], &js_callback);
+		if (status == napi_ok)
+		{
+			status = napi_typeof(env, js_callback, &is_function);
+		}
+	}
+
+	if (is_function == napi_function)
+	{
+		//save reference and go to creating threadsafe function
+		status = napi_create_reference(env, argv[0], 0, &user_mouse_callback_info.js_this);
+		if (status == napi_ok)
+		{
+			status = user_mouse_callback_info.callback_init(env, args, "func_mouse");
 		}
 	}
 
@@ -577,10 +621,17 @@ napi_value init(napi_env env, napi_value exports)
 	if (status != napi_ok)
 		return nullptr;
 
-	status = napi_create_function(env, nullptr, 0, InitInteractive, nullptr, &fn);
+	status = napi_create_function(env, nullptr, 0, SetKeyboardCallback, nullptr, &fn);
 	if (status != napi_ok)
 		return nullptr;
-	status = napi_set_named_property(env, exports, "initInteractive", fn);
+	status = napi_set_named_property(env, exports, "setKeyboardCallback", fn);
+	if (status != napi_ok)
+		return nullptr;
+
+	status = napi_create_function(env, nullptr, 0, SetMouseCallback, nullptr, &fn);
+	if (status != napi_ok)
+		return nullptr;
+	status = napi_set_named_property(env, exports, "setMouseCallback", fn);
 	if (status != napi_ok)
 		return nullptr;
 

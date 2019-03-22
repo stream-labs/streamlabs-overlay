@@ -362,7 +362,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		{
 			//send events to our window
 			//pack to WM_MESSAGE and send to orig_hwnd
-			use_callback_for_user_input(wParam, lParam);
+			use_callback_for_keyboard_input(wParam, lParam);
 			return -1;
 		}
 	}
@@ -374,7 +374,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (nCode >= 0)
 	{
 		MSLLHOOKSTRUCT* event = (MSLLHOOKSTRUCT*)lParam;
-		std::cout << "APP: LowLevelMouseProc " << event->pt.x << ", "<< event->pt.y << ", " << event->dwExtraInfo << std::endl;
+		std::cout << "APP: LowLevelMouseProc " << wParam << ", "<< event->pt.x << ", "<< event->pt.y << ", " << event->dwExtraInfo << std::endl;
 
 		//todo
 		//check if we in intercepting state
@@ -384,7 +384,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 		{
 			//send events to our window
 			//pack to WM_MESSAGE and send to orig_hwnd
-			use_callback_for_user_input(wParam, lParam);
+			use_callback_for_mouse_input(wParam, lParam);
 			return -1;
 		}
 	}

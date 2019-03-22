@@ -141,33 +141,51 @@ int WINAPI remove_overlay(int id)
 	}
 }
 
-static int (*callback_ptr)(WPARAM , LPARAM ) = nullptr;
+static int (*callback_keyboard_ptr)(WPARAM, LPARAM) = nullptr;
+static int (*callback_mouse_ptr)(WPARAM, LPARAM) = nullptr;
 
-int WINAPI set_callback_for_user_input(int(*ptr)(WPARAM, LPARAM))
+int WINAPI set_callback_for_keyboard_input(int (*ptr)(WPARAM, LPARAM))
 {
-	callback_ptr = ptr;
+	callback_keyboard_ptr = ptr;
+
+	return 0;
+}
+
+int WINAPI set_callback_for_mouse_input(int (*ptr)(WPARAM, LPARAM))
+{
+	callback_mouse_ptr = ptr;
 
 	return 0;
 }
 
 int WINAPI switch_overlays_user_input(bool mode_active)
 {
-	BOOL ret; 
-	if(mode_active)
+	BOOL ret;
+	if (mode_active)
 	{
 		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_TAKE_INPUT, 0);
-	} else {
+	} else
+	{
 		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_RELEASE_INPUT, 0);
 	}
 
 	return 0;
 }
 
-int WINAPI use_callback_for_user_input(WPARAM wParam, LPARAM lParam)
+int WINAPI use_callback_for_keyboard_input(WPARAM wParam, LPARAM lParam)
 {
-	if (callback_ptr != nullptr)
+	if (callback_keyboard_ptr != nullptr)
 	{
-		callback_ptr(wParam, lParam);
+		callback_keyboard_ptr(wParam, lParam);
+	}
+	return 0;
+}
+
+int WINAPI use_callback_for_mouse_input(WPARAM wParam, LPARAM lParam)
+{
+	if (callback_mouse_ptr != nullptr)
+	{
+		callback_mouse_ptr(wParam, lParam);
 	}
 	return 0;
 }

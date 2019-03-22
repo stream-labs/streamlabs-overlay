@@ -8,6 +8,8 @@
 #include <queue>
 #include <memory>
 
+#include "sl_overlay_api.h"
+
 #define NAPI_EXPERIMENTAL 1
 #include <node_api.h>
 
@@ -30,25 +32,57 @@ struct callback_method_t
 	napi_callback fail;
 	napi_ref set_return_ref;
 	napi_ref fail_ref;
+	
+	void callback_method_reset();
 
 	napi_status set_args_and_call_callback(napi_env env, napi_value callback, napi_value* result);
+	napi_status callback_method_call_tsf(bool block);
+	napi_status callback_init( napi_env env, napi_callback_info info, const char* name);
+	virtual void set_callback() = 0;
+	int use_callback(WPARAM wParam, LPARAM lParam);
 
 	bool ready;
-	bool intercept_active;
+	static bool set_intercept_active(bool);;
+	static bool get_intercept_active();
+
 	std::mutex send_queue_mutex;
 	std::queue<std::shared_ptr<wm_event_t>> to_send;
-
-	size_t argc_to_cb;
-	napi_value argv_to_cb[3];
-	napi_status set_callback_args_values(napi_env env);
+	virtual size_t get_argc_to_cb() = 0;
+	virtual napi_value * get_argv_to_cb() = 0;
+	virtual napi_status set_callback_args_values(napi_env env){return napi_ok;};
 	
 	callback_method_t();
 };
 
-extern callback_method_t user_input_callback_info;
+struct callback_keyboard_method_t : callback_method_t
+{
+	size_t argc_to_cb;
+	napi_value argv_to_cb[3];
+	
+	virtual size_t get_argc_to_cb() {return argc_to_cb;};
+	virtual napi_value * get_argv_to_cb() {return argv_to_cb;} ;
 
-int callback_method_func_get_args(callback_method_t* method, napi_env env);
-napi_value callback_method_func_set_return(napi_env env, napi_callback_info info);
-napi_value callback_method_func_fail(napi_env env, napi_callback_info info);
+	virtual napi_status set_callback_args_values(napi_env env);
+	virtual void set_callback();
+};
 
-napi_status user_input_callback_init(callback_method_t* method, napi_env env, napi_callback_info info, const char* name);
+struct callback_mouse_method_t : callback_method_t
+{
+	size_t argc_to_cb;
+	napi_value argv_to_cb[4];
+
+	virtual size_t get_argc_to_cb() { return argc_to_cb; };
+	virtual napi_value * get_argv_to_cb() { return argv_to_cb; };
+
+	virtual napi_status set_callback_args_values(napi_env env);
+	virtual void set_callback();
+};
+
+extern callback_keyboard_method_t user_keyboard_callback_info;
+extern callback_mouse_method_t user_mouse_callback_info;
+
+napi_value keyboard_callback_return(napi_env env, napi_callback_info info);
+napi_value keyboard_callback_fail(napi_env env, napi_callback_info info);
+napi_value mouse_callback_return(napi_env env, napi_callback_info info);
+napi_value mouse_callback_fail(napi_env env, napi_callback_info info);
+
