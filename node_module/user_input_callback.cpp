@@ -211,7 +211,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 		to_send.pop();
 	}
 
-	argc_to_cb = 3;
+	argc_to_cb = 2;
 
 	bool send_key = false;
 
@@ -246,15 +246,12 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 		{
 			LPKBDLLHOOKSTRUCT key = (LPKBDLLHOOKSTRUCT)event->lParam;
 			status = napi_create_int32(env, key->vkCode, &argv_to_cb[1]);
-			status = napi_create_int32(env, key->vkCode, &argv_to_cb[2]);
 		}
 	}
-
 
 	if (!send_key)
 	{
 		status = napi_create_int32(env, 0, &argv_to_cb[1]);
-		status = napi_create_int32(env, 0, &argv_to_cb[2]);
 	}
 
 	return status;

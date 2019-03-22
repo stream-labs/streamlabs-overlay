@@ -46,19 +46,18 @@ function got_text( test)
 	console.log('--------------- got_text -----------___________' + test);
 }
 
-
 function step_1()
 {
     console.log('--------------- step_1');
 	console.log('');
 	console.log('Call to Interactive');
-	streamlabs_overlays.setMouseCallback( (test_text1, test_text2, test_text3, test_text4) => {
-		console.log('setMouseCallback: '+ test_text1 +', '+ test_text2+', '+ test_text3+ ', '+test_text4);
+	streamlabs_overlays.setMouseCallback( (eventType, x, y, modifier) => {
+		console.log('setMouseCallback: '+ eventType +', '+ x+', '+ y+ ', '+modifier);
 		return 1112233;
 	} );
 
-	streamlabs_overlays.setKeyboardCallback( (test_text1, test_text2, test_text3) => {
-		console.log('setKeyboardCallback: '+ test_text1 +', '+ test_text2+', '+ test_text3);
+	streamlabs_overlays.setKeyboardCallback( (eventType, keyCode) => {
+		console.log('setKeyboardCallback: '+ eventType +', '+ keyCode);
 		if(test_text3 == 38)
 		{
 			streamlabs_overlays.toInteractive();

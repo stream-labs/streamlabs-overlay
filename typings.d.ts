@@ -175,3 +175,25 @@ export function remove(id: OverlayId): void;
  * @see {OverlayThreadStatus}
  */
 export function getStatus(): OverlayThreadStatus;
+
+/**
+ * Set callback for mouse events 
+ *
+ * 
+ */
+export function setMouseCallback(  );
+
+/**
+ * Set callback for keyboard events 
+ *
+ * 
+ */
+export function setKeyboardCallback(  );
+
+
+/**
+ * Switch on/off interactive mode for overlays
+ * In this mode overlay module intercept user keyboard and mouse events and use callbacks to send them to frontend
+ * 
+ */
+export function switchInteractiveMode(  );

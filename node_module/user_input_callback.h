@@ -57,7 +57,7 @@ struct callback_method_t
 struct callback_keyboard_method_t : callback_method_t
 {
 	size_t argc_to_cb;
-	napi_value argv_to_cb[3];
+	napi_value argv_to_cb[2];
 	
 	virtual size_t get_argc_to_cb() {return argc_to_cb;};
 	virtual napi_value * get_argv_to_cb() {return argv_to_cb;} ;
