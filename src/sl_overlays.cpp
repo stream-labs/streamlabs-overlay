@@ -239,8 +239,6 @@ int smg_overlays::create_overlay_window_by_hwnd(HWND hwnd)
 
 void smg_overlays::on_update_timer()
 {
-	std::cout << "APP: on update timer = " << std::endl;
-
 	if (showing_overlays)
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);

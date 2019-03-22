@@ -291,6 +291,27 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 		mouse_modifiers = "leftButtonDown";
 		send_mouse = true;
 		break;
+	case WM_LBUTTONUP:
+		event_type = "mouseUp";
+		mouse_modifiers = "leftButtonUp";
+		send_mouse = true;
+		break;
+	case WM_RBUTTONDOWN:
+		event_type = "mouseDown";
+		mouse_modifiers = "rightButtonDown";
+		send_mouse = true;
+		break;
+	case WM_RBUTTONUP:
+		event_type = "mouseUp";
+		mouse_modifiers = "rightButtonUp";
+		send_mouse = true;
+		break;
+	case WM_MOUSEWHEEL:
+	case WM_MOUSEHWHEEL:
+		event_type = "mouseWheel";
+		mouse_modifiers = "";
+		send_mouse = true;		
+		break;
 	default:
 		break;
 	};
@@ -309,6 +330,10 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 		if (status == napi_ok)
 		{
 			status = napi_create_int32(env, 100, &argv_to_cb[2]);
+		}
+		if (status == napi_ok)
+		{
+			status = napi_create_string_utf8(env, mouse_modifiers.c_str(), mouse_modifiers.size(), &argv_to_cb[3]);
 		}
 	}
 

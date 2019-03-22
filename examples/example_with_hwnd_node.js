@@ -27,6 +27,7 @@ function step_3()
 {
 	console.log('--------------- step_3');
 	console.log('');
+	streamlabs_overlays.switchInteractiveMode();
 
 	setTimeout(step_finish, 5000);
 }
@@ -35,7 +36,8 @@ function step_2()
 {
 	console.log('--------------- step_2');
 	console.log('');
-	streamlabs_overlays.toInteractive();
+	streamlabs_overlays.switchInteractiveMode();
+
 	setTimeout(step_3, 5000);
 }
 
@@ -50,8 +52,13 @@ function step_1()
     console.log('--------------- step_1');
 	console.log('');
 	console.log('Call to Interactive');
-	streamlabs_overlays.initInteractive( (test_text1, test_text2, test_text3) => {
-		console.log('CallInteractive: '+ test_text1 +', '+ test_text2+', '+ test_text3);
+	streamlabs_overlays.setMouseCallback( (test_text1, test_text2, test_text3, test_text4) => {
+		console.log('setMouseCallback: '+ test_text1 +', '+ test_text2+', '+ test_text3+ ', '+test_text4);
+		return 1112233;
+	} );
+
+	streamlabs_overlays.setKeyboardCallback( (test_text1, test_text2, test_text3) => {
+		console.log('setKeyboardCallback: '+ test_text1 +', '+ test_text2+', '+ test_text3);
 		if(test_text3 == 38)
 		{
 			streamlabs_overlays.toInteractive();

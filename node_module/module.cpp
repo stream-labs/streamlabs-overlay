@@ -617,7 +617,7 @@ napi_value init(napi_env env, napi_value exports)
 	status = napi_create_function(env, nullptr, 0, SwitchToInteractive, nullptr, &fn);
 	if (status != napi_ok)
 		return nullptr;
-	status = napi_set_named_property(env, exports, "toInteractive", fn);
+	status = napi_set_named_property(env, exports, "switchInteractiveMode", fn);
 	if (status != napi_ok)
 		return nullptr;
 
