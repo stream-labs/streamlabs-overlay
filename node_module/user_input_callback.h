@@ -86,3 +86,4 @@ napi_value keyboard_callback_fail(napi_env env, napi_callback_info info);
 napi_value mouse_callback_return(napi_env env, napi_callback_info info);
 napi_value mouse_callback_fail(napi_env env, napi_callback_info info);
 
+int switch_input();

@@ -354,9 +354,11 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		//we have to give user ways to exit like Esc or Tab
 		if (event->vkCode == VK_ESCAPE)
 		{
-		}
+			//PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_RELEASE_INPUT, 0);
+			use_callback_for_switching_input();
+		} else
 
-		if (event->vkCode >= VK_SPACE && event->vkCode <= VK_HELP || event->vkCode >= 'A' && event->vkCode <= 'Z')
+		//if (event->vkCode >= VK_SPACE && event->vkCode <= VK_HELP || event->vkCode >= 'A' && event->vkCode <= 'Z' || event->vkCode >= 'a' && event->vkCode <= 'z' || event->vkCode >= '0' && event->vkCode <= '9')
 		{
 			//send events to our window
 			//pack to WM_MESSAGE and send to orig_hwnd
@@ -378,12 +380,15 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 		//check if we in intercepting state
 		//check if game window is on top
 		//we have to give user ways to exit like Esc or Tab
-		//if (event->vkCode == VK_UP)
+		
 		{
 			//send events to our window
 			//pack to WM_MESSAGE and send to orig_hwnd
 			use_callback_for_mouse_input(wParam, lParam);
-			return -1;
+			if(wParam != WM_MOUSEMOVE)
+			{
+				return -1;
+			}
 		}
 	}
 	return CallNextHookEx(llmouse_hook, nCode, wParam, lParam);

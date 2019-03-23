@@ -143,6 +143,7 @@ int WINAPI remove_overlay(int id)
 
 static int (*callback_keyboard_ptr)(WPARAM, LPARAM) = nullptr;
 static int (*callback_mouse_ptr)(WPARAM, LPARAM) = nullptr;
+static int (*callback_switch_ptr)() = nullptr;
 
 int WINAPI set_callback_for_keyboard_input(int (*ptr)(WPARAM, LPARAM))
 {
@@ -158,16 +159,9 @@ int WINAPI set_callback_for_mouse_input(int (*ptr)(WPARAM, LPARAM))
 	return 0;
 }
 
-int WINAPI switch_overlays_user_input(bool mode_active)
+int WINAPI set_callback_for_switching_input(int (*ptr)())
 {
-	BOOL ret;
-	if (mode_active)
-	{
-		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_TAKE_INPUT, 0);
-	} else
-	{
-		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_RELEASE_INPUT, 0);
-	}
+	callback_switch_ptr = ptr;
 
 	return 0;
 }
@@ -187,6 +181,30 @@ int WINAPI use_callback_for_mouse_input(WPARAM wParam, LPARAM lParam)
 	{
 		callback_mouse_ptr(wParam, lParam);
 	}
+	return 0;
+}
+
+int WINAPI use_callback_for_switching_input()
+{
+	if (callback_switch_ptr != nullptr)
+	{
+		callback_switch_ptr();
+	}
+	return 0;
+}
+
+int WINAPI switch_overlays_user_input(bool mode_active)
+{
+	BOOL ret = false;
+
+	if (mode_active)
+	{
+		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_TAKE_INPUT, 0);
+	} else
+	{
+		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_RELEASE_INPUT, 0);
+	}
+
 	return 0;
 }
 

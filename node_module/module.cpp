@@ -163,19 +163,16 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 	return nullptr;
 }
 
-extern callback_keyboard_method_t user_keyboard_callback_info;
-
 napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 {
-	if (!user_keyboard_callback_info.ready)
+	if (!user_keyboard_callback_info.ready || !user_mouse_callback_info.ready)
 	{
 		return nullptr;
 	}
 
-	napi_status status;
-
-	callback_method_t::set_intercept_active( !callback_method_t::get_intercept_active() );
-	switch_overlays_user_input(callback_method_t::get_intercept_active());
+	set_callback_for_switching_input(&switch_input);
+	
+	switch_input();
 
 	std::cout << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
 

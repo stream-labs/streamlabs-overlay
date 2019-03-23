@@ -185,7 +185,7 @@ void callback_method_threadsafe_callback(napi_env env, napi_value callback, void
 						method->success = true;
 						method->completed = true;
 					}
-					std::cout << "APP: callback_method_threadsafe_callback ret " << ret << std::endl;
+					//std::cout << "APP: callback_method_threadsafe_callback ret " << ret << std::endl;
 				} else
 				{
 					//if it function then call it
@@ -402,9 +402,21 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 	return ret;
 }
 
+int switch_input()
+{
+	std::cout << "APP: switch_input " << std::endl;
+
+	int ret = -1;
+
+	callback_method_t::set_intercept_active(!callback_method_t::get_intercept_active());
+	switch_overlays_user_input(callback_method_t::get_intercept_active());
+
+	return ret;
+}
+
 int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
 {
-	std::cout << "APP: use_callback with " << std::endl;
+	std::cout << "APP: use_callback  " << std::endl;
 
 	int ret = -1;
 
@@ -419,7 +431,7 @@ int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
 
 int use_callback_mouse(WPARAM wParam, LPARAM lParam)
 {
-	std::cout << "APP: use_callback with " << std::endl;
+	std::cout << "APP: use_callback  " << std::endl;
 
 	int ret = -1;
 

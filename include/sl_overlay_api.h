@@ -25,8 +25,10 @@ int WINAPI remove_overlay(int id);
 
 int WINAPI set_callback_for_keyboard_input(int (*ptr)(WPARAM, LPARAM));
 int WINAPI set_callback_for_mouse_input(int(*ptr)(WPARAM, LPARAM));
+int WINAPI set_callback_for_switching_input(int(*ptr)());
 
 int WINAPI use_callback_for_keyboard_input(WPARAM wParam, LPARAM lParam);
 int WINAPI use_callback_for_mouse_input(WPARAM wParam, LPARAM lParam);
+int WINAPI use_callback_for_switching_input();
 
 int WINAPI switch_overlays_user_input(bool mode_active);
