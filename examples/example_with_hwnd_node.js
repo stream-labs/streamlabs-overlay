@@ -58,7 +58,7 @@ function step_1()
 
 	streamlabs_overlays.setKeyboardCallback( (eventType, keyCode) => {
 		console.log('setKeyboardCallback: '+ eventType +', '+ keyCode);
-		if(test_text3 == 38)
+		if(keyCode == 38)
 		{
 			streamlabs_overlays.toInteractive();
 		}

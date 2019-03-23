@@ -639,16 +639,16 @@ smg_overlays::smg_overlays()
 	quiting = false;
 
 	std::cout << "APP: start application " << std::endl;
+}
 
+void smg_overlays::init()
+{
 	if (!app_settings->read())
 	{
 		app_settings->default_init();
 		// app_settings.test_init();
 	}
-}
 
-void smg_overlays::init()
-{
 	create_overlay_window_class();
 
 	create_windows_for_apps();
