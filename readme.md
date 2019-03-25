@@ -8,14 +8,21 @@ Also app can create `web view`, open url in it and use that web view as source.
 ## nodejs module 
 ### Build 
   There is gyp project file in repository what can be used to make node module. 
+
+To setup env and make a build use command
 ```
-node-gyp configure 
-node-gyp build
+yarn install
 ```
   Module file will be in 'build\Release\'
 
+And to make build again after source code changed
+```
+node-gyp build
+```
+
 #### Requirements
 - node
+- yarn
 - node-gyp
 - python 2.7
 - msbuild (vs studio make tools )
@@ -23,11 +30,12 @@ node-gyp build
 ### Module use examples
   Examples to show api usage for simple usecases. 
 ```
-node example\simple_add_remove_overlays.js
-node example\simple_setup_overlay.js
-node example\simple_thread_stress_text.js
+node examples\example_with_hwnd_node.js
+node examples\simple_add_remove_overlays.js
+node examples\simple_setup_overlay.js
+node examples\simple_thread_stress_text.js
 ```
-  Simple UI example in 'example\electron_ui'
+  Simple UI example in 'examples\example_with_offscreen.js'
 
 ### Module API
 Each overlay has ID by which it can be adressed in api.
@@ -37,22 +45,27 @@ Thread what control overlays have to be started and stoped explicitly by module 
 - `stop()`
 
 For now overlays can be shown and hidden all together
-- `show_overlays()`
-- `hide_overlays()`
+- `show()`
+- `hide()`
 
 To get basic info about overlays 
-- `get_overlays_count()`
-- `get_overlays_ids()` it return list of overlay ids. 
-- `get_overlay_info(overlay_id)`
+- `getCount()`
+- `getIds()` it return list of overlay ids. 
+- `getInfo(overlay_id)`
 
 To create, setup and remove overlay
-- `add_overlay(url)` return overlay id 
-- `add_overlay_ex(url, x, y, width, height)` return overlay id 
-- `set_overlay_position(overlay_id, x, y, width, height)`
-- `set_overlay_url(overlay_id, url)`
-- `set_overlay_transparency(overlay_id, transparency)` from 0 to 255 like in SetLayeredWindowAttributes 
-- `call_overlay_reload(overlay_id)` send web view a command to reload current page
-- `remove_overlay(overlay_id)`
+- `add(url)` return overlay id 
+- `addHWND(url)` return overlay id 
+- `addEx(url, x, y, width, height)` return overlay id 
+- `setPosition(overlay_id, x, y, width, height)`
+- `setUrl(overlay_id, url)`
+- `setTransparency(overlay_id, transparency)` from 0 to 255 like in SetLayeredWindowAttributes 
+- `reload(overlay_id)` send web view a command to reload current page
+- `remove(overlay_id)`
+- `paintOverlay(overlay_id, width, height, bitmap)` 
+- `setMouseCallback(callback)`
+- `setKeyabordCallback(callback)`
+- `switchInteractiveMode()`
 
 ## stand alone app 
 ### Build 
