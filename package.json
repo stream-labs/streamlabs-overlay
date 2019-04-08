@@ -8,7 +8,7 @@
     "name": "Streamlabs",
     "url": "https://streamlabs.com"
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "SEE LICENSE IN COPYRIGHT LAW",
   "engines": {
     "node": ">= 10"
@@ -18,7 +18,7 @@
     "url": "git://github.com/stream-labs/streamlabs-overlay"
   },
   "scripts": {
-    "build":"node-pre-gyp install --fallback-to-build --msvs_version=2017 ",
+    "install":"node-pre-gyp install --fallback-to-build --msvs_version=2017",
     "pack": "node-pre-gyp package",
     "release": "standard-version",
     "test": "node index.js"
@@ -37,11 +37,8 @@
     "trailingComma": "all"
   },
   "files": [
-    "index.js","typings.d.ts", "package.json", "build/Release/*/streamlabs_overlay.node"
+    "npm/index.js","npm/typings.d.ts", "npm/package.json", "build/Release/*/streamlabs_overlay.node"
   ],  
-  "dependencies": {
-    "nan": "^2.12.1"
-  },
   "devDependencies": {
     "@types/node": "^11.10.4",
     "node-pre-gyp": "^0.12.0",

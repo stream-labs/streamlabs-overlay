@@ -1,0 +1,25 @@
+{
+  "name": "@streamlabs/game-overlay",
+  "private": true,
+  "description": "Streamlabs Game Overlay module",
+  "main": "index.js",
+  "typings": "typings.d.ts",
+  "author": {
+    "name": "Streamlabs",
+    "url": "https://streamlabs.com"
+  },
+  "version": "0.0.3",
+  "license": "SEE LICENSE IN COPYRIGHT LAW",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/stream-labs/streamlabs-overlay"
+  },
+  "scripts": {
+  },
+  "dependencies": {
+    "nan": "^2.12.1"
+  }
+}
