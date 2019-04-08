@@ -1,8 +1,10 @@
-node_modules
+node_modules/
 lib/binding
-build
+build/
 test
+examples/
 *.tgz
 npm-debug.log
 .npmignore
 .gitignore
+.vscode

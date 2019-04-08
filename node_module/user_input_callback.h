@@ -10,7 +10,8 @@
 
 #include "sl_overlay_api.h"
 
-#define NAPI_EXPERIMENTAL 1
+#define NAPI_EXPERIMENTAL 
+#define NAPI_VERSION 3
 #include <node_api.h>
 
 struct wm_event_t;
