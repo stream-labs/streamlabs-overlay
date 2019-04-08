@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.0.4](https://github.com/stream-labs/streamlabs-overlay/compare/v0.0.1...v0.0.4) (2019-04-08)
+
+
+
 # 1.1.0 (2019-03-15)
 
 
