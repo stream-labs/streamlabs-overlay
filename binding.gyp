@@ -14,7 +14,6 @@
         "node_module\*.cpp",
         "node_module\*.h"
       ],
-      "product_dir": "<(module_path)",
       "conditions": [
         [
           "OS=='win'",
