@@ -1,4 +1,5 @@
 build/
+build*
 settings.cfg
 .vs/
 pids
@@ -10,3 +11,6 @@ npm-debug.log
 node_modules/
 .idea/
 .vscode/
+dist/
+streamlabs_game_overlay*.tar.gz
+yarn-error.log

@@ -8,3 +8,6 @@ npm-debug.log
 .npmignore
 .gitignore
 .vscode
+dist/
+streamlabs_game_overlay*.tar.gz
+yarn-error.log
