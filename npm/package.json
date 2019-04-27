@@ -8,10 +8,10 @@
     "name": "Streamlabs",
     "url": "https://streamlabs.com"
   },
-  "version": "0.0.3",
+  "version": "0.0.7",
   "license": "SEE LICENSE IN COPYRIGHT LAW",
   "engines": {
-    "node": ">= 10"
+    "node": ">= 8"
   },  
   "binary": {
     "module_name": "streamlabs_overlay",
@@ -19,7 +19,7 @@
     "remote_path": "./{module_name}/v{version}/{configuration}/",
     "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz",
     "host": "https://streamlabs-overlay-binary.s3-us-east-1.amazonaws.com",
-    "napi_versions": [3]
+    "napi_versions": [1]
   },  
   "repository": {
     "type": "git",

@@ -1,5 +1,10 @@
 const { app, BrowserWindow} = require("electron")
-//const streamlabs_overlays = require('../index')
+const streamlabs_overlays = require('../build-tmp-napi-v1/Release/streamlabs_overlay.node')
+
+//
+//  # command to run this test 
+//  yarn run electron examples\example_with_hwnd.js
+//
 
 let win
 //streamlabs_overlays.start();
@@ -13,7 +18,7 @@ function createWindow() {
   
     let hwnd = win.getNativeWindowHandle();
     console.log(hwnd);
-    //streamlabs_overlays.addHWND(hwnd);
+    streamlabs_overlays.addHWND(hwnd);
 
     win.on("closed", () => {
       win = null
