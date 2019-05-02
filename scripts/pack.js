@@ -5,10 +5,10 @@ const rimraf = require('rimraf');
 
 const dist_dir = "dist";
 const dist_dir_path = path.join(__dirname, "..", dist_dir);
-const prepack_path = path.join(dist_dir_path, "game-overlay");
-const npm_dir_path = path.join(__dirname, "..", 'npm');
-const module_name = 'streamlabs_overlay.node';
-const module_search_path = path.join(__dirname, '..', 'build*', 'Release', '**', module_name);
+const prepack_path  = path.join(dist_dir_path, "game-overlay");
+const npm_dir_path  = path.join(__dirname, "..", 'npm');
+const module_name   = 'streamlabs_overlay.node';
+const module_search_path = path.join(__dirname, '..', 'build*', 'Release', module_name);
 var node_module_path = '';
 var pack_version = '0.0.0';
 // Make dist dir and move files to it 

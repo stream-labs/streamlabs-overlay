@@ -1,5 +1,6 @@
 const { app, BrowserWindow} = require("electron")
-const streamlabs_overlays = require('../build-tmp-napi-v1/Release/streamlabs_overlay.node')
+//const streamlabs_overlays = require('../build-tmp-napi-v1/Release/streamlabs_overlay.node')
+const streamlabs_overlays = require('../build/Release/streamlabs_overlay.node')
 
 //
 //  # command to run this test 

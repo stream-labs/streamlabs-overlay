@@ -1,11 +1,13 @@
 ## Overlay
 `overlay` - it is a window what try to stay over any other windows( even fullscreen games ) and show content of some `source`. 
 
-`source` can be other window like chat or cpu monitor. 
+`source` - can be other window like chat or cpu monitor. 
 
 Also app can create `web view`, open url in it and use that web view as source.
 
-## nodejs module 
+It can be build as nodejs module and as standalone app. 
+
+## NodeJS Module 
 ### Build 
   There is gyp project file in repository what can be used to make node module. 
 
@@ -19,6 +21,21 @@ And to make build again after source code changed
 ```
 node-gyp build
 ```
+By default module works fine with electron 4. But to make one loadable in electron 2. Other steps have to be done 
+
+```
+nvm use 8.x.x
+yarn install 
+#remove build-tmp*
+node-gyp configure 
+node-gyp rebuild --target=2.0.16 --dist-url=https://atom.io/download/atom-shell
+node scripts\pack.js 
+```
+
+### Pack 
+Use command 'node script\pack.js' to make a package for slobs.
+
+It uses version from package.json so update it to a new value.
 
 #### Requirements
 - node
@@ -34,6 +51,7 @@ node examples\example_with_hwnd_node.js
 node examples\simple_add_remove_overlays.js
 node examples\simple_setup_overlay.js
 node examples\simple_thread_stress_text.js
+yarn electron examples\example_with_hwnd.js	  
 ```
   Simple UI example in 'examples\example_with_offscreen.js'
 
@@ -63,11 +81,16 @@ To create, setup and remove overlay
 - `reload(overlay_id)` send web view a command to reload current page
 - `remove(overlay_id)`
 - `paintOverlay(overlay_id, width, height, bitmap)` 
-- `setMouseCallback(callback)`
+
+For interective mode set callbacks and switch on/off. See examples\example_with_hwnd_node.js. 
+- `setMouseCallback(callback)` 
 - `setKeyabordCallback(callback)`
 - `switchInteractiveMode()`
 
-## stand alone app 
+## Stand Alone App 
+
+Code for that mode can be outdated as main development have focus on nodejs module mode. 
+
 ### Build 
 ```
 mkdir build_app

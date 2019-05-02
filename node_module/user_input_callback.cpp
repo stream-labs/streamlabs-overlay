@@ -37,7 +37,12 @@ napi_status callback_method_t::callback_method_call_tsf(bool block)
 
 	napi_status status;
 
+#ifdef NAPI_EXPERIMENTAL
 	status = napi_call_threadsafe_function(threadsafe_function, 0, block ? napi_tsfn_blocking : napi_tsfn_nonblocking);
+#else
+
+#endif
+
 	if (status == napi_ok)
 	{
 		if (block)
@@ -278,7 +283,7 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 
 	switch (event->wParam)
 	{
-	
+
 	case WM_MOUSEMOVE:
 		event_type = "mouseMove";
 		send_mouse = true;
@@ -307,7 +312,7 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 	case WM_MOUSEHWHEEL:
 		event_type = "mouseWheel";
 		mouse_modifiers = "";
-		send_mouse = true;		
+		send_mouse = true;
 		break;
 	default:
 		break;
@@ -367,7 +372,7 @@ static void example_finalize(napi_env env, void* data, void* hint) {}
 
 int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 {
-	std::cout << "APP: use_callback with " << std::endl;
+	std::cout << "APP: use_callback called" << std::endl;
 
 	int ret = -1;
 
@@ -375,6 +380,8 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 		std::lock_guard<std::mutex> lock(send_queue_mutex);
 		to_send.push(std::make_shared<wm_event_t>(wParam, lParam));
 	}
+#ifdef NAPI_EXPERIMENTAL
+
 	while (to_send.size() > 0)
 	{
 		if (!initialized)
@@ -398,6 +405,9 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 			callback_method_reset();
 		}
 	}
+#else
+	uv_async_send(&uv_async_this);
+#endif
 
 	return ret;
 }
@@ -416,7 +426,7 @@ int switch_input()
 
 int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
 {
-	std::cout << "APP: use_callback  " << std::endl;
+	std::cout << "APP: use_callback_keyboard  " << std::endl;
 
 	int ret = -1;
 
@@ -431,7 +441,7 @@ int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
 
 int use_callback_mouse(WPARAM wParam, LPARAM lParam)
 {
-	std::cout << "APP: use_callback  " << std::endl;
+	std::cout << "APP: use_callback_mouse  " << std::endl;
 
 	int ret = -1;
 
@@ -484,6 +494,7 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 
 	if (status == napi_ok)
 	{
+#ifdef NAPI_EXPERIMENTAL
 		status = napi_create_threadsafe_function(
 		    env,
 		    argv[0],
@@ -496,7 +507,12 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 		    this,
 		    callback_method_threadsafe_callback,
 		    &threadsafe_function);
-
+#else
+		status = napi_async_init(env, argv[0], async_name, &async_context);
+		uv_async_init(uv_default_loop(), &uv_async_this, &static_async_callback);
+		uv_async_this.data = this;
+		env_this = env;
+#endif
 		std::cout << "APP: user_input_callback_method_init status = " << status << std::endl;
 
 		if (status == napi_ok)
@@ -506,6 +522,51 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 	}
 
 	return status;
+}
+
+void callback_method_t::static_async_callback(uv_async_t* handle)
+{
+	try
+	{
+		static_cast<callback_method_t*>(handle->data)->async_callback();
+	} catch (std::exception& e)
+	{
+	} catch (...)
+	{}
+}
+
+void callback_method_t::async_callback()
+{
+	napi_status status;
+	napi_value js_cb;
+	napi_value ret_value;
+	napi_value recv;
+
+	napi_handle_scope scope;
+
+	status = napi_open_handle_scope(env_this, &scope);
+	if (status == napi_ok)
+	{
+		status = napi_get_reference_value(env_this, js_this, &js_cb);
+		if (status == napi_ok)
+		{
+			while (to_send.size() > 0)
+			{
+				status = set_callback_args_values(env_this);
+				if (status == napi_ok)
+				{
+					status = napi_make_callback(env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
+				}
+			}
+		}
+
+		napi_close_handle_scope(env_this, scope);
+	}
+
+	if (status != napi_ok)
+	{
+		std::cout << "APP: failed async_callback to send callback with status " << status << std::endl;
+	}
 }
 
 void callback_mouse_method_t::set_callback()

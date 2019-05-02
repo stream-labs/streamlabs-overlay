@@ -1,4 +1,5 @@
-const streamlabs_overlays = require('../build-tmp-napi-v1/Release/streamlabs_overlay.node')
+//const streamlabs_overlays = require('../build-tmp-napi-v1/Release/streamlabs_overlay.node')
+const streamlabs_overlays = require('../build/Release/streamlabs_overlay.node')
 
 console.log('Call start');
 streamlabs_overlays.start();
@@ -52,17 +53,17 @@ function step_1()
 	console.log('');
 	console.log('Call to Interactive');
 	streamlabs_overlays.setMouseCallback( (eventType, x, y, modifier) => {
-		console.log('setMouseCallback: '+ eventType +', '+ x+', '+ y+ ', '+modifier);
-		return 1112233;
+		console.log('get MouseCallback: '+ eventType +', '+ x+', '+ y+ ', '+modifier);
+		return 111223;
 	} );
 
 	streamlabs_overlays.setKeyboardCallback( (eventType, keyCode) => {
-		console.log('setKeyboardCallback: '+ eventType +', '+ keyCode);
+		console.log('get KeyboardCallback: '+ eventType +', '+ keyCode);
 		if(keyCode == 38)
 		{
 			streamlabs_overlays.switchInteractiveMode();
 		}
-		return 1112233;
+		return 111223;
 	} );
 
 

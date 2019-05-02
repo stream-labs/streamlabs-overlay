@@ -9,7 +9,7 @@
     "name": "Streamlabs",
     "url": "https://streamlabs.com"
   },
-  "version": "0.0.8",
+  "version": "0.0.9",
   "license": "SEE LICENSE IN COPYRIGHT LAW",
   "engines": {
     "node": ">= 8"
@@ -52,7 +52,7 @@
     "@types/node": "^11.10.4",
     "node-pre-gyp": "^0.12.0",
     "aws-sdk": "^2.x",
-    "electron": "^4.1.4",
+    "electron": "^2.0.16",
     "prettier": "^1.16.4",
     "standard-version": "^5.0.1",
     "fs-extra": "7.0.1",
