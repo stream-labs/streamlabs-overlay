@@ -160,7 +160,7 @@ export function setTransparency(overlayId: OverlayId, transparency: number): voi
  *
  *  @param overlayId ID of the overlay to set
  */
-export function paintOverlay(overlayId: OverlayId, width: number, height: number, image: Buffer);
+export function paintOverlay(overlayId: OverlayId, width: number, height: number, image: Buffer): void;
 
 /**
  * Remove an overlay
@@ -181,14 +181,14 @@ export function getStatus(): OverlayThreadStatus;
  *
  * 
  */
-export function setMouseCallback(  );
+export function setMouseCallback(callback: Function): void;
 
 /**
  * Set callback for keyboard events 
  *
  * 
  */
-export function setKeyboardCallback(  );
+export function setKeyboardCallback(callback: Function): void;
 
 
 /**
@@ -196,4 +196,4 @@ export function setKeyboardCallback(  );
  * In this mode overlay module intercept user keyboard and mouse events and use callbacks to send them to frontend
  * 
  */
-export function switchInteractiveMode(  );
+export function switchInteractiveMode(callback: Function): void;
