@@ -1,6 +1,7 @@
 #include "user_input_callback.h"
 #include <errno.h>
 #include <iostream>
+#include "overlay_logging.h"
 
 callback_keyboard_method_t user_keyboard_callback_info;
 callback_mouse_method_t user_mouse_callback_info;
@@ -29,7 +30,7 @@ void callback_method_t::callback_method_reset()
 
 napi_status callback_method_t::callback_method_call_tsf(bool block)
 {
-	std::cout << "APP: callback_method_call_tsf " << std::endl;
+	log_cout << "APP: callback_method_call_tsf " << std::endl;
 
 	initialized = true;
 	completed = false;
@@ -64,7 +65,7 @@ napi_value callback_method_set_return_int(callback_method_t* method, napi_env en
 	napi_value then;
 	napi_value result;
 	bool ispromise;
-	std::cout << "APP: callback_method_set_return_int " << std::endl;
+	log_cout << "APP: callback_method_set_return_int " << std::endl;
 
 	if (napi_ok != napi_get_cb_info(env, info, &argc, &result, &js_this, 0))
 		napi_throw_error(env, 0, "Could not get callback info");
@@ -100,7 +101,7 @@ napi_value callback_method_set_return_int(callback_method_t* method, napi_env en
 
 napi_value callback_method_fail(callback_method_t* method, napi_env env, napi_callback_info info)
 {
-	std::cout << "APP: callback_method_fail " << std::endl;
+	log_cout << "APP: callback_method_fail " << std::endl;
 
 	method->success = false;
 	method->completed = true;
@@ -112,7 +113,7 @@ napi_status callback_method_t::set_args_and_call_callback(napi_env env, napi_val
 {
 	napi_value local_this;
 	napi_status status;
-	std::cout << "APP: set_args_and_call_callback" << std::endl;
+	log_cout << "APP: set_args_and_call_callback" << std::endl;
 
 	status = set_callback_args_values(env);
 	if (status == napi_ok)
@@ -150,7 +151,7 @@ void callback_method_threadsafe_callback(napi_env env, napi_value callback, void
 	napi_value argv[2];
 	napi_status status;
 	int ret = 0;
-	std::cout << "APP: callback_method_threadsafe_callback" << std::endl;
+	log_cout << "APP: callback_method_threadsafe_callback" << std::endl;
 
 	status = method->set_args_and_call_callback(env, callback, &result);
 
@@ -190,13 +191,13 @@ void callback_method_threadsafe_callback(napi_env env, napi_value callback, void
 						method->success = true;
 						method->completed = true;
 					}
-					//std::cout << "APP: callback_method_threadsafe_callback ret " << ret << std::endl;
+					//log_cout << "APP: callback_method_threadsafe_callback ret " << ret << std::endl;
 				} else
 				{
 					//if it function then call it
 					//status = napi_call_function(env, global, *argv, 1, &result, &result);
-					//std::cout << "APP: callback_method_threadsafe_callback " << status << std::endl;
-					//std::cout << "APP: callback_method_threadsafe_callback " << result << std::endl;
+					//log_cout << "APP: callback_method_threadsafe_callback " << status << std::endl;
+					//log_cout << "APP: callback_method_threadsafe_callback " << result << std::endl;
 				}
 			}
 		}
@@ -205,7 +206,7 @@ void callback_method_threadsafe_callback(napi_env env, napi_value callback, void
 
 napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 {
-	std::cout << "APP: callback_keyboard_method_t::set_callback_args_values" << std::endl;
+	log_cout << "APP: callback_keyboard_method_t::set_callback_args_values" << std::endl;
 	napi_status status = napi_ok;
 
 	std::shared_ptr<wm_event_t> event;
@@ -264,7 +265,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 
 napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 {
-	std::cout << "APP:  callback_mouse_method_t::set_callback_args_values" << std::endl;
+	log_cout << "APP:  callback_mouse_method_t::set_callback_args_values" << std::endl;
 	napi_status status = napi_ok;
 
 	std::shared_ptr<wm_event_t> event;
@@ -372,7 +373,7 @@ static void example_finalize(napi_env env, void* data, void* hint) {}
 
 int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 {
-	std::cout << "APP: use_callback called" << std::endl;
+	log_cout << "APP: use_callback called" << std::endl;
 
 	int ret = -1;
 
@@ -414,7 +415,7 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 
 int switch_input()
 {
-	std::cout << "APP: switch_input " << std::endl;
+	log_cout << "APP: switch_input " << std::endl;
 
 	int ret = -1;
 
@@ -426,7 +427,7 @@ int switch_input()
 
 int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
 {
-	std::cout << "APP: use_callback_keyboard  " << std::endl;
+	log_cout << "APP: use_callback_keyboard  " << std::endl;
 
 	int ret = -1;
 
@@ -441,7 +442,7 @@ int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
 
 int use_callback_mouse(WPARAM wParam, LPARAM lParam)
 {
-	std::cout << "APP: use_callback_mouse  " << std::endl;
+	log_cout << "APP: use_callback_mouse  " << std::endl;
 
 	int ret = -1;
 
@@ -456,7 +457,7 @@ int use_callback_mouse(WPARAM wParam, LPARAM lParam)
 
 void callback_finalize(napi_env env, void* data, void* hint)
 {
-	std::cout << "APP: callback_finalize " << std::endl;
+	log_cout << "APP: callback_finalize " << std::endl;
 }
 
 napi_status callback_method_t::callback_init(napi_env env, napi_callback_info info, const char* name)
@@ -513,7 +514,7 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 		uv_async_this.data = this;
 		env_this = env;
 #endif
-		std::cout << "APP: user_input_callback_method_init status = " << status << std::endl;
+		log_cout << "APP: user_input_callback_method_init status = " << status << std::endl;
 
 		if (status == napi_ok)
 		{
@@ -565,7 +566,7 @@ void callback_method_t::async_callback()
 
 	if (status != napi_ok)
 	{
-		std::cout << "APP: failed async_callback to send callback with status " << status << std::endl;
+		log_cout << "APP: failed async_callback to send callback with status " << status << std::endl;
 	}
 }
 

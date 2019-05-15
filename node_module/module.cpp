@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <node_api.h>
+#include "overlay_logging.h"
 
 //namespace overlays_node
 //{
@@ -73,7 +74,7 @@ napi_value AddOverlay(napi_env env, napi_callback_info args)
 		char* url = new char[512];
 		size_t result;
 		status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
-		std::cout << "APP: AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
+		log_cout << "APP: AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
 		crated_overlay_id = add_webview(url);
 	}
 
@@ -96,7 +97,7 @@ napi_value AddOverlayEx(napi_env env, napi_callback_info args)
 		char* url = new char[512];
 		size_t result;
 		status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
-		std::cout << "APP: AddOverlayEx " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
+		log_cout << "APP: AddOverlayEx " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
 
 		int x;
 		status = napi_get_value_int32(env, argv[1], &x);
@@ -132,13 +133,13 @@ napi_value AddOverlayHWND(napi_env env, napi_callback_info args)
 
 		if (incoming_array != nullptr)
 		{
-			std::cout << "APP: AddOverlayHWND " << argc << std::endl;
+			log_cout << "APP: AddOverlayHWND " << argc << std::endl;
 
 			crated_overlay_id = add_overlay_by_hwnd(incoming_array, array_lenght);
 			incoming_array = nullptr;
 		} else
 		{
-			std::cout << "APP: AddOverlayHWND failed to get hwnd" << argc << std::endl;
+			log_cout << "APP: AddOverlayHWND failed to get hwnd" << argc << std::endl;
 		}
 	}
 
@@ -157,7 +158,7 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 	int32_t overlay_id;
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	status = napi_get_value_int32(env, argv[0], &overlay_id);
-	std::cout << "APP: RemoveOverlay " << overlay_id << std::endl;
+	log_cout << "APP: RemoveOverlay " << overlay_id << std::endl;
 	remove_overlay(overlay_id);
 
 	return nullptr;
@@ -174,14 +175,14 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 	
 	switch_input();
 
-	std::cout << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
+	log_cout << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
 
 	return nullptr;
 }
 
 napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 {
-	std::cout << "APP: SetKeyboardCallback " << std::endl;
+	log_cout << "APP: SetKeyboardCallback " << std::endl;
 	if (user_keyboard_callback_info.ready)
 	{
 		return nullptr;
@@ -226,7 +227,7 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 
 napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 {
-	std::cout << "APP: SetMouseCallback " << std::endl;
+	log_cout << "APP: SetMouseCallback " << std::endl;
 	if (user_mouse_callback_info.ready)
 	{
 		return nullptr;
@@ -276,7 +277,7 @@ napi_value GetOverlayInfo(napi_env env, napi_callback_info args)
 	int32_t overlay_id;
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	status = napi_get_value_int32(env, argv[0], &overlay_id);
-	std::cout << "APP: GetOverlayInfo look for " << overlay_id << std::endl;
+	log_cout << "APP: GetOverlayInfo look for " << overlay_id << std::endl;
 	std::shared_ptr<overlay_window> requested_overlay = get_overlays()->get_overlay_by_id(overlay_id);
 
 	if (requested_overlay == nullptr)
@@ -387,7 +388,7 @@ napi_value SetOverlayUrl(napi_env env, napi_callback_info args)
 		char* url = new char[512];
 		size_t result;
 		status = napi_get_value_string_utf8(env, argv[1], url, 256, &result);
-		std::cout << "APP: SetOverlayUrl " << url << ", " << std::string(url).size() << std::endl;
+		log_cout << "APP: SetOverlayUrl " << url << ", " << std::string(url).size() << std::endl;
 		overlay_id = set_webview_url(overlay_id, url);
 	}
 
@@ -420,14 +421,14 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 
 		if (incoming_array != nullptr)
 		{
-			std::cout << "APP: PaintOverlay " << argc << ", image buffer size " << array_lenght << ", w " << width << ", h "
+			log_cout << "APP: PaintOverlay " << argc << ", image buffer size " << array_lenght << ", w " << width << ", h "
 			          << height << std::endl;
 
 			paint_overlay_from_buffer(overlay_id, incoming_array, array_lenght, width, height);
 			incoming_array = nullptr;
 		} else
 		{
-			std::cout << "APP: PaintOverlay failed to get buffer" << argc << std::endl;
+			log_cout << "APP: PaintOverlay failed to get buffer" << argc << std::endl;
 		}
 	}
 
@@ -453,7 +454,7 @@ napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
 
 		int overlay_transparency;
 		status = napi_get_value_int32(env, argv[1], &overlay_transparency);
-		std::cout << "APP: SetOverlayTransparency " << overlay_transparency << std::endl;
+		log_cout << "APP: SetOverlayTransparency " << overlay_transparency << std::endl;
 		overlay_id = set_overlay_transparency(overlay_id, overlay_transparency);
 	}
 
@@ -476,7 +477,7 @@ napi_value CallOverlayReload(napi_env env, napi_callback_info args)
 	{
 		int overlay_id;
 		status = napi_get_value_int32(env, argv[0], &overlay_id);
-		std::cout << "APP: CallOverlayReload " << std::endl;
+		log_cout << "APP: CallOverlayReload " << std::endl;
 		overlay_id = call_webview_roload(overlay_id);
 	}
 

@@ -5,6 +5,7 @@
 #include "stdafx.h"
 
 #include <iostream>
+#include "overlay_logging.h"
 
 bool overlay_window::save_state_to_settings()
 {
@@ -56,7 +57,7 @@ void overlay_window::clean_resources()
 {
 	if (status != overlay_status::destroing) {
 		status = overlay_status::destroing;
-		std::cout << "APP: clean_resources for " << id << std::endl;
+		log_cout << "APP: clean_resources for " << id << std::endl;
 		if (hdc != nullptr) {
 
 			DeleteDC(hdc);
@@ -69,7 +70,7 @@ void overlay_window::clean_resources()
 		}
 
 		if (overlay_hwnd != nullptr) {
-			std::cout << "APP: clean_resources close overlay window hwnd " << overlay_hwnd << std::endl;
+			log_cout << "APP: clean_resources close overlay window hwnd " << overlay_hwnd << std::endl;
 			DestroyWindow(overlay_hwnd);
 		} else {
 			PostMessage(0, WM_SLO_OVERLAY_WINDOW_DESTOYED, id, NULL);
@@ -119,7 +120,7 @@ bool overlay_window::set_rect(RECT& new_rect)
 
 bool  overlay_window::paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
 {
-	std::cout << "APP: paint_window_from_buffer array_size = " << array_size << ", w " << width << ", h " << height  << std::endl;
+	log_cout << "APP: paint_window_from_buffer array_size = " << array_size << ", w " << width << ", h " << height  << std::endl;
 	// HDC new_hdc = nullptr;
 	// HBITMAP new_hbmp = nullptr;
 	// int new_width = width;
@@ -132,14 +133,14 @@ bool  overlay_window::paint_window_from_buffer(const void* image_array, size_t a
 	if(hbmp != nullptr)
 	{
 		LONG workedout = SetBitmapBits(hbmp, width * height * 4, image_array);
-		std::cout << "APP: paint_window_from_buffer workedout = " << workedout << std::endl;
+		log_cout << "APP: paint_window_from_buffer workedout = " << workedout << std::endl;
 		//ShowWindow(overlay_hwnd, SW_SHOWNA);
 		if (!IsWindowVisible(overlay_hwnd)) {
 				ShowWindow(overlay_hwnd, SW_SHOWNA);
 		}
 		update_from_original = false;
 	} else {
-		std::cout << "APP: paint_window_from_buffer no hbmp " << std::endl;
+		log_cout << "APP: paint_window_from_buffer no hbmp " << std::endl;
 	}
 
 	return true;
@@ -165,7 +166,7 @@ bool overlay_window::get_window_screenshot()
 		int new_height = client_rect.bottom - client_rect.top;
 		RECT cur_rect = get_rect();
 
-		//std::cout << "APP: get_window_screenshot new_x " << new_x << ", new_y " << new_y << ", new_width " << new_width << ", new_height " << new_height << std::endl;
+		//log_cout << "APP: get_window_screenshot new_x " << new_x << ", new_y " << new_y << ", new_width " << new_width << ", new_height " << new_height << std::endl;
 
 		HDC new_hdc = nullptr;
 		HBITMAP new_hbmp = nullptr;
@@ -239,7 +240,7 @@ bool overlay_window::get_window_screenshot()
 				}
 				updated = true;
 			} else {
-				std::cout << "APP: get_window_screenshot failed to get bitmap from orig window "
+				log_cout << "APP: get_window_screenshot failed to get bitmap from orig window "
 				          << GetLastError() << std::endl;
 				if (!keep_gdi) {
 					DeleteDC(new_hdc);
@@ -248,7 +249,7 @@ bool overlay_window::get_window_screenshot()
 			}
 		}
 	} else {
-		//std::cout << "APP: get_window_screenshot failed to get rect from orig window " << GetLastError() << std::endl;
+		//log_cout << "APP: get_window_screenshot failed to get rect from orig window " << GetLastError() << std::endl;
 	}
 
 	if (overlay_hwnd) {

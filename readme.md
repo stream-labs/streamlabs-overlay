@@ -73,7 +73,7 @@ To get basic info about overlays
 
 To create, setup and remove overlay
 - `add(url)` return overlay id 
-- `addHWND(url)` return overlay id 
+- `addHWND(hwnd)` return overlay id 
 - `addEx(url, x, y, width, height)` return overlay id 
 - `setPosition(overlay_id, x, y, width, height)`
 - `setUrl(overlay_id, url)`
