@@ -3,8 +3,8 @@
 #include <iostream>
 #include "overlay_logging.h"
 
-callback_keyboard_method_t user_keyboard_callback_info;
-callback_mouse_method_t user_mouse_callback_info;
+callback_keyboard_method_t* user_keyboard_callback_info = nullptr;
+callback_mouse_method_t* user_mouse_callback_info = nullptr;
 
 struct wm_event_t
 {
@@ -16,6 +16,7 @@ struct wm_event_t
 
 callback_method_t::callback_method_t()
 {
+	log_cout << "APP: callback_method_t()" << std::endl;
 	ready = false;
 }
 
@@ -351,22 +352,22 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 
 napi_value keyboard_callback_return(napi_env env, napi_callback_info info)
 {
-	return callback_method_set_return_int(&user_keyboard_callback_info, env, info);
+	return callback_method_set_return_int(user_keyboard_callback_info, env, info);
 }
 
 napi_value keyboard_callback_fail(napi_env env, napi_callback_info info)
 {
-	return callback_method_fail(&user_keyboard_callback_info, env, info);
+	return callback_method_fail(user_keyboard_callback_info, env, info);
 }
 
 napi_value mouse_callback_return(napi_env env, napi_callback_info info)
 {
-	return callback_method_set_return_int(&user_mouse_callback_info, env, info);
+	return callback_method_set_return_int(user_mouse_callback_info, env, info);
 }
 
 napi_value mouse_callback_fail(napi_env env, napi_callback_info info)
 {
-	return callback_method_fail(&user_mouse_callback_info, env, info);
+	return callback_method_fail(user_mouse_callback_info, env, info);
 }
 
 static void example_finalize(napi_env env, void* data, void* hint) {}
@@ -431,7 +432,7 @@ int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
 
 	int ret = -1;
 
-	callback_method_t* method = &user_keyboard_callback_info;
+	callback_method_t* method = user_keyboard_callback_info;
 	if (method != nullptr)
 	{
 		ret = method->use_callback(wParam, lParam);
@@ -446,7 +447,7 @@ int use_callback_mouse(WPARAM wParam, LPARAM lParam)
 
 	int ret = -1;
 
-	callback_method_t* method = &user_mouse_callback_info;
+	callback_method_t* method = user_mouse_callback_info;
 	if (method != nullptr)
 	{
 		ret = method->use_callback(wParam, lParam);
@@ -470,6 +471,7 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 	napi_status status;
 
 	status = napi_get_cb_info(env, info, &argc, argv, NULL, 0);
+	
 	if (status == napi_ok)
 	{
 		status = napi_create_function(env, "set_return", NAPI_AUTO_LENGTH, set_return, NULL, &local_return);
@@ -487,7 +489,7 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 			status = napi_create_reference(env, local_fail, 0, &fail_ref);
 		}
 	}
-
+	
 	if (status == napi_ok)
 	{
 		status = napi_create_string_utf8(env, name, NAPI_AUTO_LENGTH, &async_name);

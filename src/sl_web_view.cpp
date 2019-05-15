@@ -196,7 +196,8 @@ DWORD WINAPI web_views_thread_func(void* data)
 
 			std::shared_ptr<web_view_wnd> web_view_window = get_web_view_by_id((int)msg.wParam);
 			if (web_view_window != nullptr) {
-				web_view_window->apply_url(std::string((char*)msg.lParam));
+				std::string new_url = std::string((char*)msg.lParam);
+				web_view_window->apply_url(new_url);
 			}
 		} break;
 		case WM_SLO_WEBVIEW_RELOAD: {

@@ -52,6 +52,7 @@ function step_1()
     console.log('--------------- step_1');
 	console.log('');
 	console.log('Call to Interactive');
+	
 	streamlabs_overlays.setMouseCallback( (eventType, x, y, modifier) => {
 		console.log('get MouseCallback: '+ eventType +', '+ x+', '+ y+ ', '+modifier);
 		return 111223;

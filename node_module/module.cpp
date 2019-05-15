@@ -10,16 +10,31 @@
 #include <node_api.h>
 #include "overlay_logging.h"
 
-//namespace overlays_node
-//{
+
 napi_value Start(napi_env env, napi_callback_info args)
 {
 	start_overlays_thread();
+	
+	if (user_keyboard_callback_info == nullptr)
+	{
+		user_keyboard_callback_info = new callback_keyboard_method_t();
+	}
+
+	if( user_mouse_callback_info == nullptr)
+	{
+		user_mouse_callback_info = new callback_mouse_method_t();
+	}
+
+
 	return nullptr;
 }
 
 napi_value Stop(napi_env env, napi_callback_info args)
 {
+	delete user_keyboard_callback_info;
+	user_keyboard_callback_info = nullptr;
+	delete user_mouse_callback_info;
+	user_mouse_callback_info = nullptr;
 	stop_overlays_thread();
 	return nullptr;
 }
@@ -166,7 +181,7 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 
 napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 {
-	if (!user_keyboard_callback_info.ready || !user_mouse_callback_info.ready)
+	if (!user_keyboard_callback_info->ready || !user_mouse_callback_info->ready)
 	{
 		return nullptr;
 	}
@@ -183,15 +198,15 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 {
 	log_cout << "APP: SetKeyboardCallback " << std::endl;
-	if (user_keyboard_callback_info.ready)
+	if (user_keyboard_callback_info->ready)
 	{
 		return nullptr;
 	}
 
-	user_keyboard_callback_info.ready = true;
+	user_keyboard_callback_info->ready = true;
 
-	user_keyboard_callback_info.set_return = keyboard_callback_return;
-	user_keyboard_callback_info.fail = keyboard_callback_fail;
+	user_keyboard_callback_info->set_return = keyboard_callback_return;
+	user_keyboard_callback_info->fail = keyboard_callback_fail;
 
 	napi_status status;
 	size_t argc = 1;
@@ -214,11 +229,11 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 	if (is_function == napi_function)
 	{
 		//save reference and go to creating threadsafe function
-		status = napi_create_reference(env, argv[0], 0, &user_keyboard_callback_info.js_this);
+		status = napi_create_reference(env, argv[0], 0, &user_keyboard_callback_info->js_this);
 		if (status == napi_ok)
 		{
 
-			status = user_keyboard_callback_info.callback_init( env, args, "func_keyboard");
+			status = user_keyboard_callback_info->callback_init( env, args, "func_keyboard");
 		}
 	}
 
@@ -228,15 +243,15 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 {
 	log_cout << "APP: SetMouseCallback " << std::endl;
-	if (user_mouse_callback_info.ready)
+	if (user_mouse_callback_info->ready)
 	{
 		return nullptr;
 	}
 
-	user_mouse_callback_info.ready = true;
+	user_mouse_callback_info->ready = true;
 
-	user_mouse_callback_info.set_return = mouse_callback_return;
-	user_mouse_callback_info.fail = mouse_callback_fail;
+	user_mouse_callback_info->set_return = mouse_callback_return;
+	user_mouse_callback_info->fail = mouse_callback_fail;
 
 	napi_status status;
 	size_t argc = 1;
@@ -259,10 +274,10 @@ napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 	if (is_function == napi_function)
 	{
 		//save reference and go to creating threadsafe function
-		status = napi_create_reference(env, argv[0], 0, &user_mouse_callback_info.js_this);
+		status = napi_create_reference(env, argv[0], 0, &user_mouse_callback_info->js_this);
 		if (status == napi_ok)
 		{
-			status = user_mouse_callback_info.callback_init(env, args, "func_mouse");
+			status = user_mouse_callback_info->callback_init(env, args, "func_mouse");
 		}
 	}
 
@@ -637,4 +652,4 @@ napi_value init(napi_env env, napi_value exports)
 }
 
 NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
-//} // namespace overlays_node
+

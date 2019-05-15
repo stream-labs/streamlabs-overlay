@@ -111,8 +111,8 @@ struct callback_mouse_method_t : callback_method_t
 	virtual void set_callback();
 };
 
-extern callback_keyboard_method_t user_keyboard_callback_info;
-extern callback_mouse_method_t user_mouse_callback_info;
+extern callback_keyboard_method_t* user_keyboard_callback_info;
+extern callback_mouse_method_t* user_mouse_callback_info;
 
 napi_value keyboard_callback_return(napi_env env, napi_callback_info info);
 napi_value keyboard_callback_fail(napi_env env, napi_callback_info info);
