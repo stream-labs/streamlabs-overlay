@@ -32,6 +32,12 @@ node-gyp rebuild --target=2.0.16 --dist-url=https://atom.io/download/atom-shell
 node scripts\pack.js 
 ```
 
+To make debug build for nodejs tests 
+
+```
+node-gyp --debug configure rebuild 
+```
+
 ### Pack 
 Use command 'node script\pack.js' to make a package for slobs.
 

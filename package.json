@@ -9,7 +9,7 @@
     "name": "Streamlabs",
     "url": "https://streamlabs.com"
   },
-  "version": "0.0.10",
+  "version": "0.0.12",
   "license": "SEE LICENSE IN COPYRIGHT LAW",
   "engines": {
     "node": ">= 8"
@@ -21,7 +21,7 @@
   "scripts": {
     "install": "node-pre-gyp install --fallback-to-build --msvs_version=2017",
     "pack": "node scripts/pack.js",
-    "build": "node-gyp configure && node-gyp build",
+    "build": "node-gyp configure && node-gyp rebuild --target=2.0.16 --dist-url=https://atom.io/download/atom-shell",
     "pack-gyp": "node-pre-gyp package",
     "release": "standard-version",
     "test": "node index.test.js"

@@ -13,30 +13,52 @@
 
 napi_value Start(napi_env env, napi_callback_info args)
 {
-	start_overlays_thread();
+	int thread_start_status = 0;
+	napi_value ret;
+	napi_status status;
 	
-	if (user_keyboard_callback_info == nullptr)
+	thread_start_status = start_overlays_thread();
+	if (thread_start_status != 0)
 	{
-		user_keyboard_callback_info = new callback_keyboard_method_t();
+		if (user_keyboard_callback_info == nullptr)
+		{
+			user_keyboard_callback_info = new callback_keyboard_method_t();
+		}
+
+		if( user_mouse_callback_info == nullptr)
+		{
+			user_mouse_callback_info = new callback_mouse_method_t();
+		}
 	}
 
-	if( user_mouse_callback_info == nullptr)
-	{
-		user_mouse_callback_info = new callback_mouse_method_t();
-	}
-
-
-	return nullptr;
+	status = napi_create_int32(env, thread_start_status, &ret);
+	if (status != napi_ok)
+		return nullptr;
+	return ret;
 }
 
 napi_value Stop(napi_env env, napi_callback_info args)
 {
-	delete user_keyboard_callback_info;
-	user_keyboard_callback_info = nullptr;
-	delete user_mouse_callback_info;
-	user_mouse_callback_info = nullptr;
-	stop_overlays_thread();
-	return nullptr;
+	if (user_keyboard_callback_info!=nullptr)
+	{
+		delete user_keyboard_callback_info;
+		user_keyboard_callback_info = nullptr;
+	}
+	if (user_mouse_callback_info!=nullptr)
+	{
+		delete user_mouse_callback_info;
+		user_mouse_callback_info = nullptr;
+	}
+
+	int thread_stop_status = 0;
+	napi_value ret;
+	napi_status status;
+
+	thread_stop_status  = stop_overlays_thread();
+	status = napi_create_int32(env, thread_stop_status, &ret);
+	if (status != napi_ok)
+		return nullptr;
+	return ret;
 }
 
 napi_value GetStatus(napi_env env, napi_callback_info args)

@@ -14,3 +14,4 @@ node_modules/
 dist/
 streamlabs_game_overlay*.tar.gz
 yarn-error.log
+game-overlay-v*z

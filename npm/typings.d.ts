@@ -39,16 +39,21 @@ export const enum OverlayThreadStatus {
 }
 
 /**
- * Start the overlay thread. This seems to be required before any other operations
- * can be performed (aside from `getStatus`).
+ * Start the overlay thread. This is required before any other operations
+ * can be performed (aside from `getStatus`). 
+ * Can be done only when getStatus returns `destroyed`. 
+ * 
+ * Return: 1 if everything went fine. 
  */
-export function start(): void;
+export function start(): number;
 
 /**
  * Stop the overlay thread. No operations other than `start` and `getStatus` should be performed
- * after invoking this.
+ * after invoking this. To invoce `start` should wait till thread status become `destroyed`
+ *
+ * Return: 1 if everything went fine.  
  */
-export function stop(): void;
+export function stop(): number;
 
 /**
  * Returns the number of overlays currently active

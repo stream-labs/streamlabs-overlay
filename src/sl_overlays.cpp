@@ -519,9 +519,10 @@ void smg_overlays::create_windows_for_apps()
 	std::for_each(app_settings->apps_names.begin(), app_settings->apps_names.end(), [](std::string& n) {
 		WCHAR* process_name = new wchar_t[n.size() + 1];
 		mbstowcs(&process_name[0], n.c_str(), n.size() + 1);
-		delete[] process_name;
 
 		FindRunningProcess(process_name);
+
+		delete[] process_name;
 	});
 }
 

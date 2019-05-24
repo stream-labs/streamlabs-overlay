@@ -51,7 +51,12 @@ int WINAPI stop_overlays_thread()
 
 		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_QUIT, 0);
 
-		return ret;
+		if (ret)
+		{
+			return 1;
+		} else {
+			return 0;
+		}
 	}
 }
 
