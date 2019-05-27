@@ -183,14 +183,14 @@ export function getStatus(): OverlayThreadStatus;
 
 /**
  * Set callback for mouse events 
- *
+ * setMouseCallback( (eventType, x, y, modifier) => {
  * 
  */
 export function setMouseCallback(callback: Function): void;
 
 /**
  * Set callback for keyboard events 
- *
+ * setKeyboardCallback( (eventType, keyCode) => {
  * 
  */
 export function setKeyboardCallback(callback: Function): void;
@@ -201,4 +201,4 @@ export function setKeyboardCallback(callback: Function): void;
  * In this mode overlay module intercept user keyboard and mouse events and use callbacks to send them to frontend
  * 
  */
-export function switchInteractiveMode(callback: Function): void;
+export function switchInteractiveMode( active: Boolean ): void;

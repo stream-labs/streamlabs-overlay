@@ -48,7 +48,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 {
 	app_settings = std::make_shared<smg_settings>();
 
-	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
+	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance(in_standalone_mode);
 
 	web_views_hInstance = GetModuleHandle(NULL);
 	web_views_thread = CreateThread(nullptr, 0, web_views_thread_func, nullptr, 0, &web_views_thread_id);
@@ -204,7 +204,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM param)
 {
-	return smg_overlays::get_instance()->process_found_window(hwnd, param);
+	return smg_overlays::get_instance(in_standalone_mode)->process_found_window(hwnd, param);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -220,7 +220,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	} break;
 	case WM_DESTROY: {
 		log_cout << "APP: WndProc WM_DESTROY for " << hWnd << std::endl;
-		smg_overlays::get_instance()->on_window_destroy(hWnd);
+		smg_overlays::get_instance(in_standalone_mode)->on_window_destroy(hWnd);
 
 		return 0;
 	} break;
@@ -233,7 +233,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		log_cout << "APP: WndProc WM_QUIT for " << hWnd << std::endl;
 	} break;
 	case WM_PAINT: {
-		smg_overlays::get_instance()->draw_overlay_gdi(hWnd, g_bDblBuffered);
+		smg_overlays::get_instance(in_standalone_mode)->draw_overlay_gdi(hWnd, g_bDblBuffered);
 		return 0;
 	} break;
 

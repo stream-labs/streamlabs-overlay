@@ -84,7 +84,7 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 	case HOTKEY_ADD_WEB:
 	{
 		log_cout << "APP: get HOTKEY_ADD_WEB " << web_views_thread_id << std::endl;
-		if (in_standalone_mode)
+		if (standalone_mode)
 		{
 			log_cout << "APP: create default web view" << std::endl;
 			web_view_overlay_settings n;
@@ -144,7 +144,11 @@ void smg_overlays::quit()
 	deregister_hotkeys();
 
 	update_settings();
-	app_settings->write();
+
+	if(!standalone_mode)
+	{
+		app_settings->write();
+	}
 
 	BOOL ret = PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_CLOSE_THREAD, NULL, NULL);
 	if (!ret)
@@ -626,17 +630,18 @@ std::vector<int> smg_overlays::get_ids()
 	return ret;
 }
 
-std::shared_ptr<smg_overlays> smg_overlays::get_instance()
+std::shared_ptr<smg_overlays> smg_overlays::get_instance(bool in_standalone_mode)
 {
 	if (instance == nullptr)
 	{
-		instance = std::make_shared<smg_overlays>();
+		instance = std::make_shared<smg_overlays>(in_standalone_mode);
 	}
 	return instance;
 }
 
-smg_overlays::smg_overlays()
+smg_overlays::smg_overlays(bool in_standalone_mode)
 {
+	standalone_mode = in_standalone_mode;
 	showing_overlays = false;
 	quiting = false;
 
@@ -645,10 +650,15 @@ smg_overlays::smg_overlays()
 
 void smg_overlays::init()
 {
-	if (!app_settings->read())
+	if( !standalone_mode )
 	{
 		app_settings->default_init();
-		// app_settings.test_init();
+	} else {
+		if (!app_settings->read())
+		{
+			app_settings->default_init();
+			// app_settings.test_init();
+		}
 	}
 
 	create_overlay_window_class();
@@ -659,7 +669,7 @@ void smg_overlays::init()
 		create_web_view_window(n);
 	});
 
-	if (in_standalone_mode)
+	if (standalone_mode)
 	{
 		register_hotkeys();
 	}
@@ -706,11 +716,13 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 	bool window_ok = false;
 	bool window_catched = false;
 	std::shared_ptr<overlay_window> found_window = nullptr;
+	DWORD dwProcessID = 0;
 	if (param != NULL)
 	{
 		unsigned long process_id = 0;
 		GetWindowThreadProcessId(hwnd, &process_id);
-		if (*((unsigned long*)param) == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
+		dwProcessID = *( (unsigned long*)param);
+		if ( dwProcessID == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
 		{
 			window_ok = true;
 		}
@@ -725,7 +737,7 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 
 	if (window_ok)
 	{
-		WINDOWINFO wi;
+		WINDOWINFO wi = {0};
 		GetWindowInfo(hwnd, &wi);
 		int y = wi.rcWindow.bottom - wi.rcWindow.top;
 		int x = wi.rcWindow.left - wi.rcWindow.right;
@@ -761,7 +773,7 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 
 			// add process file name to settings
 			TCHAR nameProcess[MAX_PATH];
-			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, *((unsigned long*)param));
+			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessID);
 			DWORD file_name_size = MAX_PATH;
 			QueryFullProcessImageName(processHandle, 0, nameProcess, &file_name_size);
 			CloseHandle(processHandle);
@@ -780,6 +792,7 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 			}
 		}
 	}
+
 	if (window_catched)
 	{
 		PostMessage(NULL, WM_SLO_SOURCE_CREATED, found_window->id, reinterpret_cast<LPARAM>(&(found_window->orig_handle)));

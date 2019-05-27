@@ -193,8 +193,10 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 	size_t argc = 1;
 	napi_value argv[1];
 	int32_t overlay_id;
+
 	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
 	status = napi_get_value_int32(env, argv[0], &overlay_id);
+	
 	log_cout << "APP: RemoveOverlay " << overlay_id << std::endl;
 	remove_overlay(overlay_id);
 
@@ -205,15 +207,30 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 {
 	if (!user_keyboard_callback_info->ready || !user_mouse_callback_info->ready)
 	{
+		log_cout << "APP: SwitchToInteractive rejected as callbacks not set" << std::endl;
 		return nullptr;
 	}
 
-	set_callback_for_switching_input(&switch_input);
+	napi_status status;
+	size_t argc = 1;
+	napi_value argv[1];
+	bool switch_to;
+
+	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
+	if (status == napi_ok) {
+		status = napi_get_value_bool(env, argv[0], &switch_to);
+		if (status == napi_ok)
+		{
+			if (callback_method_t::get_intercept_active() != switch_to)
+			{
+				set_callback_for_switching_input(&switch_input); // so module can switch itself off by some hotkey 
 	
-	switch_input();
+				switch_input();
 
-	log_cout << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
-
+				log_cout << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
+			}
+		}
+	}
 	return nullptr;
 }
 

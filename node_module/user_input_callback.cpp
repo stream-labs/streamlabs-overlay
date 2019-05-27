@@ -37,7 +37,7 @@ napi_status callback_method_t::callback_method_call_tsf(bool block)
 	completed = false;
 	success = false;
 
-	napi_status status;
+	napi_status status = napi_ok;
 
 #ifdef NAPI_EXPERIMENTAL
 	status = napi_call_threadsafe_function(threadsafe_function, 0, block ? napi_tsfn_blocking : napi_tsfn_nonblocking);
@@ -218,8 +218,6 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 		to_send.pop();
 	}
 
-	argc_to_cb = 2;
-
 	bool send_key = false;
 
 	std::string event_type = "unknown";
@@ -276,9 +274,7 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 		event = to_send.front();
 		to_send.pop();
 	}
-
-	argc_to_cb = 4;
-
+	
 	bool send_mouse = false;
 	std::string event_type = "unknown";
 	std::string mouse_modifiers = "";

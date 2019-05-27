@@ -91,7 +91,7 @@ int WINAPI get_overlays_count()
 		return 0;
 	} else
 	{
-		int ret = smg_overlays::get_instance()->get_count();
+		int ret = smg_overlays::get_instance(in_standalone_mode)->get_count();
 
 		thread_state_mutex.unlock();
 		return ret;
@@ -230,7 +230,7 @@ int WINAPI add_webview(const char* url, int x, int y, int width, int height)
 		return -1;
 	} else
 	{
-		int ret = smg_overlays::get_instance()->create_web_view_window(n);
+		int ret = smg_overlays::get_instance(in_standalone_mode)->create_web_view_window(n);
 
 		thread_state_mutex.unlock();
 		delete[] url;
@@ -252,7 +252,7 @@ int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 			HWND hwnd;
 			memcpy(&hwnd, hwnd_array, sizeof(HWND));
 
-			ret = smg_overlays::get_instance()->create_overlay_window_by_hwnd(hwnd);
+			ret = smg_overlays::get_instance(in_standalone_mode)->create_overlay_window_by_hwnd(hwnd);
 
 			thread_state_mutex.unlock();
 		}
@@ -272,7 +272,7 @@ int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, si
 		} else
 		{
 
-			std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
+			std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance(in_standalone_mode)->get_overlay_by_id(overlay_id);
 			if (overlay != nullptr)
 			{
 				overlay->paint_window_from_buffer(image_array, array_size, width, height);
@@ -401,6 +401,6 @@ std::shared_ptr<smg_overlays> get_overlays()
 	{
 		thread_state_mutex.unlock();
 
-		return smg_overlays::get_instance();
+		return smg_overlays::get_instance(in_standalone_mode);
 	}
 }

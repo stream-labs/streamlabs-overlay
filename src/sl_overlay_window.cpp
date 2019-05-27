@@ -51,6 +51,7 @@ overlay_window::overlay_window()
 	hbmp = nullptr;
 	manual_position = false;
 	status = overlay_status::creating;
+	rect = {0};
 }
 
 void overlay_window::clean_resources()

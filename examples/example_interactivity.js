@@ -1,5 +1,5 @@
 //const streamlabs_overlays = require('../build-tmp-napi-v1/Release/streamlabs_overlay.node')
-const streamlabs_overlays = require('../build/Debug/streamlabs_overlay.node')
+const streamlabs_overlays = require('../build/Release/streamlabs_overlay.node')
 
 console.log('Call start');
 streamlabs_overlays.start();
@@ -28,7 +28,7 @@ function step_3()
 {
 	console.log('--------------- step_3');
 	console.log('');
-	streamlabs_overlays.switchInteractiveMode();
+	streamlabs_overlays.switchInteractiveMode(false);
 
 	setTimeout(step_finish, 5000);
 }
@@ -37,7 +37,7 @@ function step_2()
 {
 	console.log('--------------- step_2');
 	console.log('');
-	streamlabs_overlays.switchInteractiveMode();
+	streamlabs_overlays.switchInteractiveMode(true);
 
 	setTimeout(step_3, 5000);
 }
@@ -62,8 +62,15 @@ function step_1()
 		console.log('get KeyboardCallback: '+ eventType +', '+ keyCode);
 		if(keyCode == 38)
 		{
-			streamlabs_overlays.switchInteractiveMode();
+			streamlabs_overlays.switchInteractiveMode( false );
 		}
+    // win.focus();
+    // win.webContents.once('dom-ready', () => {
+    //   win.webContents.sendInputEvent({ type: 'char', x: 10, y: 10, keyCode: 'A' });
+    // });
+      //win.webContents.sendInputEvent({type:'keyDown', x:10, y:10, keyCode:'A'});
+    //win.webContents.sendInputEvent({type:'contextMenu', x:10, y:10});
+    //win.webContents.sendInputEvent({type:'char', x:10, y:10, keyCode:'A'});		
 		return 111223;
 	} );
 
