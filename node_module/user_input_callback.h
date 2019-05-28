@@ -10,9 +10,6 @@
 
 #include "sl_overlay_api.h"
 
-
-//#define NAPI_EXPERIMENTAL
-//#define NAPI_VERSION 1
 #include <node_api.h>
 #include <uv.h>
 
@@ -22,13 +19,11 @@ struct callback_method_t
 {
 	napi_ref js_this;
 
-#ifdef NAPI_EXPERIMENTAL
-	napi_threadsafe_function threadsafe_function;
-#else
+
 	napi_async_context async_context;
-	uv_async_t  uv_async_this;
+	uv_async_t uv_async_this;
 	napi_env env_this;
-#endif 
+
 	bool initialized;
 	bool completed;
 	bool success;
@@ -36,11 +31,9 @@ struct callback_method_t
 	int result_int;
 
 	int error;
-	napi_value result;
 	napi_callback set_return;
 	napi_callback fail;
-	napi_ref set_return_ref;
-	napi_ref fail_ref;
+	napi_value result;
 
 	void callback_method_reset();
 
@@ -52,9 +45,9 @@ struct callback_method_t
 
 	bool ready;
 	static bool set_intercept_active(bool);
-	 
+
 	static bool get_intercept_active();
-	
+
 	static void static_async_callback(uv_async_t* handle);
 	void async_callback();
 
@@ -113,10 +106,5 @@ struct callback_mouse_method_t : callback_method_t
 
 extern callback_keyboard_method_t* user_keyboard_callback_info;
 extern callback_mouse_method_t* user_mouse_callback_info;
-
-napi_value keyboard_callback_return(napi_env env, napi_callback_info info);
-napi_value keyboard_callback_fail(napi_env env, napi_callback_info info);
-napi_value mouse_callback_return(napi_env env, napi_callback_info info);
-napi_value mouse_callback_fail(napi_env env, napi_callback_info info);
 
 int switch_input();

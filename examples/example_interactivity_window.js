@@ -53,9 +53,9 @@ function createWindow() {
 	});
 
 	streamlabs_overlays.setMouseCallback((eventType, x, y, modifier) => {
-		console.log('get MouseCallback: ' + eventType + ', ' + x + ', ' + y + ', ' + modifier);
+		console.log('get first MouseCallback: ' + eventType + ', ' + x + ', ' + y + ', ' + modifier);
 		return 1;
-	});
+	});	
 
 	streamlabs_overlays.setKeyboardCallback((eventType, keyCodeValue) => {
 		//console.log('get KeyboardCallback: '+ eventType +', '+ keyCodeValue + ', '+ BrowserWindow.getAllWindows[0].getNativeWindowHandle());

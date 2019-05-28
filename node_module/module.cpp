@@ -239,13 +239,10 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 	log_cout << "APP: SetKeyboardCallback " << std::endl;
 	if (user_keyboard_callback_info->ready)
 	{
-		return nullptr;
+		user_keyboard_callback_info->ready = false;
+		napi_delete_reference(env, user_keyboard_callback_info->js_this);
+	} else {
 	}
-
-	user_keyboard_callback_info->ready = true;
-
-	user_keyboard_callback_info->set_return = keyboard_callback_return;
-	user_keyboard_callback_info->fail = keyboard_callback_fail;
 
 	napi_status status;
 	size_t argc = 1;
@@ -284,13 +281,15 @@ napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 	log_cout << "APP: SetMouseCallback " << std::endl;
 	if (user_mouse_callback_info->ready)
 	{
-		return nullptr;
+		user_mouse_callback_info->ready = false;
+		napi_delete_reference(env, user_mouse_callback_info->js_this);
+	} else
+	{
+#ifdef NAPI_EXPERIMENTAL
+		user_mouse_callback_info->set_return = mouse_callback_return;
+		user_mouse_callback_info->fail = mouse_callback_fail;
+#endif
 	}
-
-	user_mouse_callback_info->ready = true;
-
-	user_mouse_callback_info->set_return = mouse_callback_return;
-	user_mouse_callback_info->fail = mouse_callback_fail;
 
 	napi_status status;
 	size_t argc = 1;
