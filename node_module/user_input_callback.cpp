@@ -549,6 +549,7 @@ void callback_method_t::async_callback()
 		status = napi_get_reference_value(env_this, js_this, &js_cb);
 		if (status == napi_ok)
 		{
+			napi_get_undefined(env_this, &recv);
 			while (to_send.size() > 0)
 			{
 				status = set_callback_args_values(env_this);

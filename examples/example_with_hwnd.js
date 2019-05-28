@@ -21,17 +21,17 @@ function createWindow() {
   streamlabs_overlays.start();
 
   win1 = new BrowserWindow({ x: 300, y: 300, width: 400, height: 300 })
-  win1.loadURL(`https://www.google.com/search?q=1`)
+  win2.loadURL(`https://www.google.com/search?q=1`);
   hwnd = win1.getNativeWindowHandle();
   streamlabs_overlays.addHWND(hwnd);
 
   win2 = new BrowserWindow({ x: 600, y: 300, width: 400, height: 300 })
-  win2.loadURL(`https://www.google.com/search?q=2`)
+  win2.loadURL(`https://www.google.com/search?q=2`);
   hwnd = win2.getNativeWindowHandle();
   streamlabs_overlays.addHWND(hwnd);
 
   win3 = new BrowserWindow({ x: 300, y: 600, width: 400, height: 300 })
-  win3.loadURL(`https://www.google.com/search?q=3`)
+  win3.loadURL(`https://www.google.com/search?q=3`);
   hwnd = win3.getNativeWindowHandle();
   streamlabs_overlays.addHWND(hwnd);
 

@@ -78,7 +78,7 @@ struct callback_method_t
 struct callback_keyboard_method_t : callback_method_t
 {
 	const static size_t argc_to_cb = 2;
-	napi_value argv_to_cb[argc_to_cb] = {0};
+	napi_value argv_to_cb[argc_to_cb];
 
 	virtual size_t get_argc_to_cb()
 	{
@@ -96,7 +96,7 @@ struct callback_keyboard_method_t : callback_method_t
 struct callback_mouse_method_t : callback_method_t
 {
 	const static size_t argc_to_cb = 4;
-	napi_value argv_to_cb[argc_to_cb] = {0};
+	napi_value argv_to_cb[argc_to_cb];
 
 	virtual size_t get_argc_to_cb()
 	{

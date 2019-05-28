@@ -7,6 +7,7 @@ const fs = require("fs")
 //  yarn run electron examples\example_with_offscreen.js
 //
 let test_started = false;
+let win;
 
 function createWindow() {
   test_started = true;
@@ -26,7 +27,7 @@ function createWindow() {
     },
   })
 
-  win.loadURL(`https://www.google.com/search?q=1`)
+  win.loadURL(`https://time.is/`);
 
 
   let hwnd = win.getNativeWindowHandle();
@@ -72,7 +73,7 @@ function step_1() {
 
   for (let overlayid of overlays_ids) {
     console.log('Call set overlay transparency 20/255');
-    streamlabs_overlays.setTransparency(overlayid, 20 );
+    streamlabs_overlays.setTransparency(overlayid, 20);
   }
 
   setTimeout(step_2, 5000);
@@ -88,7 +89,7 @@ function step_2() {
 
   for (let overlayid of overlays_ids) {
     console.log('Call set overlay transparency 20/255');
-    streamlabs_overlays.setTransparency(overlayid, 200 );
+    streamlabs_overlays.setTransparency(overlayid, 200);
   }
 
   setTimeout(step_finish, 5000);
