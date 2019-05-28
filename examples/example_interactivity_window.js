@@ -6,7 +6,7 @@ const fs = require("fs")
 let win;
 //
 //  # command to run this test 
-//  yarn run electron examples\example_with_offscreen.js
+//  yarn run electron examples\example_interactivity_window.js
 //
 let test_started = false;
 
@@ -18,7 +18,7 @@ function createWindow() {
 	streamlabs_overlays.start();
 
 	win = new BrowserWindow({
-		show: true,
+		show: false,
 		width: 700,
 		height: 700,
 		frame: false,
@@ -64,7 +64,7 @@ function createWindow() {
 
 		//BrowserWindow.getAllWindows()[0].webContents.sendInputEvent({type:eventType, x:10, y:10, keyCode:keyCodeValue});
 		try {
-			win.webContents.sendInputEvent({ type: eventType, keyCode: 'PageDown' });
+			win.webContents.sendInputEvent({ type: eventType, keyCode: keyCodeValue });
 			//win.webContents.invalidate();
 			//win.loadURL(`https://www.google.com/search?q=`+keyCodeValue);
 			//let hwnd = win.getNativeWindowHandle();

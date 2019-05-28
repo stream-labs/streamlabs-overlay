@@ -285,10 +285,6 @@ napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 		napi_delete_reference(env, user_mouse_callback_info->js_this);
 	} else
 	{
-#ifdef NAPI_EXPERIMENTAL
-		user_mouse_callback_info->set_return = mouse_callback_return;
-		user_mouse_callback_info->fail = mouse_callback_fail;
-#endif
 	}
 
 	napi_status status;

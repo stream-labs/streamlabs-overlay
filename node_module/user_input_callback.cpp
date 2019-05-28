@@ -2,9 +2,131 @@
 #include <errno.h>
 #include <iostream>
 #include "overlay_logging.h"
+#include <map>
 
 callback_keyboard_method_t* user_keyboard_callback_info = nullptr;
 callback_mouse_method_t* user_mouse_callback_info = nullptr;
+
+const std::string & translate_to_electron_keycode(const int id)
+{
+	static std::map<int, std::string> CodeToKeyCodes = {
+	    {1, "LButton"},
+	    {2, "RButton"},
+	    {4, "MButton"},
+	    {5, "XButotn1"},
+	    {6, "XButotn2"},
+	    {8, "Backspace"},
+	    {9, "Tab"},
+	    {13, "Enter"},
+	    {16, "Shift"},
+	    {17, "Ctrl"},
+	    {18, "Alt"},
+	    {19, "Pause"},
+	    {20, "CapsLock"},
+	    {27, "Escape"},
+	    {32, " "},
+	    {33, "PageUp"},
+	    {34, "PageDown"},
+	    {35, "End"},
+	    {36, "Home"},
+	    {37, "Left"},
+	    {38, "Up"},
+	    {39, "Right"},
+	    {40, "Down"},
+	    {45, "Insert"},
+	    {46, "Delete"},
+	    {48, "0"},
+	    {49, "1"},
+	    {50, "2"},
+	    {51, "3"},
+	    {52, "4"},
+	    {53, "5"},
+	    {54, "6"},
+	    {55, "7"},
+	    {56, "8"},
+	    {57, "9"},
+	    {65, "A"},
+	    {66, "B"},
+	    {67, "C"},
+	    {68, "D"},
+	    {69, "E"},
+	    {70, "F"},
+	    {71, "G"},
+	    {72, "H"},
+	    {73, "I"},
+	    {74, "J"},
+	    {75, "K"},
+	    {76, "L"},
+	    {77, "M"},
+	    {78, "N"},
+	    {79, "O"},
+	    {80, "P"},
+	    {81, "Q"},
+	    {82, "R"},
+	    {83, "S"},
+	    {84, "T"},
+	    {85, "U"},
+	    {86, "V"},
+	    {87, "W"},
+	    {88, "X"},
+	    {89, "Y"},
+	    {90, "Z"},
+	    {91, "Meta"},
+	    {92, "Meta"},
+	    {93, "ContextMenu"},
+	    {96, "0"},
+	    {97, "1"},
+	    {98, "2"},
+	    {99, "3"},
+	    {100, "4"},
+	    {101, "5"},
+	    {102, "6"},
+	    {103, "7"},
+	    {104, "8"},
+	    {105, "9"},
+	    {106, "*"},
+	    {107, "+"},
+	    {109, "-"},
+	    {110, "."},
+	    {111, "/"},
+	    {112, "F1"},
+	    {113, "F2"},
+	    {114, "F3"},
+	    {115, "F4"},
+	    {116, "F5"},
+	    {117, "F6"},
+	    {118, "F7"},
+	    {119, "F8"},
+	    {120, "F9"},
+	    {121, "F10"},
+	    {122, "F11"},
+	    {123, "F12"},
+	    {144, "NumLock"},
+	    {145, "ScrollLock"},
+	    {160, "Shift"},
+	    {161, "Shift"},
+	    {162, "Control"},
+	    {163, "Control"},
+	    {164, "Alt"},
+	    {165, "Alt"},
+	    {182, "My Computer"},
+	    {183, "My Calculator"},
+	    {186, ";"},
+	    {187, "="},
+	    {188, "},"},
+	    {189, "-"},
+	    {190, "."},
+	    {191, "/"},
+	    {192, "`"},
+	    {219, "["},
+	    {220, "\\"},
+	    {221, "]"},
+	    {222, "'"},
+	    {250, "Play"},
+	};
+
+	return CodeToKeyCodes[id];
+}
 
 struct wm_event_t
 {
@@ -127,7 +249,8 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 		if (status == napi_ok)
 		{
 			LPKBDLLHOOKSTRUCT key = (LPKBDLLHOOKSTRUCT)event->lParam;
-			status = napi_create_int32(env, key->vkCode, &argv_to_cb[1]);
+			const std::string & keyCode = translate_to_electron_keycode(key->vkCode);
+			status = napi_create_string_utf8(env, keyCode.c_str(), keyCode.size(), &argv_to_cb[1]);
 		}
 	}
 
@@ -235,8 +358,8 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 	}
 
 	uv_async_send(&uv_async_this);
-	
-	if (to_send.size() > 256) 
+
+	if (to_send.size() > 256)
 	{
 		log_cout << "APP: Failed to send too many events, will switch input interception off" << std::endl;
 		switch_input();
@@ -297,8 +420,6 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 	size_t argc = 1;
 	napi_value argv[1];
 	napi_value async_name;
-	napi_value local_return;
-	napi_value local_fail;
 	napi_status status;
 
 	status = napi_get_cb_info(env, info, &argc, argv, NULL, 0);
@@ -307,11 +428,10 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 	{
 		status = napi_create_string_utf8(env, name, NAPI_AUTO_LENGTH, &async_name);
 	}
-	
+
 	if (status == napi_ok)
 	{
-		
-		status = napi_async_destroy(env_this, async_context); 
+		status = napi_async_destroy(env_this, async_context);
 
 		status = napi_async_init(env, argv[0], async_name, &async_context);
 		uv_async_init(uv_default_loop(), &uv_async_this, &static_async_callback);
@@ -361,7 +481,8 @@ void callback_method_t::async_callback()
 				status = set_callback_args_values(env_this);
 				if (status == napi_ok)
 				{
-					status = napi_make_callback(env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
+					status = napi_make_callback(
+					    env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
 				}
 			}
 		}
