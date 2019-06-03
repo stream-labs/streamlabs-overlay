@@ -509,3 +509,15 @@ void callback_keyboard_method_t::set_callback()
 {
 	set_callback_for_keyboard_input(&use_callback_keyboard);
 }
+
+napi_status napi_create_and_set_named_property(napi_env & env, napi_value & obj, const char* value_name, const int value) 
+{
+	napi_status status;
+	napi_value set_value;
+	status = napi_create_int32(env, value, &set_value);
+	if (status == napi_ok)
+	{
+		status = napi_set_named_property(env, obj, value_name, set_value);
+	}
+	return status;
+}

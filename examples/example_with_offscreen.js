@@ -7,7 +7,14 @@ const fs = require("fs")
 //  yarn run electron examples\example_with_offscreen.js
 //
 let test_started = false;
-let win;
+let win1;
+let overlayid1;
+let win2;
+let overlayid2;
+let hwnd;
+
+const win_widht = 600;
+const win_height = 800;
 
 function createWindow() {
   test_started = true;
@@ -16,10 +23,10 @@ function createWindow() {
 
   streamlabs_overlays.start();
 
-  win = new BrowserWindow({
+  win1 = new BrowserWindow({
     show: false,
-    width: 600,
-    height: 800,
+    width: win_widht,
+    height: win_height,
     frame: false,
     webPreferences: {
       offscreen: true,
@@ -28,26 +35,54 @@ function createWindow() {
   })
 
   //win.loadURL(`https://time.is/`);
-  win.loadURL(`https://codepen.io/jasonleewilson/pen/gPrxwX`);
+  win1.loadURL(`https://codepen.io/jasonleewilson/pen/gPrxwX`);
 
 
-  let hwnd = win.getNativeWindowHandle();
+  hwnd = win1.getNativeWindowHandle();
   console.log(hwnd);
-  let overlayid = streamlabs_overlays.addHWND(hwnd);
+  overlayid1 = streamlabs_overlays.addHWND(hwnd);
+  streamlabs_overlays.setPosition(overlayid1, 900, 200, win_height, win_widht);
 
-  streamlabs_overlays.show();
-
-  win.webContents.on('paint', (event, dirty, image) => {
-    streamlabs_overlays.paintOverlay(overlayid, 600, 800, image.getBitmap());
+  win1.webContents.on('paint', (event, dirty, image) => {
+    streamlabs_overlays.paintOverlay(overlayid1, win_widht, win_height, image.getBitmap());
 
   })
 
-  win.webContents.setFrameRate(10);
-  win.webContents.invalidate();
+  win1.webContents.setFrameRate(10);
+  win1.webContents.invalidate();
+
+
+  win2 = new BrowserWindow({
+    show: false,
+    width: win_widht,
+    height: win_height,
+    frame: false,
+    webPreferences: {
+      offscreen: true,
+      nodeIntegration: false,
+    },
+  })
+
+  win2.loadURL(`https://time.is/`);
+  
+  hwnd = win2.getNativeWindowHandle();
+  console.log(hwnd);
+  overlayid2 = streamlabs_overlays.addHWND(hwnd);
+  streamlabs_overlays.setPosition(overlayid2, 100,100, win_height, win_widht);
+
+  win2.webContents.on('paint', (event, dirty, image) => {
+    streamlabs_overlays.paintOverlay(overlayid2, win_widht, win_height, image.getBitmap());
+
+  })
+
+  win2.webContents.setFrameRate(10);
+  win2.webContents.invalidate();
+
 
   streamlabs_overlays.show();
-
-  win.on("closed", () => { win = null });
+ 
+  win1.on("closed", () => { win1 = null });
+  win2.on("closed", () => { win2 = null });
 
   setTimeout(step_1, 5000);
 }
@@ -77,7 +112,7 @@ function step_1() {
     streamlabs_overlays.setTransparency(overlayid, 20);
   }
 
-  setTimeout(step_2, 5000);
+  setTimeout(step_2, 10000);
 }
 
 function step_2() {

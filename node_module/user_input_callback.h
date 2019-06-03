@@ -15,6 +15,8 @@
 
 struct wm_event_t;
 
+napi_status napi_create_and_set_named_property(napi_env & env, napi_value & obj, const char* value_name, const int value);
+
 struct callback_method_t
 {
 	napi_ref js_this;
