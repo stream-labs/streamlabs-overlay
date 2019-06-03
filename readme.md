@@ -3,9 +3,7 @@
 
 `source` - can be other window like chat or cpu monitor. 
 
-Also app can create `web view`, open url in it and use that web view as source.
-
-It can be build as nodejs module and as standalone app. 
+It should be build as nodejs module. 
 
 ## NodeJS Module 
 ### Build 
@@ -78,11 +76,8 @@ To get basic info about overlays
 - `getInfo(overlay_id)`
 
 To create, setup and remove overlay
-- `add(url)` return overlay id 
 - `addHWND(hwnd)` return overlay id 
-- `addEx(url, x, y, width, height)` return overlay id 
 - `setPosition(overlay_id, x, y, width, height)`
-- `setUrl(overlay_id, url)`
 - `setTransparency(overlay_id, transparency)` from 0 to 255 like in SetLayeredWindowAttributes 
 - `reload(overlay_id)` send web view a command to reload current page
 - `remove(overlay_id)`

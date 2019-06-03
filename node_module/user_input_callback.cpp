@@ -455,7 +455,7 @@ void callback_method_t::static_async_callback(uv_async_t* handle)
 	try
 	{
 		static_cast<callback_method_t*>(handle->data)->async_callback();
-	} catch (std::exception& e)
+	} catch (std::exception& )
 	{
 	} catch (...)
 	{}

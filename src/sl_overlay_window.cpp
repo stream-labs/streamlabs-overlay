@@ -1,7 +1,6 @@
 #include "sl_overlay_window.h"
 
 #include "sl_overlays_settings.h"
-#include "sl_web_view.h"
 #include "stdafx.h"
 
 #include <iostream>
@@ -325,22 +324,6 @@ bool web_view_window::save_state_to_settings()
 	return true;
 }
 
-std::string web_view_window::get_url()
-{
-	return url;
-}
-
-void web_view_window::set_url(char* new_url)
-{
-	std::string save_url = new_url;
-	BOOL ret = PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_SET_URL, id, reinterpret_cast<LPARAM>(new_url));
-	if (!ret) {
-		delete[] new_url;
-	} else {
-		url = save_url;
-	}
-}
-
 bool web_view_window::ready_to_create_overlay()
 {
 	return orig_handle != nullptr;
@@ -349,17 +332,11 @@ bool web_view_window::ready_to_create_overlay()
 void web_view_window::clean_resources()
 {
 	overlay_window::clean_resources();
-	PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_CLOSE, id, NULL);
 }
 
 bool web_view_window::apply_new_rect(RECT& new_rect)
 {
 	RECT* send_rect = new RECT(new_rect);
-	BOOL ret = PostThreadMessage(web_views_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(send_rect));
-	if (!ret) {
-		delete send_rect;
-		return false;
-	}
 
 	return true;
 }

@@ -11,7 +11,6 @@ class overlay_window;
 
 class smg_overlays
 {
-	bool standalone_mode;
 	static std::shared_ptr<smg_overlays> instance;
 	bool quiting;
 
@@ -19,12 +18,12 @@ class smg_overlays
 	mutable std::shared_mutex overlays_list_access;
 	bool showing_overlays;
 
-	static std::shared_ptr<smg_overlays> get_instance(bool in_standalone_mode);
+	static std::shared_ptr<smg_overlays> get_instance();
 
 	public:
 	std::list<std::shared_ptr<overlay_window>> showing_windows;
 
-	smg_overlays(bool in_standalone_mode);
+	smg_overlays();
 	virtual ~smg_overlays(){};
 	void init();
 	void deinit();

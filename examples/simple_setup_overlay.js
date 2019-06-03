@@ -81,9 +81,6 @@ function step_2() {
 	console.log('Call set overlay position');
 	streamlabs_overlays.setPosition(overlays_ids[0], 500, 500, 600, 200);
 
-	console.log('Call set overlay url');
-	streamlabs_overlays.setUrl(overlays_ids[0], "http://bing.com/");
-
 	console.log('Call set overlay transparency off');
 	streamlabs_overlays.setTransparency(overlays_ids[0], 255);
 

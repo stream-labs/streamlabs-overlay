@@ -82,32 +82,6 @@ export function show(): void;
 export function hide(): void;
 
 /**
- * Add an overlay which loads the given URL.
- *
- * @param url The URL to load in the overlay window
- * @returns ID of the overlay that was created
- */
-export function add(url: OverlayUrl): OverlayId;
-
-/**
- * Add an overlay with settings
- *
- * @param url URL of the overlay's contents
- * @param x Horizontal position on the screen
- * @param y Vertical position on the screen
- * @param width Window width
- * @param height Window height
- * @returns ID of the overlay that was created
- */
-export function addEx(
-  url: OverlayUrl,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-): OverlayId;
-
-/**
  * Add an overlay to an existing window.
  *
  * @param hwnd The native Windows handle of the window to be set as an overlay
@@ -137,13 +111,6 @@ export function setPosition(
   width: number,
   height: number,
 ): void;
-
-/**
- * Modify an overlay's URL
- *
- * @param url The new overlay URL
- */
-export function setUrl(url: OverlayUrl): void;
 
 /**
  * Reload a specific overlay
@@ -194,7 +161,6 @@ export function setMouseCallback(callback: Function): void;
  * 
  */
 export function setKeyboardCallback(callback: Function): void;
-
 
 /**
  * Switch on/off interactive mode for overlays

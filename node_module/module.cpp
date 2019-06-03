@@ -98,63 +98,6 @@ napi_value GetOverlaysCount(napi_env env, napi_callback_info args)
 	return ret;
 }
 
-napi_value AddOverlay(napi_env env, napi_callback_info args)
-{
-	napi_status status;
-	size_t argc = 1;
-	napi_value argv[1];
-	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
-	int crated_overlay_id = -1;
-
-	if (argc == 1)
-	{
-		char* url = new char[512];
-		size_t result;
-		status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
-		log_cout << "APP: AddOverlay " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
-		crated_overlay_id = add_webview(url);
-	}
-
-	napi_value ret;
-	status = napi_create_int32(env, crated_overlay_id, &ret);
-	if (status != napi_ok)
-		return nullptr;
-	return ret;
-}
-
-napi_value AddOverlayEx(napi_env env, napi_callback_info args)
-{
-	napi_status status;
-	size_t argc = 5;
-	napi_value argv[5];
-	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
-	int crated_overlay_id = -1;
-	if (argc == 5)
-	{
-		char* url = new char[512];
-		size_t result;
-		status = napi_get_value_string_utf8(env, argv[0], url, 256, &result);
-		log_cout << "APP: AddOverlayEx " << argc << ", " << url << ", " << std::string(url).size() << std::endl;
-
-		int x;
-		status = napi_get_value_int32(env, argv[1], &x);
-		int y;
-		status = napi_get_value_int32(env, argv[2], &y);
-		int width;
-		status = napi_get_value_int32(env, argv[3], &width);
-		int height;
-		status = napi_get_value_int32(env, argv[4], &height);
-
-		crated_overlay_id = add_webview(url, x, y, width, height);
-	}
-
-	napi_value ret;
-	status = napi_create_int32(env, crated_overlay_id, &ret);
-	if (status != napi_ok)
-		return nullptr;
-	return ret;
-}
-
 napi_value AddOverlayHWND(napi_env env, napi_callback_info args)
 {
 	napi_status status;
@@ -421,33 +364,6 @@ napi_value SetOverlayPosition(napi_env env, napi_callback_info args)
 	return ret;
 }
 
-napi_value SetOverlayUrl(napi_env env, napi_callback_info args)
-{
-	napi_status status;
-	size_t argc = 2;
-	napi_value argv[2];
-	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
-	int overlay_id = -1;
-
-	if (argc == 2)
-	{
-		int overlay_id;
-		status = napi_get_value_int32(env, argv[0], &overlay_id);
-
-		char* url = new char[512];
-		size_t result;
-		status = napi_get_value_string_utf8(env, argv[1], url, 256, &result);
-		log_cout << "APP: SetOverlayUrl " << url << ", " << std::string(url).size() << std::endl;
-		overlay_id = set_webview_url(overlay_id, url);
-	}
-
-	napi_value ret;
-	status = napi_create_int32(env, overlay_id, &ret);
-	if (status != napi_ok)
-		return nullptr;
-	return ret;
-}
-
 napi_value PaintOverlay(napi_env env, napi_callback_info args)
 {
 	napi_status status;
@@ -505,29 +421,6 @@ napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
 		status = napi_get_value_int32(env, argv[1], &overlay_transparency);
 		log_cout << "APP: SetOverlayTransparency " << overlay_transparency << std::endl;
 		overlay_id = set_overlay_transparency(overlay_id, overlay_transparency);
-	}
-
-	napi_value ret;
-	status = napi_create_int32(env, overlay_id, &ret);
-	if (status != napi_ok)
-		return nullptr;
-	return ret;
-}
-
-napi_value CallOverlayReload(napi_env env, napi_callback_info args)
-{
-	napi_status status;
-	size_t argc = 1;
-	napi_value argv[1];
-	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
-	int overlay_id = -1;
-
-	if (argc == 1)
-	{
-		int overlay_id;
-		status = napi_get_value_int32(env, argv[0], &overlay_id);
-		log_cout << "APP: CallOverlayReload " << std::endl;
-		overlay_id = call_webview_roload(overlay_id);
 	}
 
 	napi_value ret;
@@ -598,20 +491,6 @@ napi_value init(napi_env env, napi_value exports)
 	if (status != napi_ok)
 		return nullptr;
 
-	status = napi_create_function(env, nullptr, 0, AddOverlay, nullptr, &fn);
-	if (status != napi_ok)
-		return nullptr;
-	status = napi_set_named_property(env, exports, "add", fn);
-	if (status != napi_ok)
-		return nullptr;
-
-	status = napi_create_function(env, nullptr, 0, AddOverlayEx, nullptr, &fn);
-	if (status != napi_ok)
-		return nullptr;
-	status = napi_set_named_property(env, exports, "addEx", fn);
-	if (status != napi_ok)
-		return nullptr;
-
 	status = napi_create_function(env, nullptr, 0, AddOverlayHWND, nullptr, &fn);
 	if (status != napi_ok)
 		return nullptr;
@@ -626,24 +505,10 @@ napi_value init(napi_env env, napi_value exports)
 	if (status != napi_ok)
 		return nullptr;
 
-	status = napi_create_function(env, nullptr, 0, SetOverlayUrl, nullptr, &fn);
-	if (status != napi_ok)
-		return nullptr;
-	status = napi_set_named_property(env, exports, "setUrl", fn);
-	if (status != napi_ok)
-		return nullptr;
-
 	status = napi_create_function(env, nullptr, 0, PaintOverlay, nullptr, &fn);
 	if (status != napi_ok)
 		return nullptr;
 	status = napi_set_named_property(env, exports, "paintOverlay", fn);
-	if (status != napi_ok)
-		return nullptr;
-
-	status = napi_create_function(env, nullptr, 0, CallOverlayReload, nullptr, &fn);
-	if (status != napi_ok)
-		return nullptr;
-	status = napi_set_named_property(env, exports, "reload", fn);
 	if (status != napi_ok)
 		return nullptr;
 
