@@ -139,7 +139,7 @@ int WINAPI remove_overlay(int id)
 		return 0;
 	} else
 	{
-		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_WEBVIEW_CLOSE, id, NULL);
+		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_CLOSE, id, NULL);
 
 		thread_state_mutex.unlock();
 		return ret;
@@ -213,31 +213,6 @@ int WINAPI switch_overlays_user_input(bool mode_active)
 	return 0;
 }
 
-int WINAPI add_webview(const char* url, int x, int y, int width, int height)
-{
-	web_view_overlay_settings n;
-	n.x = x;
-	n.y = y;
-	n.width = width;
-	n.height = height;
-	n.url = std::string(url);
-
-	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing)
-	{
-		thread_state_mutex.unlock();
-		delete[] url;
-		return -1;
-	} else
-	{
-		int ret = smg_overlays::get_instance()->create_web_view_window(n);
-
-		thread_state_mutex.unlock();
-		delete[] url;
-		return ret;
-	}
-}
-
 int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 {
 	int ret = -1;
@@ -285,11 +260,6 @@ int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, si
 	return ret;
 }
 
-int WINAPI add_webview(const char* url)
-{
-	return add_webview(url, 100, 100, 400, 300);
-}
-
 int WINAPI set_overlay_position(int id, int x, int y, int width, int height)
 {
 	thread_state_mutex.lock();
@@ -319,31 +289,6 @@ int WINAPI set_overlay_position(int id, int x, int y, int width, int height)
 	}
 }
 
-int WINAPI set_webview_url(int id, char* url)
-{
-	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing)
-	{
-		thread_state_mutex.unlock();
-		delete[] url;
-		return -1;
-	} else
-	{
-		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_WEBVIEW_SET_URL, id, reinterpret_cast<LPARAM>(url));
-		thread_state_mutex.unlock();
-
-		if (!ret)
-		{
-			delete[] url;
-			return -1;
-		}
-
-		return id;
-	}
-
-	return id;
-}
-
 int WINAPI set_overlay_transparency(int id, int transparency)
 {
 	thread_state_mutex.lock();
@@ -354,29 +299,6 @@ int WINAPI set_overlay_transparency(int id, int transparency)
 	} else
 	{
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_TRANSPARENCY, id, (LPARAM)(transparency));
-		thread_state_mutex.unlock();
-
-		if (!ret)
-		{
-			return -1;
-		}
-
-		return id;
-	}
-
-	return id;
-}
-
-int WINAPI call_webview_roload(int id)
-{
-	thread_state_mutex.lock();
-	if (thread_state != sl_overlay_thread_state::runing)
-	{
-		thread_state_mutex.unlock();
-		return -1;
-	} else
-	{
-		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_WEBVIEW_RELOAD, id, NULL);
 		thread_state_mutex.unlock();
 
 		if (!ret)

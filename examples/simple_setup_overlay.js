@@ -10,11 +10,10 @@ function script_finished() {
 	console.log('Call stop');
 	streamlabs_overlays.stop();
 
-    console.log('END');
+	console.log('END');
 }
 
-function step_finish()
-{
+function step_finish() {
 	console.log('--------------- step_finish');
 	console.log('');
 
@@ -37,8 +36,7 @@ function step_finish()
 	setTimeout(script_finished, 2000);
 }
 
-function step_4()
-{
+function step_4() {
 	console.log('--------------- step_4');
 	console.log('');
 
@@ -52,8 +50,7 @@ function step_4()
 	setTimeout(step_finish, 5000);
 }
 
-function step_3()
-{
+function step_3() {
 	console.log('--------------- step_3');
 	console.log('');
 
@@ -70,8 +67,7 @@ function step_3()
 	setTimeout(step_4, 5000);
 }
 
-function step_2()
-{
+function step_2() {
 	console.log('--------------- step_2');
 	console.log('');
 
@@ -85,17 +81,13 @@ function step_2()
 	console.log('Call set overlay position');
 	streamlabs_overlays.setPosition(overlays_ids[0], 500, 500, 600, 200);
 
-	console.log('Call set overlay url');
-	streamlabs_overlays.setUrl(overlays_ids[0], "http://bing.com/");
-
 	console.log('Call set overlay transparency off');
 	streamlabs_overlays.setTransparency(overlays_ids[0], 255);
 
 	setTimeout(step_3, 5000);
 }
 
-function step_1()
-{
+function step_1() {
 	console.log('--------------- step_1');
 	console.log('');
 	console.log('Call get count');

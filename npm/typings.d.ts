@@ -2,15 +2,10 @@
 /** A unique identifier for an overlay **/
 export type OverlayId = number;
 
-/** URL of the overlay's content **/
-export type OverlayUrl = string;
-
 /** Information about an overlay and its position on the screen */
 export type OverlayInfo = {
   /** The internal ID of this overlay */
   id: OverlayId;
-  /** The source URL that gets loaded into the overlay window */
-  url: OverlayUrl;
   /** Width of the window */
   width: number;
   /** Height of the window */
@@ -82,32 +77,6 @@ export function show(): void;
 export function hide(): void;
 
 /**
- * Add an overlay which loads the given URL.
- *
- * @param url The URL to load in the overlay window
- * @returns ID of the overlay that was created
- */
-export function add(url: OverlayUrl): OverlayId;
-
-/**
- * Add an overlay with settings
- *
- * @param url URL of the overlay's contents
- * @param x Horizontal position on the screen
- * @param y Vertical position on the screen
- * @param width Window width
- * @param height Window height
- * @returns ID of the overlay that was created
- */
-export function addEx(
-  url: OverlayUrl,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-): OverlayId;
-
-/**
  * Add an overlay to an existing window.
  *
  * @param hwnd The native Windows handle of the window to be set as an overlay
@@ -137,13 +106,6 @@ export function setPosition(
   width: number,
   height: number,
 ): void;
-
-/**
- * Modify an overlay's URL
- *
- * @param url The new overlay URL
- */
-export function setUrl(url: OverlayUrl): void;
 
 /**
  * Reload a specific overlay
@@ -183,22 +145,21 @@ export function getStatus(): OverlayThreadStatus;
 
 /**
  * Set callback for mouse events 
- *
+ * setMouseCallback( (eventType, x, y, modifier) => {
  * 
  */
 export function setMouseCallback(callback: Function): void;
 
 /**
  * Set callback for keyboard events 
- *
+ * setKeyboardCallback( (eventType, keyCode) => {
  * 
  */
 export function setKeyboardCallback(callback: Function): void;
-
 
 /**
  * Switch on/off interactive mode for overlays
  * In this mode overlay module intercept user keyboard and mouse events and use callbacks to send them to frontend
  * 
  */
-export function switchInteractiveMode(callback: Function): void;
+export function switchInteractiveMode( active: Boolean ): void;

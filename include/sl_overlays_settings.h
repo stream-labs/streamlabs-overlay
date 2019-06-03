@@ -15,8 +15,6 @@ class web_view_overlay_settings
 	int width;
 	int height;
 
-	void read(std::ifstream& infile);
-	void write(std::ofstream& outfile);
 	
 	web_view_overlay_settings();
 };
@@ -32,11 +30,8 @@ class smg_settings
 	bool use_color_key;
 	int redraw_timeout; //ms
 
-	void test_init();
 	void default_init();
 
-	bool read();
-	void write();
 
 	smg_settings();
 };

@@ -6,7 +6,6 @@
 
 #include "sl_overlay_window.h"
 #include "sl_overlays_settings.h"
-#include "sl_web_view.h"
 
 #include "sl_overlay_api.h"
 #include "overlay_logging.h"
@@ -81,24 +80,6 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 		ret = true;
 	}
 	break;
-	case HOTKEY_ADD_WEB:
-	{
-		log_cout << "APP: get HOTKEY_ADD_WEB " << web_views_thread_id << std::endl;
-		if (in_standalone_mode)
-		{
-			log_cout << "APP: create default web view" << std::endl;
-			web_view_overlay_settings n;
-			n.x = 100;
-			n.y = 100;
-			n.width = 400;
-			n.height = 400;
-			n.url = "https://google.com";
-
-			create_web_view_window(n);
-		}
-		ret = true;
-	}
-	break;
 
 	case HOTKEY_QUIT:
 	{
@@ -141,21 +122,13 @@ void smg_overlays::quit()
 {
 	log_cout << "APP: quit " << std::endl;
 	quiting = true;
-	deregister_hotkeys();
 
 	update_settings();
-	app_settings->write();
-
-	BOOL ret = PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_CLOSE_THREAD, NULL, NULL);
-	if (!ret)
-	{
-		//todo force stop that thread
-	}
 
 	if (showing_windows.size() != 0)
 	{
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			PostMessage(0, WM_SLO_WEBVIEW_CLOSE, n->id, 0);
+			PostMessage(0, WM_SLO_OVERLAY_CLOSE, n->id, 0);
 		});
 	} else
 	{
@@ -163,58 +136,6 @@ void smg_overlays::quit()
 	}
 
 	//it's not all. after last windows will be destroyed then thread quits
-}
-
-int smg_overlays::create_web_view_window(web_view_overlay_settings& n)
-{
-	std::shared_ptr<web_view_window> new_web_view_window = std::make_shared<web_view_window>();
-	new_web_view_window->orig_handle = nullptr;
-	new_web_view_window->use_method = sl_window_capture_method::bitblt;
-
-	RECT overlay_rect;
-	overlay_rect.left = n.x;
-	overlay_rect.right = n.x + n.width;
-	overlay_rect.top = n.y;
-	overlay_rect.bottom = n.y + n.height;
-	new_web_view_window->set_rect(overlay_rect);
-
-	new_web_view_window->url = n.url;
-	log_cout << "APP: create new webview " << n.url << ", x " << n.x << " y " << n.y << ", size " << n.width << " x "
-	          << n.height << std::endl;
-
-	if (n.url.find("http://") == 0 || n.url.find("https://") == 0 || n.url.find("file://") == 0)
-	{
-		new_web_view_window->url = n.url;
-	} else
-	{
-		WCHAR buffer[MAX_PATH];
-		GetCurrentDirectory(MAX_PATH, buffer);
-		std::wstring ws(buffer);
-		std::string temp_path(ws.begin(), ws.end());
-		// std::string::size_type pos = temp_path.find_last_of("\\/");
-
-		new_web_view_window->url = "file:////";
-		new_web_view_window->url += temp_path; // .substr(0, pos);
-		new_web_view_window->url += "\\";
-		new_web_view_window->url += n.url;
-	}
-
-	{
-		std::unique_lock<std::shared_mutex> lock(overlays_list_access);
-		showing_windows.push_back(new_web_view_window);
-	}
-
-	web_view_overlay_settings* new_window_params = new web_view_overlay_settings(n);
-	BOOL ret = PostThreadMessage(
-	    web_views_thread_id, WM_SLO_WEBVIEW_CREATE, new_web_view_window->id, reinterpret_cast<LPARAM>(new_window_params));
-	if (!ret)
-	{
-		delete new_window_params;
-		// todo failed to create web view probably have to remove
-		// overlay or something
-	}
-
-	return new_web_view_window->id;
 }
 
 int smg_overlays::create_overlay_window_by_hwnd(HWND hwnd)
@@ -478,32 +399,6 @@ void smg_overlays::unhook_user_input()
 	}
 }
 
-void smg_overlays::register_hotkeys()
-{
-	RegisterHotKey(NULL, HOTKEY_SHOW_OVERLAYS, MOD_ALT, 0x53);   //'S'how
-	RegisterHotKey(NULL, HOTKEY_HIDE_OVERLAYS, MOD_ALT, 0x48);   //'H'ide all
-	RegisterHotKey(NULL, HOTKEY_ADD_WEB, MOD_ALT, 0x57);         // add 'W'ebview
-	RegisterHotKey(NULL, HOTKEY_UPDATE_OVERLAYS, MOD_ALT, 0x55); //'U'pdate
-	RegisterHotKey(NULL, HOTKEY_QUIT, MOD_ALT, 0x51);            //'Q'uit
-	RegisterHotKey(NULL, HOTKEY_CATCH_APP, MOD_ALT, 0x50);       // catch a'P'p window
-
-	RegisterHotKey(NULL, HOTKEY_TAKE_INPUT, MOD_ALT, 0x54);    // game 'T'ake input
-	RegisterHotKey(NULL, HOTKEY_RELEASE_INPUT, MOD_ALT, 0x52); // game 'R'elease input
-}
-
-void smg_overlays::deregister_hotkeys()
-{
-	UnregisterHotKey(NULL, HOTKEY_SHOW_OVERLAYS);   //'S'how
-	UnregisterHotKey(NULL, HOTKEY_HIDE_OVERLAYS);   //'H'ide all
-	UnregisterHotKey(NULL, HOTKEY_ADD_WEB);         // add 'W'ebview
-	UnregisterHotKey(NULL, HOTKEY_UPDATE_OVERLAYS); //'U'pdate
-	UnregisterHotKey(NULL, HOTKEY_QUIT);            //'Q'uit
-	UnregisterHotKey(NULL, HOTKEY_CATCH_APP);       // catch a'P'p window
-
-	UnregisterHotKey(NULL, HOTKEY_TAKE_INPUT);
-	UnregisterHotKey(NULL, HOTKEY_RELEASE_INPUT);
-}
-
 void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
 {
 	std::shared_ptr<overlay_window> work_overlay = get_overlay_by_id(overlay_id);
@@ -645,24 +540,11 @@ smg_overlays::smg_overlays()
 
 void smg_overlays::init()
 {
-	if (!app_settings->read())
-	{
-		app_settings->default_init();
-		// app_settings.test_init();
-	}
+	app_settings->default_init();
 
 	create_overlay_window_class();
 
 	create_windows_for_apps();
-
-	std::for_each(app_settings->web_pages.begin(), app_settings->web_pages.end(), [this](web_view_overlay_settings& n) {
-		create_web_view_window(n);
-	});
-
-	if (in_standalone_mode)
-	{
-		register_hotkeys();
-	}
 }
 
 bool FindRunningProcess(const WCHAR* process_name_part)
@@ -706,11 +588,13 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 	bool window_ok = false;
 	bool window_catched = false;
 	std::shared_ptr<overlay_window> found_window = nullptr;
+	DWORD dwProcessID = 0;
 	if (param != NULL)
 	{
 		unsigned long process_id = 0;
 		GetWindowThreadProcessId(hwnd, &process_id);
-		if (*((unsigned long*)param) == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
+		dwProcessID = *( (unsigned long*)param);
+		if ( dwProcessID == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
 		{
 			window_ok = true;
 		}
@@ -725,7 +609,7 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 
 	if (window_ok)
 	{
-		WINDOWINFO wi;
+		WINDOWINFO wi = {0};
 		GetWindowInfo(hwnd, &wi);
 		int y = wi.rcWindow.bottom - wi.rcWindow.top;
 		int x = wi.rcWindow.left - wi.rcWindow.right;
@@ -761,7 +645,7 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 
 			// add process file name to settings
 			TCHAR nameProcess[MAX_PATH];
-			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, *((unsigned long*)param));
+			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessID);
 			DWORD file_name_size = MAX_PATH;
 			QueryFullProcessImageName(processHandle, 0, nameProcess, &file_name_size);
 			CloseHandle(processHandle);
@@ -780,6 +664,7 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 			}
 		}
 	}
+
 	if (window_catched)
 	{
 		PostMessage(NULL, WM_SLO_SOURCE_CREATED, found_window->id, reinterpret_cast<LPARAM>(&(found_window->orig_handle)));
@@ -813,16 +698,19 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 			if (hWnd == n->overlay_hwnd)
 			{
 				RECT overlay_rect = n->get_rect();
-				BOOL ret = BitBlt(
-				    hdc,
-				    0,
-				    0,
+				BOOL ret =true;
+				ULONGLONG ticks_before = GetTickCount64();
+				//for(int i =0 ; i<1000; i++ ) 
+				{
+				 ret = BitBlt(
+				    hdc, 0, 0,
 				    overlay_rect.right - overlay_rect.left,
 				    overlay_rect.bottom - overlay_rect.top,
-				    n->hdc,
-				    0,
-				    0,
-				    SRCCOPY);
+				    n->hdc, 0, 0, SRCCOPY);
+				}
+				ULONGLONG ticks_after = GetTickCount64();	
+
+				log_cout << "APP: draw_overlay_gdi ticks " << ticks_after-ticks_before <<  std::endl;
 				if (!ret)
 				{
 					log_cout << "APP: draw_overlay_gdi had issue " << GetLastError() << std::endl;

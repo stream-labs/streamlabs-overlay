@@ -2,9 +2,131 @@
 #include <errno.h>
 #include <iostream>
 #include "overlay_logging.h"
+#include <map>
 
 callback_keyboard_method_t* user_keyboard_callback_info = nullptr;
 callback_mouse_method_t* user_mouse_callback_info = nullptr;
+
+const std::string & translate_to_electron_keycode(const int id)
+{
+	static std::map<int, std::string> CodeToKeyCodes = {
+	    {1, "LButton"},
+	    {2, "RButton"},
+	    {4, "MButton"},
+	    {5, "XButotn1"},
+	    {6, "XButotn2"},
+	    {8, "Backspace"},
+	    {9, "Tab"},
+	    {13, "Enter"},
+	    {16, "Shift"},
+	    {17, "Ctrl"},
+	    {18, "Alt"},
+	    {19, "Pause"},
+	    {20, "CapsLock"},
+	    {27, "Escape"},
+	    {32, " "},
+	    {33, "PageUp"},
+	    {34, "PageDown"},
+	    {35, "End"},
+	    {36, "Home"},
+	    {37, "Left"},
+	    {38, "Up"},
+	    {39, "Right"},
+	    {40, "Down"},
+	    {45, "Insert"},
+	    {46, "Delete"},
+	    {48, "0"},
+	    {49, "1"},
+	    {50, "2"},
+	    {51, "3"},
+	    {52, "4"},
+	    {53, "5"},
+	    {54, "6"},
+	    {55, "7"},
+	    {56, "8"},
+	    {57, "9"},
+	    {65, "A"},
+	    {66, "B"},
+	    {67, "C"},
+	    {68, "D"},
+	    {69, "E"},
+	    {70, "F"},
+	    {71, "G"},
+	    {72, "H"},
+	    {73, "I"},
+	    {74, "J"},
+	    {75, "K"},
+	    {76, "L"},
+	    {77, "M"},
+	    {78, "N"},
+	    {79, "O"},
+	    {80, "P"},
+	    {81, "Q"},
+	    {82, "R"},
+	    {83, "S"},
+	    {84, "T"},
+	    {85, "U"},
+	    {86, "V"},
+	    {87, "W"},
+	    {88, "X"},
+	    {89, "Y"},
+	    {90, "Z"},
+	    {91, "Meta"},
+	    {92, "Meta"},
+	    {93, "ContextMenu"},
+	    {96, "0"},
+	    {97, "1"},
+	    {98, "2"},
+	    {99, "3"},
+	    {100, "4"},
+	    {101, "5"},
+	    {102, "6"},
+	    {103, "7"},
+	    {104, "8"},
+	    {105, "9"},
+	    {106, "*"},
+	    {107, "+"},
+	    {109, "-"},
+	    {110, "."},
+	    {111, "/"},
+	    {112, "F1"},
+	    {113, "F2"},
+	    {114, "F3"},
+	    {115, "F4"},
+	    {116, "F5"},
+	    {117, "F6"},
+	    {118, "F7"},
+	    {119, "F8"},
+	    {120, "F9"},
+	    {121, "F10"},
+	    {122, "F11"},
+	    {123, "F12"},
+	    {144, "NumLock"},
+	    {145, "ScrollLock"},
+	    {160, "Shift"},
+	    {161, "Shift"},
+	    {162, "Control"},
+	    {163, "Control"},
+	    {164, "Alt"},
+	    {165, "Alt"},
+	    {182, "My Computer"},
+	    {183, "My Calculator"},
+	    {186, ";"},
+	    {187, "="},
+	    {188, "},"},
+	    {189, "-"},
+	    {190, "."},
+	    {191, "/"},
+	    {192, "`"},
+	    {219, "["},
+	    {220, "\\"},
+	    {221, "]"},
+	    {222, "'"},
+	    {250, "Play"},
+	};
+
+	return CodeToKeyCodes[id];
+}
 
 struct wm_event_t
 {
@@ -37,13 +159,7 @@ napi_status callback_method_t::callback_method_call_tsf(bool block)
 	completed = false;
 	success = false;
 
-	napi_status status;
-
-#ifdef NAPI_EXPERIMENTAL
-	status = napi_call_threadsafe_function(threadsafe_function, 0, block ? napi_tsfn_blocking : napi_tsfn_nonblocking);
-#else
-
-#endif
+	napi_status status = napi_ok;
 
 	if (status == napi_ok)
 	{
@@ -56,58 +172,6 @@ napi_status callback_method_t::callback_method_call_tsf(bool block)
 	}
 
 	return status;
-}
-
-napi_value callback_method_set_return_int(callback_method_t* method, napi_env env, napi_callback_info info)
-{
-	size_t argc = 1;
-	napi_value argv[2];
-	napi_value js_this;
-	napi_value then;
-	napi_value result;
-	bool ispromise;
-	log_cout << "APP: callback_method_set_return_int " << std::endl;
-
-	if (napi_ok != napi_get_cb_info(env, info, &argc, &result, &js_this, 0))
-		napi_throw_error(env, 0, "Could not get callback info");
-
-	if (napi_ok != napi_is_promise(env, result, &ispromise))
-		napi_throw_error(env, 0, "Could not check whether a promise was returned");
-
-	if (ispromise)
-	{
-		argc = 2;
-
-		if (napi_get_named_property(env, result, "then", &then))
-			napi_throw_error(env, 0, "Could not get 'then' from the returned promise");
-		else if (napi_ok != napi_get_reference_value(env, method->set_return_ref, &argv[0]))
-			napi_throw_error(env, 0, "Could not get referenced value 'set_return'");
-		else if (napi_ok != napi_get_reference_value(env, method->fail_ref, &argv[1]))
-			napi_throw_error(env, 0, "Could not get referenced value 'fail'");
-		else if (napi_ok != napi_call_function(env, result, then, argc, argv, &result))
-			napi_throw_error(env, 0, "Could not call 'then'");
-	}
-
-	if (napi_ok != napi_get_value_int32(env, result, &method->result_int))
-	{
-		napi_throw_error(env, 0, "Could not get return value");
-	} else
-	{
-		method->success = true;
-		method->completed = true;
-	}
-
-	return 0;
-}
-
-napi_value callback_method_fail(callback_method_t* method, napi_env env, napi_callback_info info)
-{
-	log_cout << "APP: callback_method_fail " << std::endl;
-
-	method->success = false;
-	method->completed = true;
-
-	return 0;
 }
 
 napi_status callback_method_t::set_args_and_call_callback(napi_env env, napi_value callback, napi_value* result)
@@ -140,71 +204,6 @@ bool callback_method_t::get_intercept_active()
 	return is_intercept_active;
 }
 
-void callback_method_threadsafe_callback(napi_env env, napi_value callback, void* in_context, void* data)
-{
-	callback_method_t* method;
-	method = (callback_method_t*)in_context;
-	napi_value then;
-	napi_value result;
-	bool ispromise;
-	size_t argc = 2;
-	napi_value global;
-	napi_value argv[2];
-	napi_status status;
-	int ret = 0;
-	log_cout << "APP: callback_method_threadsafe_callback" << std::endl;
-
-	status = method->set_args_and_call_callback(env, callback, &result);
-
-	if (status == napi_ok)
-	{
-		status = napi_is_promise(env, result, &ispromise);
-	}
-
-	if (status == napi_ok)
-	{
-		if (ispromise)
-		{
-			status = napi_get_named_property(env, result, "then", &then);
-			if (status == napi_ok)
-			{
-				status = napi_get_reference_value(env, method->set_return_ref, &argv[0]);
-				if (status == napi_ok)
-				{
-					status = napi_get_reference_value(env, method->fail_ref, &argv[1]);
-					if (status == napi_ok)
-					{
-						status = napi_call_function(env, result, then, argc, argv, &result);
-					}
-				}
-			}
-		} else
-		{
-			status = napi_get_global(env, &global);
-
-			if (status == napi_ok)
-			{
-				status = napi_get_value_int32(env, result, &ret);
-				if (status == napi_ok)
-				{
-					if (ret != 0)
-					{
-						method->success = true;
-						method->completed = true;
-					}
-					//log_cout << "APP: callback_method_threadsafe_callback ret " << ret << std::endl;
-				} else
-				{
-					//if it function then call it
-					//status = napi_call_function(env, global, *argv, 1, &result, &result);
-					//log_cout << "APP: callback_method_threadsafe_callback " << status << std::endl;
-					//log_cout << "APP: callback_method_threadsafe_callback " << result << std::endl;
-				}
-			}
-		}
-	}
-}
-
 napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 {
 	log_cout << "APP: callback_keyboard_method_t::set_callback_args_values" << std::endl;
@@ -217,8 +216,6 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 		event = to_send.front();
 		to_send.pop();
 	}
-
-	argc_to_cb = 2;
 
 	bool send_key = false;
 
@@ -252,7 +249,8 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 		if (status == napi_ok)
 		{
 			LPKBDLLHOOKSTRUCT key = (LPKBDLLHOOKSTRUCT)event->lParam;
-			status = napi_create_int32(env, key->vkCode, &argv_to_cb[1]);
+			const std::string & keyCode = translate_to_electron_keycode(key->vkCode);
+			status = napi_create_string_utf8(env, keyCode.c_str(), keyCode.size(), &argv_to_cb[1]);
 		}
 	}
 
@@ -276,8 +274,6 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 		event = to_send.front();
 		to_send.pop();
 	}
-
-	argc_to_cb = 4;
 
 	bool send_mouse = false;
 	std::string event_type = "unknown";
@@ -341,7 +337,7 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 		}
 	}
 
-	if ( !send_mouse)
+	if (!send_mouse)
 	{
 		status = napi_create_int32(env, 0, &argv_to_cb[1]);
 		status = napi_create_int32(env, 0, &argv_to_cb[2]);
@@ -349,28 +345,6 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 
 	return status;
 }
-
-napi_value keyboard_callback_return(napi_env env, napi_callback_info info)
-{
-	return callback_method_set_return_int(user_keyboard_callback_info, env, info);
-}
-
-napi_value keyboard_callback_fail(napi_env env, napi_callback_info info)
-{
-	return callback_method_fail(user_keyboard_callback_info, env, info);
-}
-
-napi_value mouse_callback_return(napi_env env, napi_callback_info info)
-{
-	return callback_method_set_return_int(user_mouse_callback_info, env, info);
-}
-
-napi_value mouse_callback_fail(napi_env env, napi_callback_info info)
-{
-	return callback_method_fail(user_mouse_callback_info, env, info);
-}
-
-static void example_finalize(napi_env env, void* data, void* hint) {}
 
 int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 {
@@ -382,34 +356,14 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 		std::lock_guard<std::mutex> lock(send_queue_mutex);
 		to_send.push(std::make_shared<wm_event_t>(wParam, lParam));
 	}
-#ifdef NAPI_EXPERIMENTAL
 
-	while (to_send.size() > 0)
-	{
-		if (!initialized)
-		{
-			if (callback_method_call_tsf(false) != napi_ok)
-			{
-				ret = -1;
-			} else
-			{
-				ret = 1;
-			}
-		}
-
-		if (completed)
-		{
-			if (success)
-			{
-				ret = result_int;
-			}
-
-			callback_method_reset();
-		}
-	}
-#else
 	uv_async_send(&uv_async_this);
-#endif
+
+	if (to_send.size() > 256)
+	{
+		log_cout << "APP: Failed to send too many events, will switch input interception off" << std::endl;
+		switch_input();
+	}
 
 	return ret;
 }
@@ -466,30 +420,10 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 	size_t argc = 1;
 	napi_value argv[1];
 	napi_value async_name;
-	napi_value local_return;
-	napi_value local_fail;
 	napi_status status;
 
 	status = napi_get_cb_info(env, info, &argc, argv, NULL, 0);
-	
-	if (status == napi_ok)
-	{
-		status = napi_create_function(env, "set_return", NAPI_AUTO_LENGTH, set_return, NULL, &local_return);
-		if (status == napi_ok)
-		{
-			status = napi_create_reference(env, local_return, 0, &set_return_ref);
-		}
-	}
 
-	if (status == napi_ok)
-	{
-		status = napi_create_function(env, "fail", NAPI_AUTO_LENGTH, fail, NULL, &local_fail);
-		if (status == napi_ok)
-		{
-			status = napi_create_reference(env, local_fail, 0, &fail_ref);
-		}
-	}
-	
 	if (status == napi_ok)
 	{
 		status = napi_create_string_utf8(env, name, NAPI_AUTO_LENGTH, &async_name);
@@ -497,30 +431,19 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 
 	if (status == napi_ok)
 	{
-#ifdef NAPI_EXPERIMENTAL
-		status = napi_create_threadsafe_function(
-		    env,
-		    argv[0],
-		    0,
-		    async_name,
-		    0,
-		    1,
-		    0,
-		    callback_finalize,
-		    this,
-		    callback_method_threadsafe_callback,
-		    &threadsafe_function);
-#else
+		status = napi_async_destroy(env_this, async_context);
+
 		status = napi_async_init(env, argv[0], async_name, &async_context);
 		uv_async_init(uv_default_loop(), &uv_async_this, &static_async_callback);
 		uv_async_this.data = this;
 		env_this = env;
-#endif
+
 		log_cout << "APP: user_input_callback_method_init status = " << status << std::endl;
 
 		if (status == napi_ok)
 		{
 			set_callback();
+			ready = true;
 		}
 	}
 
@@ -532,7 +455,7 @@ void callback_method_t::static_async_callback(uv_async_t* handle)
 	try
 	{
 		static_cast<callback_method_t*>(handle->data)->async_callback();
-	} catch (std::exception& e)
+	} catch (std::exception& )
 	{
 	} catch (...)
 	{}
@@ -558,7 +481,8 @@ void callback_method_t::async_callback()
 				status = set_callback_args_values(env_this);
 				if (status == napi_ok)
 				{
-					status = napi_make_callback(env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
+					status = napi_make_callback(
+					    env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
 				}
 			}
 		}
@@ -569,6 +493,10 @@ void callback_method_t::async_callback()
 	if (status != napi_ok)
 	{
 		log_cout << "APP: failed async_callback to send callback with status " << status << std::endl;
+		while (to_send.size() > 0)
+		{
+			to_send.pop();
+		}
 	}
 }
 

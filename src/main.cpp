@@ -6,7 +6,6 @@
 
 #include "sl_overlay_window.h"
 #include "sl_overlays_settings.h"
-#include "sl_web_view.h"
 #include "overlay_logging.h"
 
 std::shared_ptr<smg_settings> app_settings;
@@ -19,44 +18,12 @@ std::mutex thread_state_mutex;
 BOOL g_bDblBuffered = FALSE;
 
 UINT_PTR OVERLAY_UPDATE_TIMER = 0;
-bool in_standalone_mode = false;
-
-//  Regular entry to the app
-int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/);
-
-//  Windows entry to the app
-int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
-{
-	main(hInstance, hPrevInstance, pCmdLine, nCmdShow);
-}
-
-int APIENTRY main(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int /*nCmdShow*/)
-{
-	thread_state_mutex.lock();
-	thread_state = sl_overlay_thread_state::starting;
-
-	in_standalone_mode = true;
-	overlays_thread = GetModuleHandle(NULL);
-	overlays_thread_id = GetCurrentThreadId();
-
-	thread_state_mutex.unlock();
-
-	return overlay_thread_func(NULL);
-}
 
 DWORD WINAPI overlay_thread_func(void* data)
 {
 	app_settings = std::make_shared<smg_settings>();
 
 	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
-
-	web_views_hInstance = GetModuleHandle(NULL);
-	web_views_thread = CreateThread(nullptr, 0, web_views_thread_func, nullptr, 0, &web_views_thread_id);
-	if (web_views_thread) {
-
-	} else {
-		//todo starting webview thread failed. posibly app still can work but without webviews.
-	}
 
 	// Mark that this process is DPI aware.
 	SetProcessDPIAware();
@@ -83,24 +50,14 @@ DWORD WINAPI overlay_thread_func(void* data)
 			bool catched = false;
 
 			switch (msg.message) {
-			case WM_SLO_WEBVIEW_CREATED:
-				app->original_window_ready((int)msg.wParam, *(reinterpret_cast<HWND*>(msg.lParam)));
-				catched = true;
-				break;
-			case WM_SLO_WEBVIEW_CLOSED: {
-				log_cout << "APP: WM_WEBVIEW_CLOSED " << (int)msg.wParam << std::endl;
-				auto closed = app->get_overlay_by_id((int)msg.wParam);
-				app->remove_overlay(closed);
-				catched = true;
-			} break;
-			case WM_SLO_WEBVIEW_CLOSE: {
-				log_cout << "APP: WM_WEBVIEW_CLOSE " << (int)msg.wParam << std::endl;
+			case WM_SLO_OVERLAY_CLOSE: {
+				log_cout << "APP: WM_SLO_OVERLAY_CLOSE" << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
 				catched = true;
 			} break;
 			case WM_SLO_OVERLAY_POSITION: {
-				log_cout << "APP: WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
+				log_cout << "APP: WM_SLO_OVERLAY_POSITION " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				RECT* new_rect = reinterpret_cast<RECT*>(msg.lParam);
 				if (new_rect != nullptr) {
@@ -108,26 +65,6 @@ DWORD WINAPI overlay_thread_func(void* data)
 						overlay->apply_new_rect(*new_rect);
 					}
 					delete new_rect;
-				}
-				catched = true;
-			} break;
-			case WM_SLO_WEBVIEW_RELOAD: {
-				log_cout << "APP: WM_SLO_WEBVIEW_RELOAD " << (int)msg.wParam << std::endl;
-				PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_RELOAD, msg.wParam, NULL);
-				
-				catched = true;
-			} break;
-				
-			case WM_SLO_WEBVIEW_SET_URL: {
-				log_cout << "APP: WM_WEBVIEW_SET_URL " << (int)msg.wParam << std::endl;
-				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
-				char* new_url = reinterpret_cast<char*>(msg.lParam);
-				if (new_url != nullptr) {
-					if (overlay != nullptr) {
-						overlay->set_url(new_url);
-					} else {
-						delete[] new_url;
-					}
 				}
 				catched = true;
 			} break;
@@ -184,16 +121,12 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 	app->deinit(); //todo clean singleton in case some one start thread another time after stop
 
-	WaitForSingleObject(web_views_thread, 1000 * 15); // wait for 15sec max till webview thread closed
-	CloseHandle(web_views_thread);
-	web_views_thread = 0;
-
 	log_cout << "APP: exit from thread " << std::endl;
 
 	thread_state_mutex.lock();
-	if (!in_standalone_mode) {
-		CloseHandle(overlays_thread);
-	}
+
+	CloseHandle(overlays_thread);
+
 	overlays_thread = nullptr;
 	overlays_thread_id = 0;
 	thread_state = sl_overlay_thread_state::destoyed;

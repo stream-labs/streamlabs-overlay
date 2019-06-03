@@ -4,10 +4,7 @@ ADD_DEFINITIONS(-DUNICODE)
 ADD_DEFINITIONS(-D_UNICODE)
 
 file(GLOB SOURCES "src/*.cpp" "include/*.h")
-file(GLOB WEBFORM_SOURCES "webform/*.cpp" "webform/*.h")
 
-configure_file( "help.html" ${CMAKE_CURRENT_BINARY_DIR}/help.html COPYONLY)
- 
 project(streamlabs_overlay_app)
 add_executable(streamlabs_overlay_app ${SOURCES} ${WEBFORM_SOURCES})
 

@@ -1,7 +1,6 @@
 #include "sl_overlay_window.h"
 
 #include "sl_overlays_settings.h"
-#include "sl_web_view.h"
 #include "stdafx.h"
 
 #include <iostream>
@@ -10,16 +9,6 @@
 bool overlay_window::save_state_to_settings()
 {
 	return false;
-}
-
-std::string overlay_window::get_url()
-{
-	return "";
-}
-
-void overlay_window::set_url(char* url)
-{
-	delete[] url;
 }
 
 void overlay_window::set_transparency(int transparency) {
@@ -51,6 +40,7 @@ overlay_window::overlay_window()
 	hbmp = nullptr;
 	manual_position = false;
 	status = overlay_status::creating;
+	rect = {0};
 }
 
 void overlay_window::clean_resources()
@@ -130,11 +120,46 @@ bool  overlay_window::paint_window_from_buffer(const void* image_array, size_t a
 	// new_hdc = CreateCompatibleDC(hdcScreen);
 	// new_hbmp = CreateCompatibleBitmap(hdcScreen, new_width, new_height);
 	// SelectObject(new_hdc, new_hbmp);
-	if(hbmp != nullptr)
-	{
-		LONG workedout = SetBitmapBits(hbmp, width * height * 4, image_array);
-		log_cout << "APP: paint_window_from_buffer workedout = " << workedout << std::endl;
-		//ShowWindow(overlay_hwnd, SW_SHOWNA);
+	
+	if(hbmp != nullptr) {
+		LONG workedout = 0 ;
+		ULONGLONG ticks_before = GetTickCount64();
+		if(false) {
+		if(true) {
+			// Marked as outdate in msdn with note.
+			// "This function is provided only for compatibility with 16-bit versions of Windows. Applications should use the SetDIBits function."
+			// but 30-50 percent faster than SetDIBits
+			// and blit speed about 10000 times per second for 600x800 image 
+			workedout = SetBitmapBits(hbmp, width * height * 4, image_array);
+		} else {
+			BITMAPINFO phmi; 
+			phmi.bmiHeader.biSize = sizeof(phmi.bmiHeader);
+			phmi.bmiHeader.biWidth = width;
+			phmi.bmiHeader.biHeight = -height;
+			phmi.bmiHeader.biPlanes = 1;
+			phmi.bmiHeader.biBitCount = 32;
+			phmi.bmiHeader.biCompression = BI_RGB;
+			workedout = SetDIBits(hdc, hbmp, 0, height, image_array, &phmi, false);
+		}	
+		} else {
+			BITMAPINFO phmi; 
+			phmi.bmiHeader.biSize = sizeof(phmi.bmiHeader);
+			phmi.bmiHeader.biWidth = width;
+			phmi.bmiHeader.biHeight = -height;
+			phmi.bmiHeader.biPlanes = 1;
+			phmi.bmiHeader.biBitCount = 32;
+			phmi.bmiHeader.biCompression = BI_RGB;
+			//for(int i =0 ; i<1000; i++ ) 
+			{
+				workedout = SetDIBitsToDevice(hdc, 0,0, width, height, 0,0, 0, height, image_array, &phmi, false);
+			}
+		}
+		
+		ULONGLONG ticks_after = GetTickCount64();
+
+		log_cout << "APP: paint_window_from_buffer ticks " << ticks_after-ticks_before <<  std::endl;
+
+		log_cout << "APP: paint_window_from_buffer workedout = " << workedout <<  std::endl;
 		if (!IsWindowVisible(overlay_hwnd)) {
 				ShowWindow(overlay_hwnd, SW_SHOWNA);
 		}
@@ -272,64 +297,3 @@ bool overlay_window::get_window_screenshot()
 
 	return updated;
 }
-
-bool web_view_window::save_state_to_settings()
-{
-	web_view_overlay_settings wnd_settings;
-	wnd_settings.url = url;
-
-	RECT client_rect = {0};
-	GetWindowRect(orig_handle, &client_rect);
-	wnd_settings.x = client_rect.left;
-	wnd_settings.y = client_rect.top;
-	wnd_settings.width = client_rect.right - client_rect.left;
-	wnd_settings.height = client_rect.bottom - client_rect.top;
-
-	app_settings->web_pages.push_back(wnd_settings);
-	return true;
-}
-
-std::string web_view_window::get_url()
-{
-	return url;
-}
-
-void web_view_window::set_url(char* new_url)
-{
-	std::string save_url = new_url;
-	BOOL ret = PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_SET_URL, id, reinterpret_cast<LPARAM>(new_url));
-	if (!ret) {
-		delete[] new_url;
-	} else {
-		url = save_url;
-	}
-}
-
-bool web_view_window::ready_to_create_overlay()
-{
-	return orig_handle != nullptr;
-}
-
-void web_view_window::clean_resources()
-{
-	overlay_window::clean_resources();
-	PostThreadMessage(web_views_thread_id, WM_SLO_WEBVIEW_CLOSE, id, NULL);
-}
-
-bool web_view_window::apply_new_rect(RECT& new_rect)
-{
-	RECT* send_rect = new RECT(new_rect);
-	BOOL ret = PostThreadMessage(web_views_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(send_rect));
-	if (!ret) {
-		delete send_rect;
-		return false;
-	}
-
-	return true;
-}
-
-bool web_view_window::set_new_position(int x, int y)
-{
-	return false;
-}
-
