@@ -128,7 +128,7 @@ void smg_overlays::quit()
 	if (showing_windows.size() != 0)
 	{
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			PostMessage(0, WM_SLO_WEBVIEW_CLOSE, n->id, 0);
+			PostMessage(0, WM_SLO_OVERLAY_CLOSE, n->id, 0);
 		});
 	} else
 	{

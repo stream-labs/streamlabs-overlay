@@ -139,7 +139,7 @@ int WINAPI remove_overlay(int id)
 		return 0;
 	} else
 	{
-		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_WEBVIEW_CLOSE, id, NULL);
+		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_CLOSE, id, NULL);
 
 		thread_state_mutex.unlock();
 		return ret;

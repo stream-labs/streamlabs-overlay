@@ -4,8 +4,6 @@
 #include "stdafx.h"
 
 DWORD WINAPI overlay_thread_func(void* data);
-extern bool in_standalone_mode;
-
 class web_view_overlay_settings;
 class overlay_window;
 
@@ -58,8 +56,6 @@ class smg_overlays
 	void unhook_user_input();
 
 	//hotkeys
-	void register_hotkeys();
-	void deregister_hotkeys();
 	bool process_hotkeys(MSG& msg);
 
 	//events

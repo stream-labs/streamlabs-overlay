@@ -66,7 +66,7 @@ const int HOTKEY_CATCH_APP = 6;
 const int HOTKEY_TAKE_INPUT = 7;
 const int HOTKEY_RELEASE_INPUT = 8;
 
-#define WM_SLO_WEBVIEW_CLOSE (WM_USER + 33)
+#define WM_SLO_OVERLAY_CLOSE (WM_USER + 33)
 //command for web view thread to close web view
 //wParam id
 
@@ -86,9 +86,6 @@ const int HOTKEY_RELEASE_INPUT = 8;
 #define WM_SLO_OVERLAY_WINDOW_DESTOYED (WM_USER + 41)
 //signal for overlay thread what overlya do not have window anymore and can be deleted
 //wParam id
-
-#define WM_SLO_WEBVIEW_CLOSE_THREAD (WM_USER + 42)
-//thread should be closed, all resources released, global vars cleaned
 
 #define WM_SLO_HWND_SOURCE_READY (WM_USER + 43)
 //signal for overlay thread that it can create window for new overlay 

@@ -286,13 +286,6 @@ napi_value GetOverlayInfo(napi_env env, napi_callback_info args)
 		status = napi_create_int32(env, requested_overlay->id, &id);
 		status = napi_set_named_property(env, ret, "id", id);
 
-		std::string url_str = requested_overlay->get_url();
-		if (url_str.size() != 0)
-		{
-			napi_value url;
-			status = napi_create_string_utf8(env, url_str.c_str(), url_str.size() + 1, &url);
-			status = napi_set_named_property(env, ret, "url", url);
-		}
 		RECT overlay_rect = requested_overlay->get_rect();
 
 		napi_value width;

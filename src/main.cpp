@@ -50,14 +50,14 @@ DWORD WINAPI overlay_thread_func(void* data)
 			bool catched = false;
 
 			switch (msg.message) {
-			case WM_SLO_WEBVIEW_CLOSE: {
-				log_cout << "APP: WM_SLO_WEBVIEW_CLOSE" << (int)msg.wParam << std::endl;
+			case WM_SLO_OVERLAY_CLOSE: {
+				log_cout << "APP: WM_SLO_OVERLAY_CLOSE" << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
 				catched = true;
 			} break;
 			case WM_SLO_OVERLAY_POSITION: {
-				log_cout << "APP: WM_WEBVIEW_SET_POSITION " << (int)msg.wParam << std::endl;
+				log_cout << "APP: WM_SLO_OVERLAY_POSITION " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				RECT* new_rect = reinterpret_cast<RECT*>(msg.lParam);
 				if (new_rect != nullptr) {

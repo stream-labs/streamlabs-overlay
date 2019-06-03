@@ -11,16 +11,6 @@ bool overlay_window::save_state_to_settings()
 	return false;
 }
 
-std::string overlay_window::get_url()
-{
-	return "";
-}
-
-void overlay_window::set_url(char* url)
-{
-	delete[] url;
-}
-
 void overlay_window::set_transparency(int transparency) {
 	if (overlay_hwnd != 0)
 	{
@@ -307,42 +297,3 @@ bool overlay_window::get_window_screenshot()
 
 	return updated;
 }
-
-bool web_view_window::save_state_to_settings()
-{
-	web_view_overlay_settings wnd_settings;
-	wnd_settings.url = url;
-
-	RECT client_rect = {0};
-	GetWindowRect(orig_handle, &client_rect);
-	wnd_settings.x = client_rect.left;
-	wnd_settings.y = client_rect.top;
-	wnd_settings.width = client_rect.right - client_rect.left;
-	wnd_settings.height = client_rect.bottom - client_rect.top;
-
-	app_settings->web_pages.push_back(wnd_settings);
-	return true;
-}
-
-bool web_view_window::ready_to_create_overlay()
-{
-	return orig_handle != nullptr;
-}
-
-void web_view_window::clean_resources()
-{
-	overlay_window::clean_resources();
-}
-
-bool web_view_window::apply_new_rect(RECT& new_rect)
-{
-	RECT* send_rect = new RECT(new_rect);
-
-	return true;
-}
-
-bool web_view_window::set_new_position(int x, int y)
-{
-	return false;
-}
-

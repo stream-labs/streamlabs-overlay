@@ -2,15 +2,10 @@
 /** A unique identifier for an overlay **/
 export type OverlayId = number;
 
-/** URL of the overlay's content **/
-export type OverlayUrl = string;
-
 /** Information about an overlay and its position on the screen */
 export type OverlayInfo = {
   /** The internal ID of this overlay */
   id: OverlayId;
-  /** The source URL that gets loaded into the overlay window */
-  url: OverlayUrl;
   /** Width of the window */
   width: number;
   /** Height of the window */
