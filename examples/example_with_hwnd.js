@@ -21,7 +21,7 @@ function createWindow() {
   streamlabs_overlays.start();
 
   win1 = new BrowserWindow({ x: 300, y: 300, width: 400, height: 300 })
-  win2.loadURL(`https://www.google.com/search?q=1`);
+  win1.loadURL(`https://www.google.com/search?q=1`);
   hwnd = win1.getNativeWindowHandle();
   streamlabs_overlays.addHWND(hwnd);
 

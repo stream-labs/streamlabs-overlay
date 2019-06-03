@@ -131,11 +131,46 @@ bool  overlay_window::paint_window_from_buffer(const void* image_array, size_t a
 	// new_hdc = CreateCompatibleDC(hdcScreen);
 	// new_hbmp = CreateCompatibleBitmap(hdcScreen, new_width, new_height);
 	// SelectObject(new_hdc, new_hbmp);
-	if(hbmp != nullptr)
-	{
-		LONG workedout = SetBitmapBits(hbmp, width * height * 4, image_array);
-		log_cout << "APP: paint_window_from_buffer workedout = " << workedout << std::endl;
-		//ShowWindow(overlay_hwnd, SW_SHOWNA);
+	
+	if(hbmp != nullptr) {
+		LONG workedout = 0 ;
+		ULONGLONG ticks_before = GetTickCount64();
+		if(false) {
+		if(true) {
+			// Marked as outdate in msdn with note.
+			// "This function is provided only for compatibility with 16-bit versions of Windows. Applications should use the SetDIBits function."
+			// but 30-50 percent faster than SetDIBits
+			// and blit speed about 10000 times per second for 600x800 image 
+			workedout = SetBitmapBits(hbmp, width * height * 4, image_array);
+		} else {
+			BITMAPINFO phmi; 
+			phmi.bmiHeader.biSize = sizeof(phmi.bmiHeader);
+			phmi.bmiHeader.biWidth = width;
+			phmi.bmiHeader.biHeight = -height;
+			phmi.bmiHeader.biPlanes = 1;
+			phmi.bmiHeader.biBitCount = 32;
+			phmi.bmiHeader.biCompression = BI_RGB;
+			workedout = SetDIBits(hdc, hbmp, 0, height, image_array, &phmi, false);
+		}	
+		} else {
+			BITMAPINFO phmi; 
+			phmi.bmiHeader.biSize = sizeof(phmi.bmiHeader);
+			phmi.bmiHeader.biWidth = width;
+			phmi.bmiHeader.biHeight = -height;
+			phmi.bmiHeader.biPlanes = 1;
+			phmi.bmiHeader.biBitCount = 32;
+			phmi.bmiHeader.biCompression = BI_RGB;
+			//for(int i =0 ; i<1000; i++ ) 
+			{
+				workedout = SetDIBitsToDevice(hdc, 0,0, width, height, 0,0, 0, height, image_array, &phmi, false);
+			}
+		}
+		
+		ULONGLONG ticks_after = GetTickCount64();
+
+		log_cout << "APP: paint_window_from_buffer ticks " << ticks_after-ticks_before <<  std::endl;
+
+		log_cout << "APP: paint_window_from_buffer workedout = " << workedout <<  std::endl;
 		if (!IsWindowVisible(overlay_hwnd)) {
 				ShowWindow(overlay_hwnd, SW_SHOWNA);
 		}

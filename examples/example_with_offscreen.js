@@ -18,8 +18,8 @@ function createWindow() {
 
   win = new BrowserWindow({
     show: false,
-    width: 300,
-    height: 400,
+    width: 600,
+    height: 800,
     frame: false,
     webPreferences: {
       offscreen: true,
@@ -27,7 +27,8 @@ function createWindow() {
     },
   })
 
-  win.loadURL(`https://time.is/`);
+  //win.loadURL(`https://time.is/`);
+  win.loadURL(`https://codepen.io/jasonleewilson/pen/gPrxwX`);
 
 
   let hwnd = win.getNativeWindowHandle();
@@ -37,7 +38,7 @@ function createWindow() {
   streamlabs_overlays.show();
 
   win.webContents.on('paint', (event, dirty, image) => {
-    streamlabs_overlays.paintOverlay(overlayid, 300, 400, image.getBitmap());
+    streamlabs_overlays.paintOverlay(overlayid, 600, 800, image.getBitmap());
 
   })
 

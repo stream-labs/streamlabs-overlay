@@ -826,16 +826,19 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 			if (hWnd == n->overlay_hwnd)
 			{
 				RECT overlay_rect = n->get_rect();
-				BOOL ret = BitBlt(
-				    hdc,
-				    0,
-				    0,
+				BOOL ret =true;
+				ULONGLONG ticks_before = GetTickCount64();
+				//for(int i =0 ; i<1000; i++ ) 
+				{
+				 ret = BitBlt(
+				    hdc, 0, 0,
 				    overlay_rect.right - overlay_rect.left,
 				    overlay_rect.bottom - overlay_rect.top,
-				    n->hdc,
-				    0,
-				    0,
-				    SRCCOPY);
+				    n->hdc, 0, 0, SRCCOPY);
+				}
+				ULONGLONG ticks_after = GetTickCount64();	
+
+				log_cout << "APP: draw_overlay_gdi ticks " << ticks_after-ticks_before <<  std::endl;
 				if (!ret)
 				{
 					log_cout << "APP: draw_overlay_gdi had issue " << GetLastError() << std::endl;
