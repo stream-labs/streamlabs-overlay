@@ -23,9 +23,8 @@ extern DWORD overlays_thread_id;
 extern std::mutex thread_state_mutex;
 extern sl_overlay_thread_state thread_state;
 
-BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM);
+
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-bool FindRunningProcess(const WCHAR* process_name_part);
 
 bool smg_overlays::process_commands(MSG& msg)
 {
@@ -33,19 +32,6 @@ bool smg_overlays::process_commands(MSG& msg)
 	log_cout << "APP: process_commands id " << msg.wParam << std::endl;
 	switch (msg.wParam)
 	{
-	case COMMAND_CATCH_APP:
-	{
-		HWND top_window = GetForegroundWindow();
-		if (top_window != nullptr)
-		{
-			unsigned long process_id = 0;
-			GetWindowThreadProcessId(top_window, &process_id);
-			log_cout << "APP: catch app " << process_id << ", " << top_window << std::endl;
-			EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
-		}
-		ret = true;
-	}
-	break;
 	case COMMAND_SHOW_OVERLAYS:
 	{
 		if (showing_overlays)
@@ -386,18 +372,6 @@ void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
 	}
 }
 
-void smg_overlays::create_windows_for_apps()
-{
-	std::for_each(app_settings->apps_names.begin(), app_settings->apps_names.end(), [](std::string& n) {
-		WCHAR* process_name = new wchar_t[n.size() + 1];
-		mbstowcs(&process_name[0], n.c_str(), n.size() + 1);
-
-		FindRunningProcess(process_name);
-
-		delete[] process_name;
-	});
-}
-
 size_t smg_overlays::get_count()
 {
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
@@ -519,43 +493,6 @@ void smg_overlays::init()
 	app_settings->default_init();
 
 	create_overlay_window_class();
-
-	create_windows_for_apps();
-}
-
-bool FindRunningProcess(const WCHAR* process_name_part)
-{
-	bool procRunning = false;
-
-	HANDLE hProcessSnap;
-	PROCESSENTRY32 pe32;
-	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
-	if (hProcessSnap == INVALID_HANDLE_VALUE)
-	{
-		procRunning = false;
-	} else
-	{
-		pe32.dwSize = sizeof(PROCESSENTRY32);
-		if (Process32First(hProcessSnap, &pe32))
-		{
-			while (true)
-			{
-				if (StrStrW(pe32.szExeFile, process_name_part) != nullptr)
-				{
-					unsigned long process_id = pe32.th32ProcessID;
-					EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
-				}
-				if (!Process32Next(hProcessSnap, &pe32))
-				{
-					break;
-				}
-			}
-			CloseHandle(hProcessSnap);
-		}
-	}
-
-	return procRunning;
 }
 
 BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
@@ -618,26 +555,6 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 				showing_windows.push_back(found_window);
 			}
 			window_catched = true;
-
-			// add process file name to settings
-			TCHAR nameProcess[MAX_PATH];
-			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessID);
-			DWORD file_name_size = MAX_PATH;
-			QueryFullProcessImageName(processHandle, 0, nameProcess, &file_name_size);
-			CloseHandle(processHandle);
-			std::wstring ws(nameProcess);
-			std::string temp_path(ws.begin(), ws.end());
-			std::string::size_type pos = temp_path.find_last_of("\\/");
-			std::string file_name = temp_path.substr(pos + 1, temp_path.size());
-
-			std::list<std::string>::iterator findIter = std::find_if(
-			    app_settings->apps_names.begin(), app_settings->apps_names.end(), [&file_name](const std::string& v) {
-				    return v.compare(file_name) == 0;
-			    });
-			if (findIter == app_settings->apps_names.end())
-			{
-				app_settings->apps_names.push_back(file_name);
-			}
 		}
 	}
 

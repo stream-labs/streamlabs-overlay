@@ -155,11 +155,6 @@ DWORD WINAPI overlay_thread_func(void* data)
 	return 0;
 }
 
-BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM param)
-{
-	return smg_overlays::get_instance()->process_found_window(hwnd, param);
-}
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)

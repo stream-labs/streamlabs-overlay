@@ -32,7 +32,6 @@ class smg_overlays
 	void create_overlay_window_class();
 
 	int create_overlay_window_by_hwnd(HWND hwnd);
-	void create_windows_for_apps();
 
 	size_t get_count();
 	std::shared_ptr<overlay_window> get_overlay_by_id(int overlay_id);

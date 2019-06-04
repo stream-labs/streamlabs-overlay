@@ -60,7 +60,6 @@ const int COMMAND_SHOW_OVERLAYS = 1;
 const int COMMAND_HIDE_OVERLAYS = 2;
 const int COMMAND_UPDATE_OVERLAYS = 3;
 const int COMMAND_QUIT = 4;
-const int COMMAND_CATCH_APP = 6;
 const int COMMAND_TAKE_INPUT = 7;
 const int COMMAND_RELEASE_INPUT = 8;
 
