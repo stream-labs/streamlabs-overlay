@@ -55,8 +55,8 @@ class smg_overlays
 	void hook_user_input();
 	void unhook_user_input();
 
-	//hotkeys
-	bool process_hotkeys(MSG& msg);
+	//commands
+	bool process_commands(MSG& msg);
 
 	//events
 	void on_update_timer();

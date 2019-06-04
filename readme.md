@@ -12,28 +12,27 @@ It should be build as nodejs module.
 To setup env and make a build use command
 ```
 yarn install
+yarn build 
 ```
   Module file will be in 'build\Release\'
 
 And to make build again after source code changed
 ```
-node-gyp build
+yarn node-gyp build
 ```
-By default module works fine with electron 4. But to make one loadable in electron 2. Other steps have to be done 
+To work on electron 2 it can be required to set older version of nodejs
 
 ```
 nvm use 8.x.x
 yarn install 
-#remove build-tmp*
-node-gyp configure 
-node-gyp rebuild --target=2.0.16 --dist-url=https://atom.io/download/atom-shell
+yarn build  
 node scripts\pack.js 
 ```
 
 To make debug build for nodejs tests 
 
 ```
-node-gyp --debug configure rebuild 
+yarn node-gyp --debug configure rebuild 
 ```
 
 ### Pack 
@@ -44,7 +43,6 @@ It uses version from package.json so update it to a new value.
 #### Requirements
 - node
 - yarn
-- node-gyp
 - python 2.7
 - msbuild (vs studio make tools )
 

@@ -49,7 +49,7 @@ int WINAPI stop_overlays_thread()
 		thread_state = sl_overlay_thread_state::stopping;
 		thread_state_mutex.unlock();
 
-		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_QUIT, 0);
+		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_QUIT, 0);
 
 		if (ret)
 		{
@@ -107,7 +107,7 @@ int WINAPI show_overlays()
 		return 0;
 	} else
 	{
-		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_SHOW_OVERLAYS, 0);
+		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_SHOW_OVERLAYS, 0);
 
 		thread_state_mutex.unlock();
 		return ret;
@@ -123,7 +123,7 @@ int WINAPI hide_overlays()
 		return 0;
 	} else
 	{
-		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_HIDE_OVERLAYS, 0);
+		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_HIDE_OVERLAYS, 0);
 
 		thread_state_mutex.unlock();
 		return ret;
@@ -204,10 +204,10 @@ int WINAPI switch_overlays_user_input(bool mode_active)
 
 	if (mode_active)
 	{
-		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_TAKE_INPUT, 0);
+		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_TAKE_INPUT, 0);
 	} else
 	{
-		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_RELEASE_INPUT, 0);
+		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_RELEASE_INPUT, 0);
 	}
 
 	return 0;

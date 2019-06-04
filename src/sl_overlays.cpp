@@ -27,13 +27,13 @@ BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 bool FindRunningProcess(const WCHAR* process_name_part);
 
-bool smg_overlays::process_hotkeys(MSG& msg)
+bool smg_overlays::process_commands(MSG& msg)
 {
 	bool ret = false;
-	log_cout << "APP: process_hotkeys id " << msg.wParam << std::endl;
+	log_cout << "APP: process_commands id " << msg.wParam << std::endl;
 	switch (msg.wParam)
 	{
-	case HOTKEY_CATCH_APP:
+	case COMMAND_CATCH_APP:
 	{
 		HWND top_window = GetForegroundWindow();
 		if (top_window != nullptr)
@@ -46,7 +46,7 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 		ret = true;
 	}
 	break;
-	case HOTKEY_SHOW_OVERLAYS:
+	case COMMAND_SHOW_OVERLAYS:
 	{
 		if (showing_overlays)
 		{
@@ -60,7 +60,7 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 		ret = true;
 	}
 	break;
-	case HOTKEY_HIDE_OVERLAYS:
+	case COMMAND_HIDE_OVERLAYS:
 	{
 		showing_overlays = false;
 
@@ -68,7 +68,7 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 		ret = true;
 	}
 	break;
-	case HOTKEY_UPDATE_OVERLAYS:
+	case COMMAND_UPDATE_OVERLAYS:
 	{
 		if (showing_overlays)
 		{
@@ -81,11 +81,11 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 	}
 	break;
 
-	case HOTKEY_QUIT:
+	case COMMAND_QUIT:
 	{
 		thread_state_mutex.lock();
 
-		log_cout << "APP: HOTKEY_QUIT " << (int)thread_state << std::endl;
+		log_cout << "APP: COMMAND_QUIT " << (int)thread_state << std::endl;
 		if (thread_state != sl_overlay_thread_state::runing)
 		{
 			thread_state_mutex.unlock();
@@ -103,12 +103,12 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 	}
 	break;
 
-	case HOTKEY_TAKE_INPUT:
+	case COMMAND_TAKE_INPUT:
 	{
 		hook_user_input();
 	}
 	break;
-	case HOTKEY_RELEASE_INPUT:
+	case COMMAND_RELEASE_INPUT:
 	{
 		unhook_user_input();
 	}
@@ -276,7 +276,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		//we have to give user ways to exit like Esc or Tab
 		if (event->vkCode == VK_ESCAPE)
 		{
-			//PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_RELEASE_INPUT, 0);
+			//PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_RELEASE_INPUT, 0);
 			use_callback_for_switching_input();
 		} else
 

@@ -83,8 +83,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 				app->on_overlay_destroy(overlay);
 				catched = true;
 			} break;
-			case WM_HOTKEY: {
-				catched = app->process_hotkeys(msg);
+			case WM_SLO_OVERLAY_COMMAND: {
+				catched = app->process_commands(msg);
 
 			} break;
 			case WM_SLO_HWND_SOURCE_READY: {

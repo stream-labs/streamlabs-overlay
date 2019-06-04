@@ -58,34 +58,37 @@ enum class sl_overlay_thread_state : int
 	destoyed = 0x0100
 };
 
-const int HOTKEY_SHOW_OVERLAYS = 1;
-const int HOTKEY_HIDE_OVERLAYS = 2;
-const int HOTKEY_UPDATE_OVERLAYS = 3;
-const int HOTKEY_QUIT = 4;
-const int HOTKEY_CATCH_APP = 6;
-const int HOTKEY_TAKE_INPUT = 7;
-const int HOTKEY_RELEASE_INPUT = 8;
+const int COMMAND_SHOW_OVERLAYS = 1;
+const int COMMAND_HIDE_OVERLAYS = 2;
+const int COMMAND_UPDATE_OVERLAYS = 3;
+const int COMMAND_QUIT = 4;
+const int COMMAND_CATCH_APP = 6;
+const int COMMAND_TAKE_INPUT = 7;
+const int COMMAND_RELEASE_INPUT = 8;
 
-#define WM_SLO_OVERLAY_CLOSE (WM_USER + 33)
 //command for web view thread to close web view
 //wParam id
+#define WM_SLO_OVERLAY_CLOSE (WM_USER + 33)
 
-#define WM_SLO_OVERLAY_TRANSPARENCY (WM_USER + 35)
 //command for overlay thread to set overlay transparency
 //wParam id
 //lParam transparency
+#define WM_SLO_OVERLAY_TRANSPARENCY (WM_USER + 35)
 
-#define WM_SLO_OVERLAY_POSITION (WM_USER + 36)
 //command for web view thread to set overlay position and size
 //wParam id
 //lParam LPRECT. have to delete it after recive
+#define WM_SLO_OVERLAY_POSITION (WM_USER + 36)
 
-#define WM_SLO_SOURCE_CREATED (WM_USER + 40)
 //signal for overlay thread about source window created and can be used to make overlay for it
+#define WM_SLO_SOURCE_CREATED (WM_USER + 40)
 
-#define WM_SLO_OVERLAY_WINDOW_DESTOYED (WM_USER + 41)
-//signal for overlay thread what overlya do not have window anymore and can be deleted
+//signal for overlay thread what overlay do not have window anymore and can be deleted
 //wParam id
+#define WM_SLO_OVERLAY_WINDOW_DESTOYED (WM_USER + 41)
 
-#define WM_SLO_HWND_SOURCE_READY (WM_USER + 43)
 //signal for overlay thread that it can create window for new overlay 
+#define WM_SLO_HWND_SOURCE_READY (WM_USER + 43)
+
+//signal for overlay thread that it can create window for new overlay 
+#define WM_SLO_OVERLAY_COMMAND (WM_USER + 44)

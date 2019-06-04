@@ -176,7 +176,7 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 		{
 			if (callback_method_t::get_intercept_active() != switch_to)
 			{
-				set_callback_for_switching_input(&switch_input); // so module can switch itself off by some hotkey 
+				set_callback_for_switching_input(&switch_input); // so module can switch itself off by some command 
 	
 				switch_input();
 
