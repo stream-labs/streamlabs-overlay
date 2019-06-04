@@ -13,8 +13,8 @@ let win2;
 let overlayid2;
 let hwnd;
 
-const win_widht = 600;
-const win_height = 800;
+const win_width = 300;
+const win_height = 400;
 
 function createWindow() {
   test_started = true;
@@ -25,7 +25,7 @@ function createWindow() {
 
   win1 = new BrowserWindow({
     show: false,
-    width: win_widht,
+    width: win_width,
     height: win_height,
     frame: false,
     webPreferences: {
@@ -37,14 +37,13 @@ function createWindow() {
   //win.loadURL(`https://time.is/`);
   win1.loadURL(`https://codepen.io/jasonleewilson/pen/gPrxwX`);
 
-
   hwnd = win1.getNativeWindowHandle();
   console.log(hwnd);
   overlayid1 = streamlabs_overlays.addHWND(hwnd);
-  streamlabs_overlays.setPosition(overlayid1, 900, 200, win_height, win_widht);
+  streamlabs_overlays.setPosition(overlayid1, 900, 200, win_height, win_width);
 
   win1.webContents.on('paint', (event, dirty, image) => {
-    streamlabs_overlays.paintOverlay(overlayid1, win_widht, win_height, image.getBitmap());
+    streamlabs_overlays.paintOverlay(overlayid1, win_width, win_height, image.getBitmap());
 
   })
 
@@ -54,7 +53,7 @@ function createWindow() {
 
   win2 = new BrowserWindow({
     show: false,
-    width: win_widht,
+    width: win_width,
     height: win_height,
     frame: false,
     webPreferences: {
@@ -68,10 +67,10 @@ function createWindow() {
   hwnd = win2.getNativeWindowHandle();
   console.log(hwnd);
   overlayid2 = streamlabs_overlays.addHWND(hwnd);
-  streamlabs_overlays.setPosition(overlayid2, 100,100, win_height, win_widht);
+  streamlabs_overlays.setPosition(overlayid2, 100,100, win_height, win_width);
 
   win2.webContents.on('paint', (event, dirty, image) => {
-    streamlabs_overlays.paintOverlay(overlayid2, win_widht, win_height, image.getBitmap());
+    streamlabs_overlays.paintOverlay(overlayid2, win_width, win_height, image.getBitmap());
 
   })
 
