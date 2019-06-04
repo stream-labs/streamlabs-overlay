@@ -7,8 +7,8 @@
 #include "sl_overlay_window.h"
 #include "sl_overlays_settings.h"
 
-#include "sl_overlay_api.h"
 #include "overlay_logging.h"
+#include "sl_overlay_api.h"
 
 #include "tlhelp32.h"
 #pragma comment(lib, "uxtheme.lib")
@@ -275,7 +275,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 			use_callback_for_switching_input();
 		} else
 
-		use_callback_for_keyboard_input(wParam, lParam);
+			use_callback_for_keyboard_input(wParam, lParam);
 		return -1;
 	}
 
@@ -287,14 +287,14 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (nCode >= 0)
 	{
 		MSLLHOOKSTRUCT* event = (MSLLHOOKSTRUCT*)lParam;
-		log_cout << "APP: LowLevelMouseProc " << wParam << ", "<< event->pt.x << ", "<< event->pt.y << ", " << event->dwExtraInfo << std::endl;
+		log_cout << "APP: LowLevelMouseProc " << wParam << ", " << event->pt.x << ", " << event->pt.y << ", "
+		         << event->dwExtraInfo << std::endl;
 
 		use_callback_for_mouse_input(wParam, lParam);
-		if(wParam != WM_MOUSEMOVE)
+		if (wParam != WM_MOUSEMOVE)
 		{
 			return -1;
 		}
-	
 	}
 	return CallNextHookEx(llmouse_hook, nCode, wParam, lParam);
 }
@@ -327,7 +327,8 @@ void smg_overlays::hook_user_input()
 					game_hwnd = nullptr;
 					ImmDestroyContext(our_IMC);
 					our_IMC = nullptr;
-				} else {
+				} else
+				{
 					is_intercepting = true;
 				}
 			} else
@@ -477,7 +478,7 @@ bool smg_overlays::on_overlay_destroy(std::shared_ptr<overlay_window> overlay)
 	if (showing_windows.size() == 0 && quiting)
 	{
 		PostQuitMessage(0);
-	} 
+	}
 
 	return removed;
 }
@@ -568,8 +569,8 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 	{
 		unsigned long process_id = 0;
 		GetWindowThreadProcessId(hwnd, &process_id);
-		dwProcessID = *( (unsigned long*)param);
-		if ( dwProcessID == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
+		dwProcessID = *((unsigned long*)param);
+		if (dwProcessID == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
 		{
 			window_ok = true;
 		}
@@ -673,13 +674,18 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 			if (hWnd == n->overlay_hwnd)
 			{
 				RECT overlay_rect = n->get_rect();
-				BOOL ret =true;
+				BOOL ret = true;
 
 				ret = BitBlt(
-				    hdc, 0, 0,
+				    hdc,
+				    0,
+				    0,
 				    overlay_rect.right - overlay_rect.left,
 				    overlay_rect.bottom - overlay_rect.top,
-				    n->hdc, 0, 0, SRCCOPY);
+				    n->hdc,
+				    0,
+				    0,
+				    SRCCOPY);
 
 				if (!ret)
 				{
@@ -701,8 +707,6 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 
 void smg_overlays::update_settings()
 {
-	app_settings->web_pages.clear();
-
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 	std::for_each(showing_windows.begin(), showing_windows.end(), [this](std::shared_ptr<overlay_window>& n) {
 		n->save_state_to_settings();

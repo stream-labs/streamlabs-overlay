@@ -4,7 +4,7 @@
 #include "stdafx.h"
 
 DWORD WINAPI overlay_thread_func(void* data);
-class web_view_overlay_settings;
+
 class overlay_window;
 
 class smg_overlays
@@ -31,7 +31,6 @@ class smg_overlays
 	void create_window_for_overlay(std::shared_ptr<overlay_window>& overlay);
 	void create_overlay_window_class();
 
-	int create_web_view_window(web_view_overlay_settings& n);
 	int create_overlay_window_by_hwnd(HWND hwnd);
 	void create_windows_for_apps();
 

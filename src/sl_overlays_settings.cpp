@@ -14,5 +14,3 @@ smg_settings::smg_settings() : settings_version(0x0001)
 	use_color_key = false;
 	redraw_timeout = 300;
 }
-
-web_view_overlay_settings::web_view_overlay_settings() : x(0), y(0), width(0), height(0) {}

@@ -4,9 +4,9 @@
 #include <algorithm>
 #include <iostream>
 
+#include "overlay_logging.h"
 #include "sl_overlay_window.h"
 #include "sl_overlays_settings.h"
-#include "overlay_logging.h"
 
 std::shared_ptr<smg_settings> app_settings;
 
@@ -31,7 +31,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 	// Init COM and double-buffered painting
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-	if (SUCCEEDED(hr)) {
+	if (SUCCEEDED(hr))
+	{
 		hr = BufferedPaintInit();
 		g_bDblBuffered = SUCCEEDED(hr);
 
@@ -45,57 +46,75 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 		// Main message loop
 		MSG msg;
-		while (GetMessage(&msg, nullptr, 0, 0)) {
+		while (GetMessage(&msg, nullptr, 0, 0))
+		{
 			//log_cout << "APP: wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
 			bool catched = false;
 
-			switch (msg.message) {
-			case WM_SLO_OVERLAY_CLOSE: {
+			switch (msg.message)
+			{
+			case WM_SLO_OVERLAY_CLOSE:
+			{
 				log_cout << "APP: WM_SLO_OVERLAY_CLOSE" << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
 				catched = true;
-			} break;
-			case WM_SLO_OVERLAY_POSITION: {
+			}
+			break;
+			case WM_SLO_OVERLAY_POSITION:
+			{
 				log_cout << "APP: WM_SLO_OVERLAY_POSITION " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				RECT* new_rect = reinterpret_cast<RECT*>(msg.lParam);
-				if (new_rect != nullptr) {
-					if (overlay != nullptr) {
+				if (new_rect != nullptr)
+				{
+					if (overlay != nullptr)
+					{
 						overlay->apply_new_rect(*new_rect);
 					}
 					delete new_rect;
 				}
 				catched = true;
-			} break;
-			case WM_SLO_OVERLAY_TRANSPARENCY: {
+			}
+			break;
+			case WM_SLO_OVERLAY_TRANSPARENCY:
+			{
 				log_cout << "APP: WM_SLO_OVERLAY_TRANSPARENCY " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 
-				if (overlay != nullptr) {
-					overlay->set_transparency((int)msg.lParam );
-				} else {}
+				if (overlay != nullptr)
+				{
+					overlay->set_transparency((int)msg.lParam);
+				} else
+				{}
 				catched = true;
-			} break;
-			case WM_SLO_OVERLAY_WINDOW_DESTOYED: {
+			}
+			break;
+			case WM_SLO_OVERLAY_WINDOW_DESTOYED:
+			{
 				log_cout << "APP: WM_OVERLAY_WINDOW_DESTOYED " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				app->on_overlay_destroy(overlay);
 				catched = true;
-			} break;
-			case WM_SLO_OVERLAY_COMMAND: {
+			}
+			break;
+			case WM_SLO_OVERLAY_COMMAND:
+			{
 				catched = app->process_commands(msg);
-
-			} break;
-			case WM_SLO_HWND_SOURCE_READY: {
+			}
+			break;
+			case WM_SLO_HWND_SOURCE_READY:
+			{
 				log_cout << "APP: WM_SLO_HWND_SOURCE_READY " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				app->create_window_for_overlay(overlay);
 				catched = true;
-			} break;
+			}
+			break;
 			case WM_TIMER:
 				//log_cout << "APP: WM_TIMER id = " << (int)msg.wParam << std::endl;
-				if ((int)msg.wParam == OVERLAY_UPDATE_TIMER) {
+				if ((int)msg.wParam == OVERLAY_UPDATE_TIMER)
+				{
 					app->on_update_timer();
 					catched = true;
 				}
@@ -104,7 +123,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 				break;
 			};
 
-			if (!catched) {
+			if (!catched)
+			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
@@ -142,33 +162,46 @@ BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM param)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message) {
-	case WM_CREATE: {
-	} break;
-	case WM_SIZE: {
-	} break;
-	case WM_CLOSE: {
+	switch (message)
+	{
+	case WM_CREATE:
+	{}
+	break;
+	case WM_SIZE:
+	{}
+	break;
+	case WM_CLOSE:
+	{
 		//todo some how window wants to be closed so need to remove its overlay object
 		log_cout << "APP: WndProc WM_CLOSE for " << hWnd << std::endl;
-	} break;
-	case WM_DESTROY: {
+	}
+	break;
+	case WM_DESTROY:
+	{
 		log_cout << "APP: WndProc WM_DESTROY for " << hWnd << std::endl;
 		smg_overlays::get_instance()->on_window_destroy(hWnd);
 
 		return 0;
-	} break;
-	case WM_ERASEBKGND: {
+	}
+	break;
+	case WM_ERASEBKGND:
+	{
 		// Don't do any erasing here.  It's done in WM_PAINT to avoid flicker.
 		return 1;
-	} break;
+	}
+	break;
 
-	case WM_QUIT: {
+	case WM_QUIT:
+	{
 		log_cout << "APP: WndProc WM_QUIT for " << hWnd << std::endl;
-	} break;
-	case WM_PAINT: {
+	}
+	break;
+	case WM_PAINT:
+	{
 		smg_overlays::get_instance()->draw_overlay_gdi(hWnd, g_bDblBuffered);
 		return 0;
-	} break;
+	}
+	break;
 
 	default:
 		break;

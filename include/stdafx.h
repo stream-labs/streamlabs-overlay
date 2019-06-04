@@ -30,16 +30,14 @@
 Concepts:
 overlay window - window drawing over all other windows 
 source window - window from what content will be taken for overlay window 
-web_view - kind of source. it is simple window with ole webbrowser in it 
 app window - main window of some app as source for overlay 
 
 Threads: 
-All work with overlays in main thread. web views have their own thread. most communication between them by PostThreadMessages 
+All work with overlays in main thread. Node js api called in its own thread. Some communication between thread made by PostThreadMessages. 
 Also have mutex to control access to overlays thread data. 
 one for changes in list of overlays "overlays_list_access" and each overlay object have own mutex for data what can be accessed by other thread. 
 
 Modes:
-Stand alone app. - control by hot keys. 
 Node module. - control by node module api. 
 */
 
@@ -87,8 +85,8 @@ const int COMMAND_RELEASE_INPUT = 8;
 //wParam id
 #define WM_SLO_OVERLAY_WINDOW_DESTOYED (WM_USER + 41)
 
-//signal for overlay thread that it can create window for new overlay 
+//signal for overlay thread that it can create window for new overlay
 #define WM_SLO_HWND_SOURCE_READY (WM_USER + 43)
 
-//signal for overlay thread that it can create window for new overlay 
+//signal for overlay thread that it can create window for new overlay
 #define WM_SLO_OVERLAY_COMMAND (WM_USER + 44)

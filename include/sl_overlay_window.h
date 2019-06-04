@@ -50,5 +50,8 @@ class overlay_window
 class app_window : public overlay_window
 {
 	public:
-	virtual bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height){return false;};
+	virtual bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
+	{
+		return false;
+	};
 };
