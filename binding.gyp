@@ -3,14 +3,10 @@
     {
       "target_name": "streamlabs_overlay",
       "include_dirs": [
-        "src",
         "include"
       ],
       "sources": [
-        "src\*.cpp",
-        "src\*.h",
-        "node_module\*.cpp",
-        "node_module\*.h"
+        "src\*.cpp"
       ],
       "conditions": [
         [

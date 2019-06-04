@@ -49,12 +49,13 @@ int WINAPI stop_overlays_thread()
 		thread_state = sl_overlay_thread_state::stopping;
 		thread_state_mutex.unlock();
 
-		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_QUIT, 0);
+		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_QUIT, 0);
 
 		if (ret)
 		{
 			return 1;
-		} else {
+		} else
+		{
 			return 0;
 		}
 	}
@@ -107,7 +108,7 @@ int WINAPI show_overlays()
 		return 0;
 	} else
 	{
-		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_SHOW_OVERLAYS, 0);
+		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_SHOW_OVERLAYS, 0);
 
 		thread_state_mutex.unlock();
 		return ret;
@@ -123,7 +124,7 @@ int WINAPI hide_overlays()
 		return 0;
 	} else
 	{
-		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_HIDE_OVERLAYS, 0);
+		BOOL ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_HIDE_OVERLAYS, 0);
 
 		thread_state_mutex.unlock();
 		return ret;
@@ -204,10 +205,10 @@ int WINAPI switch_overlays_user_input(bool mode_active)
 
 	if (mode_active)
 	{
-		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_TAKE_INPUT, 0);
+		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_TAKE_INPUT, 0);
 	} else
 	{
-		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_RELEASE_INPUT, 0);
+		ret = PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_RELEASE_INPUT, 0);
 	}
 
 	return 0;
@@ -251,8 +252,6 @@ int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, si
 			if (overlay != nullptr)
 			{
 				overlay->paint_window_from_buffer(image_array, array_size, width, height);
-				//todo
-				//BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(n));
 			}
 			thread_state_mutex.unlock();
 		}

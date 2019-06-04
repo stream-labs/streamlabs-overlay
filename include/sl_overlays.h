@@ -4,7 +4,7 @@
 #include "stdafx.h"
 
 DWORD WINAPI overlay_thread_func(void* data);
-class web_view_overlay_settings;
+
 class overlay_window;
 
 class smg_overlays
@@ -31,9 +31,7 @@ class smg_overlays
 	void create_window_for_overlay(std::shared_ptr<overlay_window>& overlay);
 	void create_overlay_window_class();
 
-	int create_web_view_window(web_view_overlay_settings& n);
 	int create_overlay_window_by_hwnd(HWND hwnd);
-	void create_windows_for_apps();
 
 	size_t get_count();
 	std::shared_ptr<overlay_window> get_overlay_by_id(int overlay_id);
@@ -55,8 +53,8 @@ class smg_overlays
 	void hook_user_input();
 	void unhook_user_input();
 
-	//hotkeys
-	bool process_hotkeys(MSG& msg);
+	//commands
+	bool process_commands(MSG& msg);
 
 	//events
 	void on_update_timer();

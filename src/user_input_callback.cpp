@@ -1,13 +1,13 @@
 #include "user_input_callback.h"
 #include <errno.h>
 #include <iostream>
-#include "overlay_logging.h"
 #include <map>
+#include "overlay_logging.h"
 
 callback_keyboard_method_t* user_keyboard_callback_info = nullptr;
 callback_mouse_method_t* user_mouse_callback_info = nullptr;
 
-const std::string & translate_to_electron_keycode(const int id)
+const std::string& translate_to_electron_keycode(const int id)
 {
 	static std::map<int, std::string> CodeToKeyCodes = {
 	    {1, "LButton"},
@@ -249,7 +249,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 		if (status == napi_ok)
 		{
 			LPKBDLLHOOKSTRUCT key = (LPKBDLLHOOKSTRUCT)event->lParam;
-			const std::string & keyCode = translate_to_electron_keycode(key->vkCode);
+			const std::string& keyCode = translate_to_electron_keycode(key->vkCode);
 			status = napi_create_string_utf8(env, keyCode.c_str(), keyCode.size(), &argv_to_cb[1]);
 		}
 	}
@@ -455,7 +455,7 @@ void callback_method_t::static_async_callback(uv_async_t* handle)
 	try
 	{
 		static_cast<callback_method_t*>(handle->data)->async_callback();
-	} catch (std::exception& )
+	} catch (std::exception&)
 	{
 	} catch (...)
 	{}
@@ -508,4 +508,16 @@ void callback_mouse_method_t::set_callback()
 void callback_keyboard_method_t::set_callback()
 {
 	set_callback_for_keyboard_input(&use_callback_keyboard);
+}
+
+napi_status napi_create_and_set_named_property(napi_env& env, napi_value& obj, const char* value_name, const int value)
+{
+	napi_status status;
+	napi_value set_value;
+	status = napi_create_int32(env, value, &set_value);
+	if (status == napi_ok)
+	{
+		status = napi_set_named_property(env, obj, value_name, set_value);
+	}
+	return status;
 }

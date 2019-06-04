@@ -7,8 +7,8 @@
 #include "sl_overlay_window.h"
 #include "sl_overlays_settings.h"
 
-#include "sl_overlay_api.h"
 #include "overlay_logging.h"
+#include "sl_overlay_api.h"
 
 #include "tlhelp32.h"
 #pragma comment(lib, "uxtheme.lib")
@@ -23,30 +23,16 @@ extern DWORD overlays_thread_id;
 extern std::mutex thread_state_mutex;
 extern sl_overlay_thread_state thread_state;
 
-BOOL CALLBACK get_overlayed_windows(HWND hwnd, LPARAM);
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-bool FindRunningProcess(const WCHAR* process_name_part);
 
-bool smg_overlays::process_hotkeys(MSG& msg)
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+bool smg_overlays::process_commands(MSG& msg)
 {
 	bool ret = false;
-	log_cout << "APP: process_hotkeys id " << msg.wParam << std::endl;
+	log_cout << "APP: process_commands id " << msg.wParam << std::endl;
 	switch (msg.wParam)
 	{
-	case HOTKEY_CATCH_APP:
-	{
-		HWND top_window = GetForegroundWindow();
-		if (top_window != nullptr)
-		{
-			unsigned long process_id = 0;
-			GetWindowThreadProcessId(top_window, &process_id);
-			log_cout << "APP: catch app " << process_id << ", " << top_window << std::endl;
-			EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
-		}
-		ret = true;
-	}
-	break;
-	case HOTKEY_SHOW_OVERLAYS:
+	case COMMAND_SHOW_OVERLAYS:
 	{
 		if (showing_overlays)
 		{
@@ -60,7 +46,7 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 		ret = true;
 	}
 	break;
-	case HOTKEY_HIDE_OVERLAYS:
+	case COMMAND_HIDE_OVERLAYS:
 	{
 		showing_overlays = false;
 
@@ -68,7 +54,7 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 		ret = true;
 	}
 	break;
-	case HOTKEY_UPDATE_OVERLAYS:
+	case COMMAND_UPDATE_OVERLAYS:
 	{
 		if (showing_overlays)
 		{
@@ -81,11 +67,11 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 	}
 	break;
 
-	case HOTKEY_QUIT:
+	case COMMAND_QUIT:
 	{
 		thread_state_mutex.lock();
 
-		log_cout << "APP: HOTKEY_QUIT " << (int)thread_state << std::endl;
+		log_cout << "APP: COMMAND_QUIT " << (int)thread_state << std::endl;
 		if (thread_state != sl_overlay_thread_state::runing)
 		{
 			thread_state_mutex.unlock();
@@ -103,12 +89,12 @@ bool smg_overlays::process_hotkeys(MSG& msg)
 	}
 	break;
 
-	case HOTKEY_TAKE_INPUT:
+	case COMMAND_TAKE_INPUT:
 	{
 		hook_user_input();
 	}
 	break;
-	case HOTKEY_RELEASE_INPUT:
+	case COMMAND_RELEASE_INPUT:
 	{
 		unhook_user_input();
 	}
@@ -270,24 +256,15 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		KBDLLHOOKSTRUCT* event = (KBDLLHOOKSTRUCT*)lParam;
 		log_cout << "APP: LowLevelKeyboardProc " << event->vkCode << ", " << event->dwExtraInfo << std::endl;
 
-		//todo
-		//check if we in intercepting state
-		//check if game window is on top
-		//we have to give user ways to exit like Esc or Tab
 		if (event->vkCode == VK_ESCAPE)
 		{
-			//PostThreadMessage((DWORD)overlays_thread_id, WM_HOTKEY, HOTKEY_RELEASE_INPUT, 0);
 			use_callback_for_switching_input();
 		} else
 
-		//if (event->vkCode >= VK_SPACE && event->vkCode <= VK_HELP || event->vkCode >= 'A' && event->vkCode <= 'Z' || event->vkCode >= 'a' && event->vkCode <= 'z' || event->vkCode >= '0' && event->vkCode <= '9')
-		{
-			//send events to our window
-			//pack to WM_MESSAGE and send to orig_hwnd
 			use_callback_for_keyboard_input(wParam, lParam);
-			return -1;
-		}
+		return -1;
 	}
+
 	return CallNextHookEx(llkeyboard_hook, nCode, wParam, lParam);
 }
 
@@ -296,21 +273,13 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (nCode >= 0)
 	{
 		MSLLHOOKSTRUCT* event = (MSLLHOOKSTRUCT*)lParam;
-		log_cout << "APP: LowLevelMouseProc " << wParam << ", "<< event->pt.x << ", "<< event->pt.y << ", " << event->dwExtraInfo << std::endl;
+		log_cout << "APP: LowLevelMouseProc " << wParam << ", " << event->pt.x << ", " << event->pt.y << ", "
+		         << event->dwExtraInfo << std::endl;
 
-		//todo
-		//check if we in intercepting state
-		//check if game window is on top
-		//we have to give user ways to exit like Esc or Tab
-		
+		use_callback_for_mouse_input(wParam, lParam);
+		if (wParam != WM_MOUSEMOVE)
 		{
-			//send events to our window
-			//pack to WM_MESSAGE and send to orig_hwnd
-			use_callback_for_mouse_input(wParam, lParam);
-			if(wParam != WM_MOUSEMOVE)
-			{
-				return -1;
-			}
+			return -1;
 		}
 	}
 	return CallNextHookEx(llmouse_hook, nCode, wParam, lParam);
@@ -325,22 +294,15 @@ void smg_overlays::hook_user_input()
 		game_hwnd = GetForegroundWindow();
 		if (game_hwnd != nullptr)
 		{
+			//print window title
+			TCHAR title[256];
+			GetWindowText(game_hwnd, title, 256);
+			std::wstring title_wstr(title);
+			std::string title_str(title_wstr.begin(), title_wstr.end());
+			log_cout << "APP: hook_user_input catch window - " << title_str << std::endl;
 
-			if (true)
-			{ //print window title
-				TCHAR title[256];
-				GetWindowText(game_hwnd, title, 256);
-				std::wstring title_wstr(title);
-				std::string title_str(title_wstr.begin(), title_wstr.end());
-				log_cout << "APP: hook_user_input catch window - " << title_str << std::endl;
-			}
-
-			//DWORD threadId = ::GetWindowThreadProcessId(game_hwnd, nullptr);
-			//msg_hook = SetWindowsHookEx(WH_GETMESSAGE, CallWndMsgProc, NULL, threadId);
 			llkeyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
 			llmouse_hook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
-			//todo intercept mouse
-			//GetMouseRawData
 
 			our_IMC = ImmCreateContext();
 			if (our_IMC)
@@ -351,7 +313,8 @@ void smg_overlays::hook_user_input()
 					game_hwnd = nullptr;
 					ImmDestroyContext(our_IMC);
 					our_IMC = nullptr;
-				} else {
+				} else
+				{
 					is_intercepting = true;
 				}
 			} else
@@ -407,18 +370,6 @@ void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
 		work_overlay->orig_handle = orig_window;
 		create_window_for_overlay(work_overlay);
 	}
-}
-
-void smg_overlays::create_windows_for_apps()
-{
-	std::for_each(app_settings->apps_names.begin(), app_settings->apps_names.end(), [](std::string& n) {
-		WCHAR* process_name = new wchar_t[n.size() + 1];
-		mbstowcs(&process_name[0], n.c_str(), n.size() + 1);
-
-		FindRunningProcess(process_name);
-
-		delete[] process_name;
-	});
 }
 
 size_t smg_overlays::get_count()
@@ -501,8 +452,7 @@ bool smg_overlays::on_overlay_destroy(std::shared_ptr<overlay_window> overlay)
 	if (showing_windows.size() == 0 && quiting)
 	{
 		PostQuitMessage(0);
-	} else
-	{}
+	}
 
 	return removed;
 }
@@ -543,43 +493,6 @@ void smg_overlays::init()
 	app_settings->default_init();
 
 	create_overlay_window_class();
-
-	create_windows_for_apps();
-}
-
-bool FindRunningProcess(const WCHAR* process_name_part)
-{
-	bool procRunning = false;
-
-	HANDLE hProcessSnap;
-	PROCESSENTRY32 pe32;
-	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
-	if (hProcessSnap == INVALID_HANDLE_VALUE)
-	{
-		procRunning = false;
-	} else
-	{
-		pe32.dwSize = sizeof(PROCESSENTRY32);
-		if (Process32First(hProcessSnap, &pe32))
-		{
-			while (true)
-			{
-				if (StrStrW(pe32.szExeFile, process_name_part) != nullptr)
-				{
-					unsigned long process_id = pe32.th32ProcessID;
-					EnumWindows(get_overlayed_windows, (LPARAM)&process_id);
-				}
-				if (!Process32Next(hProcessSnap, &pe32))
-				{
-					break;
-				}
-			}
-			CloseHandle(hProcessSnap);
-		}
-	}
-
-	return procRunning;
 }
 
 BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
@@ -593,8 +506,8 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 	{
 		unsigned long process_id = 0;
 		GetWindowThreadProcessId(hwnd, &process_id);
-		dwProcessID = *( (unsigned long*)param);
-		if ( dwProcessID == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
+		dwProcessID = *((unsigned long*)param);
+		if (dwProcessID == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
 		{
 			window_ok = true;
 		}
@@ -642,26 +555,6 @@ BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
 				showing_windows.push_back(found_window);
 			}
 			window_catched = true;
-
-			// add process file name to settings
-			TCHAR nameProcess[MAX_PATH];
-			HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessID);
-			DWORD file_name_size = MAX_PATH;
-			QueryFullProcessImageName(processHandle, 0, nameProcess, &file_name_size);
-			CloseHandle(processHandle);
-			std::wstring ws(nameProcess);
-			std::string temp_path(ws.begin(), ws.end());
-			std::string::size_type pos = temp_path.find_last_of("\\/");
-			std::string file_name = temp_path.substr(pos + 1, temp_path.size());
-
-			std::list<std::string>::iterator findIter = std::find_if(
-			    app_settings->apps_names.begin(), app_settings->apps_names.end(), [&file_name](const std::string& v) {
-				    return v.compare(file_name) == 0;
-			    });
-			if (findIter == app_settings->apps_names.end())
-			{
-				app_settings->apps_names.push_back(file_name);
-			}
 		}
 	}
 
@@ -698,19 +591,19 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 			if (hWnd == n->overlay_hwnd)
 			{
 				RECT overlay_rect = n->get_rect();
-				BOOL ret =true;
-				ULONGLONG ticks_before = GetTickCount64();
-				//for(int i =0 ; i<1000; i++ ) 
-				{
-				 ret = BitBlt(
-				    hdc, 0, 0,
+				BOOL ret = true;
+
+				ret = BitBlt(
+				    hdc,
+				    0,
+				    0,
 				    overlay_rect.right - overlay_rect.left,
 				    overlay_rect.bottom - overlay_rect.top,
-				    n->hdc, 0, 0, SRCCOPY);
-				}
-				ULONGLONG ticks_after = GetTickCount64();	
+				    n->hdc,
+				    0,
+				    0,
+				    SRCCOPY);
 
-				log_cout << "APP: draw_overlay_gdi ticks " << ticks_after-ticks_before <<  std::endl;
 				if (!ret)
 				{
 					log_cout << "APP: draw_overlay_gdi had issue " << GetLastError() << std::endl;
@@ -731,8 +624,6 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 
 void smg_overlays::update_settings()
 {
-	app_settings->web_pages.clear();
-
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 	std::for_each(showing_windows.begin(), showing_windows.end(), [this](std::shared_ptr<overlay_window>& n) {
 		n->save_state_to_settings();
