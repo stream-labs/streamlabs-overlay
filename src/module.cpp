@@ -10,11 +10,12 @@
 #include <node_api.h>
 #include "overlay_logging.h"
 
+const napi_value failed_ret = nullptr;
+
 napi_value Start(napi_env env, napi_callback_info args)
 {
 	int thread_start_status = 0;
 	napi_value ret = nullptr;
-	napi_value failed_ret = nullptr;
 
 	thread_start_status = start_overlays_thread();
 	if (thread_start_status != 0)
@@ -51,7 +52,6 @@ napi_value Stop(napi_env env, napi_callback_info args)
 
 	int thread_stop_status = 0;
 	napi_value ret = nullptr;
-	napi_value failed_ret = nullptr;
 
 	thread_stop_status = stop_overlays_thread();
 
@@ -66,7 +66,6 @@ napi_value GetStatus(napi_env env, napi_callback_info args)
 	std::string thread_status = get_thread_status_name();
 
 	napi_value ret = nullptr;
-	napi_value failed_ret = nullptr;
 	if (napi_create_string_utf8(env, thread_status.c_str(), thread_status.size(), &ret) != napi_ok)
 		return failed_ret;
 
@@ -75,14 +74,12 @@ napi_value GetStatus(napi_env env, napi_callback_info args)
 
 napi_value ShowOverlays(napi_env env, napi_callback_info args)
 {
-	napi_value failed_ret = nullptr;
 	show_overlays();
 	return failed_ret;
 }
 
 napi_value HideOverlays(napi_env env, napi_callback_info args)
 {
-	napi_value failed_ret = nullptr;
 	hide_overlays();
 	return failed_ret;
 }
@@ -91,7 +88,6 @@ napi_value GetOverlaysCount(napi_env env, napi_callback_info args)
 {
 	int count = get_overlays_count();
 	napi_value ret = nullptr;
-	napi_value failed_ret = nullptr;
 
 	if (napi_create_int32(env, count, &ret) != napi_ok)
 		return failed_ret;
@@ -102,7 +98,6 @@ napi_value GetOverlaysCount(napi_env env, napi_callback_info args)
 napi_value AddOverlayHWND(napi_env env, napi_callback_info args)
 {
 	napi_value ret = nullptr;
-	napi_value failed_ret = nullptr;
 
 	size_t argc = 1;
 	napi_value argv[1];
@@ -141,7 +136,6 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 	napi_value argv[1];
 	int32_t overlay_id;
 	napi_value ret = nullptr;
-	napi_value failed_ret = nullptr;
 
 	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok)
 		return failed_ret;
@@ -157,8 +151,6 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 
 napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 {
-	napi_value failed_ret = nullptr;
-
 	if (!user_keyboard_callback_info->ready || !user_mouse_callback_info->ready)
 	{
 		log_cout << "APP: SwitchToInteractive rejected as callbacks not set" << std::endl;
@@ -204,7 +196,6 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 	} else
 	{}
 
-	napi_value failed_ret = nullptr;
 	size_t argc = 1;
 	napi_value argv[1];
 	napi_value js_this;
@@ -243,7 +234,6 @@ napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 	} else
 	{}
 
-	napi_value failed_ret = nullptr;
 	size_t argc = 1;
 	napi_value argv[1];
 	napi_value js_this;
@@ -274,8 +264,6 @@ napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 
 napi_value GetOverlayInfo(napi_env env, napi_callback_info args)
 {
-	napi_value failed_ret = nullptr;
-
 	size_t argc = 1;
 	napi_value argv[1];
 	int32_t overlay_id;
@@ -321,7 +309,6 @@ napi_value GetOverlaysIDs(napi_env env, napi_callback_info args)
 {
 	std::vector<int> ids = get_overlays()->get_ids();
 	napi_value ret = nullptr;
-	napi_value failed_ret = nullptr;
 
 	if (napi_create_array(env, &ret) != napi_ok)
 		return failed_ret;
@@ -341,7 +328,6 @@ napi_value GetOverlaysIDs(napi_env env, napi_callback_info args)
 
 napi_value SetOverlayPosition(napi_env env, napi_callback_info args)
 {
-	napi_value failed_ret = nullptr;
 	napi_value ret = nullptr;
 
 	size_t argc = 5;
@@ -380,7 +366,6 @@ napi_value SetOverlayPosition(napi_env env, napi_callback_info args)
 
 napi_value PaintOverlay(napi_env env, napi_callback_info args)
 {
-	napi_value failed_ret = nullptr;
 	napi_value ret = nullptr;
 
 	size_t argc = 4;
@@ -428,7 +413,6 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 
 napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
 {
-	napi_value failed_ret = nullptr;
 	napi_value ret = nullptr;
 
 	size_t argc = 2;
@@ -461,7 +445,6 @@ napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
 
 napi_value init(napi_env env, napi_value exports)
 {
-	napi_value failed_ret = nullptr;
 	napi_value fn;
 
 	if (napi_create_function(env, nullptr, 0, Start, nullptr, &fn) != napi_ok)
