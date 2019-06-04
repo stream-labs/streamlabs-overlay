@@ -8,7 +8,7 @@
 
 void smg_settings::default_init() {}
 
-smg_settings::smg_settings() : settings_version(0x0001)
+smg_settings::smg_settings() : settings_version(0x0002)
 {
 	transparency = 0xD0;
 	use_color_key = false;

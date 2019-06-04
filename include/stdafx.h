@@ -16,7 +16,8 @@
 #include <stdlib.h>
 #include <tchar.h>
 
-#include <atlbase.h>
+//#include <atlbase.h>
+#include <objbase.h>
 //#include <atlstr.h>
 //#include <atlsync.h>
 
@@ -30,7 +31,6 @@
 Concepts:
 overlay window - window drawing over all other windows 
 source window - window from what content will be taken for overlay window 
-app window - main window of some app as source for overlay 
 
 Threads: 
 All work with overlays in main thread. Node js api called in its own thread. Some communication between thread made by PostThreadMessages. 
@@ -58,7 +58,6 @@ enum class sl_overlay_thread_state : int
 
 const int COMMAND_SHOW_OVERLAYS = 1;
 const int COMMAND_HIDE_OVERLAYS = 2;
-const int COMMAND_UPDATE_OVERLAYS = 3;
 const int COMMAND_QUIT = 4;
 const int COMMAND_TAKE_INPUT = 7;
 const int COMMAND_RELEASE_INPUT = 8;

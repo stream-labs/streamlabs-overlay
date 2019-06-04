@@ -18,7 +18,6 @@ class overlay_window
 	std::mutex rect_access;
 
 	public:
-	bool update_from_original;
 	RECT get_rect();
 	virtual bool set_rect(RECT& new_rect);
 	virtual bool apply_new_rect(RECT& new_rect);
@@ -27,10 +26,9 @@ class overlay_window
 	sl_window_capture_method use_method;
 	overlay_status status;
 
-	bool get_window_screenshot();
+	bool create_window_content_buffer();
 	virtual bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height);
 
-	virtual bool save_state_to_settings();
 	virtual void set_transparency(int transparency);
 	virtual bool ready_to_create_overlay();
 	HWND orig_handle;
@@ -45,13 +43,4 @@ class overlay_window
 	overlay_window();
 
 	virtual void clean_resources();
-};
-
-class app_window : public overlay_window
-{
-	public:
-	virtual bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
-	{
-		return false;
-	};
 };

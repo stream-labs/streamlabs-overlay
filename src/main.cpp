@@ -29,8 +29,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 	SetProcessDPIAware();
 
 	// Init COM and double-buffered painting
-	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE | COINIT_SPEED_OVER_MEMORY);
+	
 	if (SUCCEEDED(hr))
 	{
 		hr = BufferedPaintInit();
