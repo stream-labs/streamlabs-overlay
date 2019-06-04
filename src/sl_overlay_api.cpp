@@ -251,8 +251,6 @@ int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, si
 			if (overlay != nullptr)
 			{
 				overlay->paint_window_from_buffer(image_array, array_size, width, height);
-				//todo
-				//BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(n));
 			}
 			thread_state_mutex.unlock();
 		}

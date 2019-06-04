@@ -158,33 +158,41 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 
 napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 {
+	napi_value failed_ret = nullptr;
+
 	if (!user_keyboard_callback_info->ready || !user_mouse_callback_info->ready)
 	{
 		log_cout << "APP: SwitchToInteractive rejected as callbacks not set" << std::endl;
-		return nullptr;
+		return failed_ret;
 	}
 
-	napi_status status;
+	napi_value ret = nullptr;
 	size_t argc = 1;
 	napi_value argv[1];
 	bool switch_to;
+	int switched = -1;
 
-	status = napi_get_cb_info(env, args, &argc, argv, NULL, NULL);
-	if (status == napi_ok) {
-		status = napi_get_value_bool(env, argv[0], &switch_to);
-		if (status == napi_ok)
-		{
-			if (callback_method_t::get_intercept_active() != switch_to)
-			{
-				set_callback_for_switching_input(&switch_input); // so module can switch itself off by some command 
+	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok) 
+		return failed_ret;
+
+	if( napi_get_value_bool(env, argv[0], &switch_to) != napi_ok)
+		return failed_ret;
 	
-				switch_input();
+	if (callback_method_t::get_intercept_active() != switch_to)
+	{
+		set_callback_for_switching_input(&switch_input); // so module can switch itself off by some command 
 
-				log_cout << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
-			}
-		}
+		switch_input();
+
+		log_cout << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
+		
+		switched = 1;
 	}
-	return nullptr;
+
+	if( napi_create_int32(env, switched, &ret) != napi_ok)
+		return failed_ret;
+
+	return ret;
 }
 
 napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
@@ -196,34 +204,31 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 		napi_delete_reference(env, user_keyboard_callback_info->js_this);
 	} else {
 	}
-
-	napi_status status;
+	
+	napi_value failed_ret = nullptr;
 	size_t argc = 1;
 	napi_value argv[1];
 	napi_value js_this;
 	napi_value js_callback;
 	napi_valuetype is_function = napi_undefined;
 
-	status = napi_get_cb_info(env, args, &argc, argv, &js_this, 0);
-	if (status == napi_ok)
-	{
-		//check if js side of callback is valid
-		status = napi_get_prototype(env, argv[0], &js_callback);
-		if (status == napi_ok)
-		{
-			status = napi_typeof(env, js_callback, &is_function);
-		}
-	}
+	if( napi_get_cb_info(env, args, &argc, argv, &js_this, 0)!= napi_ok )
+		return failed_ret;
+
+	//check if js side of callback is valid
+	if( napi_get_prototype(env, argv[0], &js_callback) != napi_ok)
+		return failed_ret;
+
+	if( napi_typeof(env, js_callback, &is_function) != napi_ok)
+		return failed_ret;
 
 	if (is_function == napi_function)
 	{
 		//save reference and go to creating threadsafe function
-		status = napi_create_reference(env, argv[0], 0, &user_keyboard_callback_info->js_this);
-		if (status == napi_ok)
-		{
+		if( napi_create_reference(env, argv[0], 0, &user_keyboard_callback_info->js_this) != napi_ok) 
+			return failed_ret;
 
-			status = user_keyboard_callback_info->callback_init( env, args, "func_keyboard");
-		}
+		user_keyboard_callback_info->callback_init( env, args, "func_keyboard");
 	}
 
 	return nullptr;
@@ -240,32 +245,30 @@ napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 	{
 	}
 
-	napi_status status;
+	napi_value failed_ret = nullptr;
 	size_t argc = 1;
 	napi_value argv[1];
 	napi_value js_this;
 	napi_value js_callback;
 	napi_valuetype is_function = napi_undefined;
 
-	status = napi_get_cb_info(env, args, &argc, argv, &js_this, 0);
-	if (status == napi_ok)
-	{
-		//check if js side of callback is valid
-		status = napi_get_prototype(env, argv[0], &js_callback);
-		if (status == napi_ok)
-		{
-			status = napi_typeof(env, js_callback, &is_function);
-		}
-	}
+	if( napi_get_cb_info(env, args, &argc, argv, &js_this, 0)!= napi_ok )
+		return failed_ret;
+
+	//check if js side of callback is valid
+	if( napi_get_prototype(env, argv[0], &js_callback) != napi_ok)
+		return failed_ret;
+
+	if( napi_typeof(env, js_callback, &is_function) != napi_ok)
+		return failed_ret;
 
 	if (is_function == napi_function)
 	{
 		//save reference and go to creating threadsafe function
-		status = napi_create_reference(env, argv[0], 0, &user_mouse_callback_info->js_this);
-		if (status == napi_ok)
-		{
-			status = user_mouse_callback_info->callback_init(env, args, "func_mouse");
-		}
+		if( napi_create_reference(env, argv[0], 0, &user_mouse_callback_info->js_this) != napi_ok) 
+			return failed_ret;
+
+		user_mouse_callback_info->callback_init( env, args, "func_mouse");
 	}
 
 	return nullptr;

@@ -270,24 +270,15 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		KBDLLHOOKSTRUCT* event = (KBDLLHOOKSTRUCT*)lParam;
 		log_cout << "APP: LowLevelKeyboardProc " << event->vkCode << ", " << event->dwExtraInfo << std::endl;
 
-		//todo
-		//check if we in intercepting state
-		//check if game window is on top
-		//we have to give user ways to exit like Esc or Tab
 		if (event->vkCode == VK_ESCAPE)
 		{
-			//PostThreadMessage((DWORD)overlays_thread_id, WM_SLO_OVERLAY_COMMAND, COMMAND_RELEASE_INPUT, 0);
 			use_callback_for_switching_input();
 		} else
 
-		//if (event->vkCode >= VK_SPACE && event->vkCode <= VK_HELP || event->vkCode >= 'A' && event->vkCode <= 'Z' || event->vkCode >= 'a' && event->vkCode <= 'z' || event->vkCode >= '0' && event->vkCode <= '9')
-		{
-			//send events to our window
-			//pack to WM_MESSAGE and send to orig_hwnd
-			use_callback_for_keyboard_input(wParam, lParam);
-			return -1;
-		}
+		use_callback_for_keyboard_input(wParam, lParam);
+		return -1;
 	}
+
 	return CallNextHookEx(llkeyboard_hook, nCode, wParam, lParam);
 }
 
@@ -298,20 +289,12 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 		MSLLHOOKSTRUCT* event = (MSLLHOOKSTRUCT*)lParam;
 		log_cout << "APP: LowLevelMouseProc " << wParam << ", "<< event->pt.x << ", "<< event->pt.y << ", " << event->dwExtraInfo << std::endl;
 
-		//todo
-		//check if we in intercepting state
-		//check if game window is on top
-		//we have to give user ways to exit like Esc or Tab
-		
+		use_callback_for_mouse_input(wParam, lParam);
+		if(wParam != WM_MOUSEMOVE)
 		{
-			//send events to our window
-			//pack to WM_MESSAGE and send to orig_hwnd
-			use_callback_for_mouse_input(wParam, lParam);
-			if(wParam != WM_MOUSEMOVE)
-			{
-				return -1;
-			}
+			return -1;
 		}
+	
 	}
 	return CallNextHookEx(llmouse_hook, nCode, wParam, lParam);
 }
@@ -325,22 +308,15 @@ void smg_overlays::hook_user_input()
 		game_hwnd = GetForegroundWindow();
 		if (game_hwnd != nullptr)
 		{
+			//print window title
+			TCHAR title[256];
+			GetWindowText(game_hwnd, title, 256);
+			std::wstring title_wstr(title);
+			std::string title_str(title_wstr.begin(), title_wstr.end());
+			log_cout << "APP: hook_user_input catch window - " << title_str << std::endl;
 
-			if (true)
-			{ //print window title
-				TCHAR title[256];
-				GetWindowText(game_hwnd, title, 256);
-				std::wstring title_wstr(title);
-				std::string title_str(title_wstr.begin(), title_wstr.end());
-				log_cout << "APP: hook_user_input catch window - " << title_str << std::endl;
-			}
-
-			//DWORD threadId = ::GetWindowThreadProcessId(game_hwnd, nullptr);
-			//msg_hook = SetWindowsHookEx(WH_GETMESSAGE, CallWndMsgProc, NULL, threadId);
 			llkeyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
 			llmouse_hook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
-			//todo intercept mouse
-			//GetMouseRawData
 
 			our_IMC = ImmCreateContext();
 			if (our_IMC)
@@ -501,8 +477,7 @@ bool smg_overlays::on_overlay_destroy(std::shared_ptr<overlay_window> overlay)
 	if (showing_windows.size() == 0 && quiting)
 	{
 		PostQuitMessage(0);
-	} else
-	{}
+	} 
 
 	return removed;
 }
@@ -699,18 +674,13 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 			{
 				RECT overlay_rect = n->get_rect();
 				BOOL ret =true;
-				ULONGLONG ticks_before = GetTickCount64();
-				//for(int i =0 ; i<1000; i++ ) 
-				{
-				 ret = BitBlt(
+
+				ret = BitBlt(
 				    hdc, 0, 0,
 				    overlay_rect.right - overlay_rect.left,
 				    overlay_rect.bottom - overlay_rect.top,
 				    n->hdc, 0, 0, SRCCOPY);
-				}
-				ULONGLONG ticks_after = GetTickCount64();	
 
-				log_cout << "APP: draw_overlay_gdi ticks " << ticks_after-ticks_before <<  std::endl;
 				if (!ret)
 				{
 					log_cout << "APP: draw_overlay_gdi had issue " << GetLastError() << std::endl;
