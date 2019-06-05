@@ -143,6 +143,7 @@ void smg_overlays::on_update_timer()
 void smg_overlays::deinit()
 {
 	log_cout << "APP: deinit " << std::endl;
+	quiting = false;
 }
 
 void smg_overlays::hide_overlays()

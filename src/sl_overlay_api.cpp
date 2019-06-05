@@ -3,6 +3,7 @@
 #include "sl_overlay_window.h"
 #include "sl_overlays.h"
 #include "sl_overlays_settings.h"
+#include "overlay_logging.h"
 
 extern HANDLE overlays_thread;
 extern DWORD overlays_thread_id;

@@ -106,12 +106,11 @@ function step_1() {
   var overlays_ids = streamlabs_overlays.getIds();
   console.log(overlays_ids);
 
-  for (let overlayid of overlays_ids) {
-    console.log('Call set overlay transparency 20/255');
-    streamlabs_overlays.setTransparency(overlayid, 20);
-  }
-
-  setTimeout(step_2, 10000);
+  console.log('Call set overlay transparency 20/255');
+  streamlabs_overlays.setTransparency(overlays_ids[0], 30);
+  streamlabs_overlays.setTransparency(overlays_ids[1], 230);
+ 
+  setTimeout(step_2, 11000);
 }
 
 function step_2() {
@@ -124,10 +123,10 @@ function step_2() {
 
   for (let overlayid of overlays_ids) {
     console.log('Call set overlay transparency 20/255');
-    streamlabs_overlays.setTransparency(overlayid, 200);
+    streamlabs_overlays.setTransparency(overlayid, 180);
   }
 
-  setTimeout(step_finish, 5000);
+  setTimeout(step_finish, 11000);
 }
 
 function step_finish() {

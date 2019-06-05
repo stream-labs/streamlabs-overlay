@@ -150,6 +150,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 	overlays_thread = nullptr;
 	overlays_thread_id = 0;
 	thread_state = sl_overlay_thread_state::destoyed;
+	
 	thread_state_mutex.unlock();
 
 	return 0;
