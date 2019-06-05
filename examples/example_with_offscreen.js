@@ -13,8 +13,8 @@ let win2;
 let overlayid2;
 let hwnd;
 
-const win_width = 300;
-const win_height = 400;
+const win_width = 600;
+const win_height = 800;
 
 function createWindow() {
   test_started = true;
