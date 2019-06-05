@@ -44,6 +44,15 @@ bool smg_overlays::process_commands(MSG& msg)
 		log_cout << "APP: show overlays " << std::endl;
 		showing_overlays = true;
 		ret = true;
+		{
+			std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+			std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
+				if (n->overlay_hwnd != 0)
+				{
+					ShowWindow(n->overlay_hwnd, SW_SHOW);
+				}
+			});
+		}
 	}
 	break;
 	case COMMAND_HIDE_OVERLAYS:

@@ -3,10 +3,12 @@
 #include <iostream>
 
 #ifdef _DEBUG
-    const bool debug_disabled = false;
+    const bool log_output_disabled = false;
 #else
-    const bool debug_disabled = true;
+    const bool log_output_disabled = true;
 #endif
 
-#define log_cout if (debug_disabled) {} else std::cout 
+#define log_cout if (log_output_disabled) {} else std::cout 
+#define log_debug if (log_output_disabled) {} else std::cout 
+#define log_error if (log_output_disabled) {} else std::cout 
 

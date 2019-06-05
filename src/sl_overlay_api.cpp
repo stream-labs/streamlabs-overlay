@@ -248,11 +248,13 @@ int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, si
 			thread_state_mutex.unlock();
 		} else
 		{
-
-			std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
-			if (overlay != nullptr)
+			if( smg_overlays::get_instance()->showing_overlays)
 			{
-				overlay->paint_window_from_buffer(image_array, array_size, width, height);
+				std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
+				if (overlay != nullptr)
+				{
+					overlay->paint_window_from_buffer(image_array, array_size, width, height);
+				}
 			}
 			thread_state_mutex.unlock();
 		}

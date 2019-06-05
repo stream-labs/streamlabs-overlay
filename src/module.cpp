@@ -394,9 +394,6 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 
 		if (incoming_array != nullptr)
 		{
-			log_cout << "APP: PaintOverlay " << argc << ", image buffer size " << array_lenght << ", w " << width << ", h "
-			         << height << std::endl;
-
 			painted = paint_overlay_from_buffer(overlay_id, incoming_array, array_lenght, width, height);
 			incoming_array = nullptr;
 		} else

@@ -111,7 +111,7 @@ bool overlay_window::set_rect(RECT& new_rect)
 
 bool overlay_window::paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
 {
-	log_cout << "APP: paint_window_from_buffer array_size = " << array_size << ", w " << width << ", h " << height << std::endl;
+	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height << std::endl;
 
 	if (hbmp != nullptr)
 	{
@@ -125,15 +125,15 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 		phmi.bmiHeader.biBitCount = 32;
 		phmi.bmiHeader.biCompression = BI_RGB;
 		workedout = SetDIBitsToDevice(hdc, 0, 0, width, height, 0, 0, 0, height, image_array, &phmi, false);
-
-		log_cout << "APP: paint_window_from_buffer workedout = " << workedout << std::endl;
-		if (!IsWindowVisible(overlay_hwnd))
+		if(workedout != height )
 		{
-			ShowWindow(overlay_hwnd, SW_SHOWNA);
+			log_error << "APP: Saving image from electron with SetDIBitsToDevice failed with workedout = " << workedout << std::endl;			
 		}
+		
+		InvalidateRect(overlay_hwnd, nullptr, TRUE);
 	} else
 	{
-		log_cout << "APP: paint_window_from_buffer no hbmp " << std::endl;
+		log_error << "APP: Saving image from electron failed. no hbmp to save to." << std::endl;
 	}
 
 	return true;
