@@ -144,7 +144,10 @@ void smg_overlays::on_update_timer()
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+			if(n->content_updated)
+			{
+				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+			}
 		});
 	}
 }
@@ -509,7 +512,7 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
-			if (hWnd == n->overlay_hwnd)
+			if ( hWnd == n->overlay_hwnd )
 			{
 				RECT overlay_rect = n->get_rect();
 				BOOL ret = true;
@@ -529,6 +532,7 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 				{
 					log_cout << "APP: draw_overlay_gdi had issue " << GetLastError() << std::endl;
 				}
+				n->content_updated = false;
 			}
 		});
 	}

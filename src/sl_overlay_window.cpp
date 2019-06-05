@@ -26,6 +26,7 @@ overlay_window::~overlay_window()
 
 overlay_window::overlay_window()
 {
+	content_updated = false;
 	static int id_counter = 128;
 	id = id_counter++;
 	use_method = sl_window_capture_method::print;
@@ -129,8 +130,8 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 		{
 			log_error << "APP: Saving image from electron with SetDIBitsToDevice failed with workedout = " << workedout << std::endl;			
 		}
-		
-		InvalidateRect(overlay_hwnd, nullptr, TRUE);
+		content_updated = true;
+		//InvalidateRect(overlay_hwnd, nullptr, TRUE);
 	} else
 	{
 		log_error << "APP: Saving image from electron failed. no hbmp to save to." << std::endl;

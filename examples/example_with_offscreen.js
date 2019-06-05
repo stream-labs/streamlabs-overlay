@@ -13,6 +13,7 @@ let win2;
 let overlayid2;
 let hwnd;
 
+const frame_rate = 2;
 const win_width = 600;
 const win_height = 800;
 
@@ -47,7 +48,7 @@ function createWindow() {
 
   })
 
-  win1.webContents.setFrameRate(10);
+  win1.webContents.setFrameRate(frame_rate);
   win1.webContents.invalidate();
 
 
@@ -74,7 +75,7 @@ function createWindow() {
 
   })
 
-  win2.webContents.setFrameRate(10);
+  win2.webContents.setFrameRate(frame_rate);
   win2.webContents.invalidate();
 
 

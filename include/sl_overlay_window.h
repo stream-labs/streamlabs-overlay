@@ -32,8 +32,10 @@ class overlay_window
 	virtual void set_transparency(int transparency);
 	virtual bool ready_to_create_overlay();
 	HWND orig_handle;
+	
 	HBITMAP hbmp;
 	HDC hdc;
+	bool content_updated;
 
 	HWND overlay_hwnd;
 
