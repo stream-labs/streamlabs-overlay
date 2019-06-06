@@ -78,7 +78,14 @@ RECT overlay_window::get_rect()
 
 bool overlay_window::apply_new_rect(RECT& new_rect)
 {
-	return set_new_position(new_rect.left, new_rect.top);
+	manual_position = true;
+
+	if (overlay_hwnd)
+	{
+		MoveWindow(overlay_hwnd, new_rect.left, new_rect.top, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top, FALSE);
+	}
+
+	return set_rect(new_rect);
 }
 
 bool overlay_window::set_new_position(int x, int y)
@@ -140,15 +147,32 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 	return true;
 }
 
+bool overlay_window::apply_size_from_orig()
+{
+	BOOL ret = false;
+	RECT client_rect = {0};
+	ret = GetWindowRect(orig_handle, &client_rect);
+
+	int new_x = client_rect.left;
+	int new_y = client_rect.top;
+	int new_width = client_rect.right - client_rect.left;
+	int new_height = client_rect.bottom - client_rect.top;
+
+	rect = client_rect;
+	
+	return true;
+}
+
 bool overlay_window::create_window_content_buffer()
 {
 	bool created = false;
 	BOOL ret = false;
 	RECT client_rect = {0};
-	HDC hdcScreen = GetDC(orig_handle);
+	HDC hdcScreen = GetDC(overlay_hwnd);
 
-	ret = GetWindowRect(orig_handle, &client_rect);
-	if (ret && hdcScreen != nullptr)
+	ret = GetWindowRect(overlay_hwnd, &client_rect);
+
+	if ( hdcScreen != nullptr)
 	{
 		int new_x = client_rect.left;
 		int new_y = client_rect.top;
@@ -160,17 +184,9 @@ bool overlay_window::create_window_content_buffer()
 		HBITMAP new_hbmp = nullptr;
 		bool keep_gdi = false;
 
-		if (new_width == cur_rect.right - cur_rect.left && new_height == cur_rect.bottom - cur_rect.top && hdc != nullptr)
-		{
-			keep_gdi = true;
-			new_hdc = hdc;
-			new_hbmp = hbmp;
-		} else
-		{
-			new_hdc = CreateCompatibleDC(hdcScreen);
-			new_hbmp = CreateCompatibleBitmap(hdcScreen, new_width, new_height);
-			SelectObject(new_hdc, new_hbmp);
-		}
+		new_hdc = CreateCompatibleDC(hdcScreen);
+		new_hbmp = CreateCompatibleBitmap(hdcScreen, new_width, new_height);
+		SelectObject(new_hdc, new_hbmp);
 
 		if (new_hdc == nullptr || new_hbmp == nullptr)
 		{
@@ -178,50 +194,13 @@ bool overlay_window::create_window_content_buffer()
 			DeleteObject(new_hbmp);
 		} else
 		{
-			if (!keep_gdi)
-			{
-				DeleteDC(hdc);
-				DeleteObject(hbmp);
+			DeleteDC(hdc);
+			DeleteObject(hbmp);
 
-				hdc = new_hdc;
-				hbmp = new_hbmp;
-			}
-			if (manual_position)
-			{
-				// if we have
-				if (new_width == client_rect.right - client_rect.left && new_height == client_rect.bottom - client_rect.top)
-				{
-				} else
-				{
-					RECT new_rect = cur_rect;
-					new_rect.right = cur_rect.left + new_width;
-					new_rect.bottom = cur_rect.top + new_height;
-					set_rect(new_rect);
-
-					if (overlay_hwnd)
-					{
-						MoveWindow(overlay_hwnd, new_rect.left, new_rect.top, new_width, new_height, FALSE);
-					}
-				}
-
-			} else
-			{
-				if (client_rect.left == cur_rect.left && client_rect.right == cur_rect.right &&
-					client_rect.top == cur_rect.top && client_rect.bottom == cur_rect.bottom)
-				{
-				} else
-				{
-					set_rect(client_rect);
-
-					if (overlay_hwnd)
-					{
-						MoveWindow(overlay_hwnd, new_x, new_y, new_width, new_height, FALSE);
-					}
-				}
-			}
+			hdc = new_hdc;
+			hbmp = new_hbmp;
 			created = true;
- 
-		}
+ 		}
 	} else
 	{
 		log_cout << "APP: get_window_screenshot failed to get rect from orig window " << GetLastError() << std::endl;

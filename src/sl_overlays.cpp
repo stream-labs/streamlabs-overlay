@@ -122,7 +122,7 @@ int smg_overlays::create_overlay_window_by_hwnd(HWND hwnd)
 {
 	std::shared_ptr<overlay_window> new_overlay_window = std::make_shared<overlay_window>();
 	new_overlay_window->orig_handle = hwnd;
-	new_overlay_window->create_window_content_buffer();
+	new_overlay_window->apply_size_from_orig();
 
 	{
 		std::unique_lock<std::shared_mutex> lock(overlays_list_access);

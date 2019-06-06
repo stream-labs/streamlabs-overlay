@@ -76,6 +76,11 @@ const int COMMAND_RELEASE_INPUT = 8;
 //lParam LPRECT. have to delete it after recive
 #define WM_SLO_OVERLAY_POSITION (WM_USER + 36)
 
+//command for web view thread to update hbmp for new size 
+//wParam id
+//lParam LPRECT. have to delete it after recive
+#define WM_SLO_OVERLAY_SIZE_CHANGED (WM_USER + 37)
+
 //signal for overlay thread about source window created and can be used to make overlay for it
 #define WM_SLO_SOURCE_CREATED (WM_USER + 40)
 

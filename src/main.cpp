@@ -77,6 +77,14 @@ DWORD WINAPI overlay_thread_func(void* data)
 				catched = true;
 			}
 			break;
+			case WM_SLO_OVERLAY_SIZE_CHANGED:
+			{
+				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
+				if(overlay) {
+					overlay->create_window_content_buffer();
+				}
+			}
+			break;
 			case WM_SLO_OVERLAY_TRANSPARENCY:
 			{
 				log_cout << "APP: WM_SLO_OVERLAY_TRANSPARENCY " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
@@ -164,7 +172,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{}
 	break;
 	case WM_SIZE:
-	{}
+	{
+		auto overlay = smg_overlays::get_instance()->get_overlay_by_window(hWnd);
+		if(overlay) {
+			PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SIZE_CHANGED, overlay->id, NULL);		
+		}		
+	}
 	break;
 	case WM_CLOSE:
 	{

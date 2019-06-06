@@ -22,6 +22,7 @@ class overlay_window
 	virtual bool set_rect(RECT& new_rect);
 	virtual bool apply_new_rect(RECT& new_rect);
 	virtual bool set_new_position(int x, int y);
+	virtual bool apply_size_from_orig();
 
 	sl_window_capture_method use_method;
 	overlay_status status;
