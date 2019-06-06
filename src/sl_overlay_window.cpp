@@ -8,14 +8,19 @@
 
 void overlay_window::set_transparency(int transparency, bool save_as_normal)
 {
-	if (overlay_hwnd != 0  )
+	if (overlay_hwnd != 0)
 	{
-		if (save_as_normal) 
+		if (save_as_normal)
 		{
 			overlay_transparency = transparency;
 		}
 		SetLayeredWindowAttributes(overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), transparency, LWA_ALPHA);
 	}
+}
+
+void overlay_window::set_autohide(int timeout)
+{
+	autohide_after = timeout;
 }
 
 bool overlay_window::ready_to_create_overlay()
@@ -81,7 +86,7 @@ overlay_window::overlay_window()
 	
 	overlay_transparency = -1;
 	
-	autohide_after = 5;
+	autohide_after = 0;
 	autohidden = false;
 	autohide_by_transparency = true;
 }

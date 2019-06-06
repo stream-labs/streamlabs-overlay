@@ -316,6 +316,29 @@ int WINAPI set_overlay_transparency(int id, int transparency)
 	return id;
 }
 
+int WINAPI set_overlay_autohide(int id, int autohide_timeout)
+{
+	thread_state_mutex.lock();
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
+		thread_state_mutex.unlock();
+		return -1;
+	} else
+	{
+		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SET_AUTOHIDE, id, (LPARAM)(autohide_timeout));
+		thread_state_mutex.unlock();
+
+		if (!ret)
+		{
+			return -1;
+		}
+
+		return id;
+	}
+
+	return id;
+}
+
 std::shared_ptr<smg_overlays> get_overlays()
 {
 	thread_state_mutex.lock();

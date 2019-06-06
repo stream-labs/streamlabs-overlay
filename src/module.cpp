@@ -440,6 +440,38 @@ napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
 	return ret;
 }
 
+napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
+{
+	napi_value ret = nullptr;
+
+	size_t argc = 2;
+	napi_value argv[2];
+
+	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok)
+		return failed_ret;
+
+	int set_autohide_result = -1;
+	if (argc == 2)
+	{
+		int overlay_id = -1;
+		int overlay_autohide;
+
+		if (napi_get_value_int32(env, argv[0], &overlay_id) != napi_ok)
+			return failed_ret;
+
+		if (napi_get_value_int32(env, argv[1], &overlay_autohide) != napi_ok)
+			return failed_ret;
+
+		log_cout << "APP: SetOverlayAutohide " << overlay_autohide << std::endl;
+		set_autohide_result = set_overlay_autohide(overlay_id, overlay_autohide);
+	}
+
+	if (napi_create_int32(env, set_autohide_result, &ret) != napi_ok)
+		return failed_ret;
+
+	return ret;
+}
+
 napi_value init(napi_env env, napi_value exports)
 {
 	napi_value fn;
@@ -502,6 +534,11 @@ napi_value init(napi_env env, napi_value exports)
 	if (napi_create_function(env, nullptr, 0, SetOverlayTransparency, nullptr, &fn) != napi_ok)
 		return failed_ret;
 	if (napi_set_named_property(env, exports, "setTransparency", fn) != napi_ok)
+		return failed_ret;
+
+	if (napi_create_function(env, nullptr, 0, SetOverlayAutohide, nullptr, &fn) != napi_ok)
+		return failed_ret;
+	if (napi_set_named_property(env, exports, "setAutohide", fn) != napi_ok)
 		return failed_ret;
 
 	if (napi_create_function(env, nullptr, 0, RemoveOverlay, nullptr, &fn) != napi_ok)

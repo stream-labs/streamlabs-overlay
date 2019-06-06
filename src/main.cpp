@@ -98,6 +98,19 @@ DWORD WINAPI overlay_thread_func(void* data)
 				catched = true;
 			}
 			break;
+			case WM_SLO_OVERLAY_SET_AUTOHIDE:
+			{
+				log_cout << "APP: WM_SLO_OVERLAY_SET_AUTOHIDE " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
+				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
+
+				if (overlay != nullptr)
+				{
+					overlay->set_autohide((int)msg.lParam);
+				} else
+				{}
+				catched = true;
+			}
+			break;
 			case WM_SLO_OVERLAY_WINDOW_DESTOYED:
 			{
 				log_cout << "APP: WM_OVERLAY_WINDOW_DESTOYED " << (int)msg.wParam << std::endl;

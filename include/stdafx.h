@@ -74,6 +74,11 @@ const int COMMAND_RELEASE_INPUT = 8;
 //lParam LPRECT. have to delete it after recive
 #define WM_SLO_OVERLAY_SIZE_CHANGED (WM_USER + 37)
 
+//command for overlay thread to set overlay autohide timeout 
+//wParam id
+//lParam timeout
+#define WM_SLO_OVERLAY_SET_AUTOHIDE (WM_USER + 38)
+
 //signal for overlay thread about source window created and can be used to make overlay for it
 #define WM_SLO_SOURCE_CREATED (WM_USER + 40)
 
