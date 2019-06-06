@@ -29,8 +29,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 	SetProcessDPIAware();
 
 	// Init COM and double-buffered painting
-	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE | COINIT_SPEED_OVER_MEMORY);
+	
 	if (SUCCEEDED(hr))
 	{
 		hr = BufferedPaintInit();
@@ -77,6 +77,14 @@ DWORD WINAPI overlay_thread_func(void* data)
 				catched = true;
 			}
 			break;
+			case WM_SLO_OVERLAY_SIZE_CHANGED:
+			{
+				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
+				if(overlay) {
+					overlay->create_window_content_buffer();
+				}
+			}
+			break;
 			case WM_SLO_OVERLAY_TRANSPARENCY:
 			{
 				log_cout << "APP: WM_SLO_OVERLAY_TRANSPARENCY " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
@@ -85,6 +93,19 @@ DWORD WINAPI overlay_thread_func(void* data)
 				if (overlay != nullptr)
 				{
 					overlay->set_transparency((int)msg.lParam);
+				} else
+				{}
+				catched = true;
+			}
+			break;
+			case WM_SLO_OVERLAY_SET_AUTOHIDE:
+			{
+				log_cout << "APP: WM_SLO_OVERLAY_SET_AUTOHIDE " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
+				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
+
+				if (overlay != nullptr)
+				{
+					overlay->set_autohide((int)msg.lParam);
 				} else
 				{}
 				catched = true;
@@ -150,6 +171,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 	overlays_thread = nullptr;
 	overlays_thread_id = 0;
 	thread_state = sl_overlay_thread_state::destoyed;
+	
 	thread_state_mutex.unlock();
 
 	return 0;
@@ -163,7 +185,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{}
 	break;
 	case WM_SIZE:
-	{}
+	{
+		auto overlay = smg_overlays::get_instance()->get_overlay_by_window(hWnd);
+		if(overlay) {
+			PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SIZE_CHANGED, overlay->id, NULL);		
+		}		
+	}
 	break;
 	case WM_CLOSE:
 	{

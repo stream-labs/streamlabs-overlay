@@ -16,7 +16,8 @@
 #include <stdlib.h>
 #include <tchar.h>
 
-#include <atlbase.h>
+//#include <atlbase.h>
+#include <objbase.h>
 //#include <atlstr.h>
 //#include <atlsync.h>
 
@@ -30,7 +31,6 @@
 Concepts:
 overlay window - window drawing over all other windows 
 source window - window from what content will be taken for overlay window 
-app window - main window of some app as source for overlay 
 
 Threads: 
 All work with overlays in main thread. Node js api called in its own thread. Some communication between thread made by PostThreadMessages. 
@@ -40,13 +40,6 @@ one for changes in list of overlays "overlays_list_access" and each overlay obje
 Modes:
 Node module. - control by node module api. 
 */
-
-enum class sl_window_capture_method
-{
-	bitblt,
-	print,
-	message_print
-};
 
 enum class sl_overlay_thread_state : int
 {
@@ -58,7 +51,6 @@ enum class sl_overlay_thread_state : int
 
 const int COMMAND_SHOW_OVERLAYS = 1;
 const int COMMAND_HIDE_OVERLAYS = 2;
-const int COMMAND_UPDATE_OVERLAYS = 3;
 const int COMMAND_QUIT = 4;
 const int COMMAND_TAKE_INPUT = 7;
 const int COMMAND_RELEASE_INPUT = 8;
@@ -76,6 +68,16 @@ const int COMMAND_RELEASE_INPUT = 8;
 //wParam id
 //lParam LPRECT. have to delete it after recive
 #define WM_SLO_OVERLAY_POSITION (WM_USER + 36)
+
+//command for web view thread to update hbmp for new size 
+//wParam id
+//lParam LPRECT. have to delete it after recive
+#define WM_SLO_OVERLAY_SIZE_CHANGED (WM_USER + 37)
+
+//command for overlay thread to set overlay autohide timeout 
+//wParam id
+//lParam timeout
+#define WM_SLO_OVERLAY_SET_AUTOHIDE (WM_USER + 38)
 
 //signal for overlay thread about source window created and can be used to make overlay for it
 #define WM_SLO_SOURCE_CREATED (WM_USER + 40)

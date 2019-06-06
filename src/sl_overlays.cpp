@@ -10,7 +10,7 @@
 #include "overlay_logging.h"
 #include "sl_overlay_api.h"
 
-#include "tlhelp32.h"
+//#include "tlhelp32.h"
 #pragma comment(lib, "uxtheme.lib")
 
 #pragma comment(lib, "imm32.lib")
@@ -22,7 +22,6 @@ extern HANDLE overlays_thread;
 extern DWORD overlays_thread_id;
 extern std::mutex thread_state_mutex;
 extern sl_overlay_thread_state thread_state;
-
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -44,6 +43,16 @@ bool smg_overlays::process_commands(MSG& msg)
 		log_cout << "APP: show overlays " << std::endl;
 		showing_overlays = true;
 		ret = true;
+		{
+			std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+			std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
+				if (n->overlay_hwnd != 0)
+				{
+					ShowWindow(n->overlay_hwnd, SW_SHOW);
+					n->reset_autohide();
+				}
+			});
+		}
 	}
 	break;
 	case COMMAND_HIDE_OVERLAYS:
@@ -54,19 +63,6 @@ bool smg_overlays::process_commands(MSG& msg)
 		ret = true;
 	}
 	break;
-	case COMMAND_UPDATE_OVERLAYS:
-	{
-		if (showing_overlays)
-		{
-			std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-			std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-				n->get_window_screenshot();
-			});
-		}
-		ret = true;
-	}
-	break;
-
 	case COMMAND_QUIT:
 	{
 		thread_state_mutex.lock();
@@ -109,8 +105,6 @@ void smg_overlays::quit()
 	log_cout << "APP: quit " << std::endl;
 	quiting = true;
 
-	update_settings();
-
 	if (showing_windows.size() != 0)
 	{
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
@@ -128,8 +122,7 @@ int smg_overlays::create_overlay_window_by_hwnd(HWND hwnd)
 {
 	std::shared_ptr<overlay_window> new_overlay_window = std::make_shared<overlay_window>();
 	new_overlay_window->orig_handle = hwnd;
-	//new_overlay_window->use_method = sl_window_capture_method::bitblt;
-	new_overlay_window->get_window_screenshot();
+	new_overlay_window->apply_size_from_orig();
 
 	{
 		std::unique_lock<std::shared_mutex> lock(overlays_list_access);
@@ -151,9 +144,12 @@ void smg_overlays::on_update_timer()
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			if (n->update_from_original && n->get_window_screenshot() || !n->update_from_original)
+			if (n->is_content_updated())
 			{
 				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+			} else
+			{
+				n->check_autohide();
 			}
 		});
 	}
@@ -162,6 +158,7 @@ void smg_overlays::on_update_timer()
 void smg_overlays::deinit()
 {
 	log_cout << "APP: deinit " << std::endl;
+	quiting = false;
 }
 
 void smg_overlays::hide_overlays()
@@ -204,7 +201,6 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 		DWORD const dwStyle = WS_POPUP; // no border or title bar
 		DWORD const dwStyleEx =
 		    WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT; // transparent, topmost, with no taskbar
-		                                                                          // item
 
 		overlay->overlay_hwnd =
 		    CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
@@ -216,7 +212,7 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 				SetLayeredWindowAttributes(overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_COLORKEY);
 			} else
 			{
-				SetLayeredWindowAttributes(overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), app_settings->transparency, LWA_ALPHA);
+				overlay->set_transparency(app_settings->transparency);
 			}
 			RECT overlay_rect = overlay->get_rect();
 			SetWindowPos(
@@ -485,7 +481,7 @@ smg_overlays::smg_overlays()
 	showing_overlays = false;
 	quiting = false;
 
-	log_cout << "APP: start application " << std::endl;
+	log_cout << "APP: start overlays " << std::endl;
 }
 
 void smg_overlays::init()
@@ -493,76 +489,6 @@ void smg_overlays::init()
 	app_settings->default_init();
 
 	create_overlay_window_class();
-}
-
-BOOL smg_overlays::process_found_window(HWND hwnd, LPARAM param)
-{
-	char buffer[128];
-	bool window_ok = false;
-	bool window_catched = false;
-	std::shared_ptr<overlay_window> found_window = nullptr;
-	DWORD dwProcessID = 0;
-	if (param != NULL)
-	{
-		unsigned long process_id = 0;
-		GetWindowThreadProcessId(hwnd, &process_id);
-		dwProcessID = *((unsigned long*)param);
-		if (dwProcessID == process_id && (GetWindow(hwnd, GW_OWNER) == (HWND) nullptr && IsWindowVisible(hwnd)))
-		{
-			window_ok = true;
-		}
-	} else
-	{
-		int written = GetWindowTextA(hwnd, buffer, 128);
-		if (written && strstr(buffer, "Notepad.") != nullptr)
-		{
-			window_ok = true;
-		}
-	}
-
-	if (window_ok)
-	{
-		WINDOWINFO wi = {0};
-		GetWindowInfo(hwnd, &wi);
-		int y = wi.rcWindow.bottom - wi.rcWindow.top;
-		int x = wi.rcWindow.left - wi.rcWindow.right;
-
-		int written = GetWindowTextA(hwnd, buffer, 128);
-	}
-
-	if (window_ok)
-	{
-		bool we_have_it = false;
-
-		{
-			std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-			std::for_each(
-			    showing_windows.begin(), showing_windows.end(), [&hwnd, &we_have_it](std::shared_ptr<overlay_window>& n) {
-				    if (n->orig_handle == hwnd)
-				    {
-					    we_have_it = true;
-				    }
-			    });
-		}
-
-		if (!we_have_it)
-		{
-			found_window = std::make_shared<overlay_window>();
-			found_window->orig_handle = hwnd;
-			found_window->get_window_screenshot();
-			{
-				std::unique_lock<std::shared_mutex> lock(overlays_list_access);
-				showing_windows.push_back(found_window);
-			}
-			window_catched = true;
-		}
-	}
-
-	if (window_catched)
-	{
-		PostMessage(NULL, WM_SLO_SOURCE_CREATED, found_window->id, reinterpret_cast<LPARAM>(&(found_window->orig_handle)));
-	}
-	return TRUE;
 }
 
 void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
@@ -590,24 +516,7 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 		std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
 			if (hWnd == n->overlay_hwnd)
 			{
-				RECT overlay_rect = n->get_rect();
-				BOOL ret = true;
-
-				ret = BitBlt(
-				    hdc,
-				    0,
-				    0,
-				    overlay_rect.right - overlay_rect.left,
-				    overlay_rect.bottom - overlay_rect.top,
-				    n->hdc,
-				    0,
-				    0,
-				    SRCCOPY);
-
-				if (!ret)
-				{
-					log_cout << "APP: draw_overlay_gdi had issue " << GetLastError() << std::endl;
-				}
+				n->paint_to_window(hdc);
 			}
 		});
 	}
@@ -620,13 +529,4 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 	}
 
 	EndPaint(hWnd, &ps);
-}
-
-void smg_overlays::update_settings()
-{
-	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-	std::for_each(showing_windows.begin(), showing_windows.end(), [this](std::shared_ptr<overlay_window>& n) {
-		n->save_state_to_settings();
-	});
-	log_cout << "APP: update_settings finished " << std::endl;
 }

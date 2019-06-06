@@ -108,19 +108,20 @@ export function setPosition(
 ): void;
 
 /**
- * Reload a specific overlay
- *
- * @param id ID of the overlay to reload
- */
-export function reload(id: OverlayId): void;
-
-/**
  * Set an overlay's transparency
  *
  * @param overlayId ID of the overlay to set the transparency for
  * @param transparency A positive integer from 0-255 indicating the transparency to set the overlay to, where 255 indicates opaque
  */
 export function setTransparency(overlayId: OverlayId, transparency: number): void;
+
+/**
+ * Set an overlay's autohide 
+ *
+ * @param overlayId ID of the overlay to set the transparency for
+ * @param autohideTimeout A number of seconds. If overlay should be repainted at least one in that amount of seconds to stay visible. 
+ */
+export function setTransparency(overlayId: OverlayId, autohideTimeout: number): void;
 
 /**
  * Set an overlay's transparency

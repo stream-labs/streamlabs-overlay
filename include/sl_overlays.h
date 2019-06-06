@@ -59,9 +59,5 @@ class smg_overlays
 	//events
 	void on_update_timer();
 
-	BOOL process_found_window(HWND hwnd, LPARAM param);
-
 	void draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered);
-
-	void update_settings();
 };

@@ -49,13 +49,11 @@ It uses version from package.json so update it to a new value.
 ### Module use examples
   Examples to show api usage for simple usecases. 
 ```
-node examples\example_with_hwnd_node.js
-node examples\simple_add_remove_overlays.js
-node examples\simple_setup_overlay.js
-node examples\simple_thread_stress_text.js
-yarn electron examples\example_with_hwnd.js	  
+yarn electron examples\example_with_offscreen.js	  
+yarn electron examples\example_interactivity_console.js
+yarn electron examples\example_interactivity_window.js
 ```
-  Simple UI example in 'examples\example_with_offscreen.js'
+  
 
 ### Module API
 Each overlay has ID by which it can be adressed in api.

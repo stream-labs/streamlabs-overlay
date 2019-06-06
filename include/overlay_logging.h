@@ -1,12 +1,17 @@
 #pragma once
 
 #include <iostream>
+#include <string>
 
 #ifdef _DEBUG
-    const bool debug_disabled = false;
+    const bool log_output_disabled = false;
 #else
-    const bool debug_disabled = true;
+    const bool log_output_disabled = true;
 #endif
 
-#define log_cout if (debug_disabled) {} else std::cout 
+const std::string getTimeStamp();
+
+#define log_cout if (log_output_disabled) {} else std::cout << getTimeStamp() 
+#define log_debug if (log_output_disabled) {} else std::cout << getTimeStamp() 
+#define log_error if (log_output_disabled) {} else std::cout << getTimeStamp() 
 

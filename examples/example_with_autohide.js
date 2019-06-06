@@ -35,7 +35,7 @@ function createWindow() {
     },
   })
 
-  win1.loadURL(`https://codepen.io/jasonleewilson/pen/gPrxwX`);
+  win1.loadURL(`https://www.google.com/search?source=hp&q=test+time+out+&oq=test+time+out+`);
 
   hwnd = win1.getNativeWindowHandle();
   console.log(hwnd);
@@ -103,14 +103,9 @@ function step_1() {
   console.log('Call get overlays ids');
   var overlays_ids = streamlabs_overlays.getIds();
   console.log(overlays_ids);
-
-  console.log('Call set overlay transparency 20/255');
-  streamlabs_overlays.setTransparency(overlays_ids[0], 30);
-  streamlabs_overlays.setTransparency(overlays_ids[1], 230);
   
-  //console.log(' ' + win1.getBounds() );
-  win1.setSize( 250, 250 , false );
-  streamlabs_overlays.setPosition(overlays_ids[0], 100, 50, 250, 250);
+  win2.setSize( 450, 450 , false );
+  streamlabs_overlays.setPosition(overlays_ids[1], 700, 50, 450, 450);
 
   setTimeout(step_2, 11000);
 }
@@ -123,11 +118,9 @@ function step_2() {
   var overlays_ids = streamlabs_overlays.getIds();
   console.log(overlays_ids);
 
-  for (let overlayid of overlays_ids) {
-    console.log('Call set overlay transparency 20/255');
-    streamlabs_overlays.setTransparency(overlayid, 180);
-  }
-  
+  win1.webContents.invalidate();
+  win2.webContents.invalidate();  
+
   setTimeout(step_finish, 11000);
 }
 
