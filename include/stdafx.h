@@ -41,13 +41,6 @@ Modes:
 Node module. - control by node module api. 
 */
 
-enum class sl_window_capture_method
-{
-	bitblt,
-	print,
-	message_print
-};
-
 enum class sl_overlay_thread_state : int
 {
 	starting = 0x0020,

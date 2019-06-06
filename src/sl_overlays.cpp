@@ -23,7 +23,6 @@ extern DWORD overlays_thread_id;
 extern std::mutex thread_state_mutex;
 extern sl_overlay_thread_state thread_state;
 
-
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 bool smg_overlays::process_commands(MSG& msg)
@@ -50,6 +49,7 @@ bool smg_overlays::process_commands(MSG& msg)
 				if (n->overlay_hwnd != 0)
 				{
 					ShowWindow(n->overlay_hwnd, SW_SHOW);
+					n->reset_autohide();
 				}
 			});
 		}
@@ -144,9 +144,12 @@ void smg_overlays::on_update_timer()
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			if(n->content_updated)
+			if (n->is_content_updated())
 			{
 				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+			} else
+			{
+				n->check_autohide();
 			}
 		});
 	}
@@ -198,7 +201,6 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 		DWORD const dwStyle = WS_POPUP; // no border or title bar
 		DWORD const dwStyleEx =
 		    WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT; // transparent, topmost, with no taskbar
-		                                                                          // item
 
 		overlay->overlay_hwnd =
 		    CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
@@ -210,7 +212,7 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 				SetLayeredWindowAttributes(overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_COLORKEY);
 			} else
 			{
-				SetLayeredWindowAttributes(overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), app_settings->transparency, LWA_ALPHA);
+				overlay->set_transparency(app_settings->transparency);
 			}
 			RECT overlay_rect = overlay->get_rect();
 			SetWindowPos(
@@ -512,27 +514,9 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
-			if ( hWnd == n->overlay_hwnd )
+			if (hWnd == n->overlay_hwnd)
 			{
-				RECT overlay_rect = n->get_rect();
-				BOOL ret = true;
-
-				ret = BitBlt(
-				    hdc,
-				    0,
-				    0,
-				    overlay_rect.right - overlay_rect.left,
-				    overlay_rect.bottom - overlay_rect.top,
-				    n->hdc,
-				    0,
-				    0,
-				    SRCCOPY);
-
-				if (!ret)
-				{
-					log_cout << "APP: draw_overlay_gdi had issue " << GetLastError() << std::endl;
-				}
-				n->content_updated = false;
+				n->paint_to_window(hdc);
 			}
 		});
 	}

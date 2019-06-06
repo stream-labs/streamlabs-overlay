@@ -6,10 +6,14 @@
 #include <iostream>
 #include "overlay_logging.h"
 
-void overlay_window::set_transparency(int transparency)
+void overlay_window::set_transparency(int transparency, bool save_as_normal)
 {
-	if (overlay_hwnd != 0)
+	if (overlay_hwnd != 0  )
 	{
+		if (save_as_normal) 
+		{
+			overlay_transparency = transparency;
+		}
 		SetLayeredWindowAttributes(overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), transparency, LWA_ALPHA);
 	}
 }
@@ -17,6 +21,44 @@ void overlay_window::set_transparency(int transparency)
 bool overlay_window::ready_to_create_overlay()
 {
 	return orig_handle != nullptr;
+}
+
+bool overlay_window::is_content_updated()
+{
+	return content_updated;
+}
+
+void overlay_window::check_autohide()
+{
+	ULONGLONG current_ticks = GetTickCount64();
+
+	if (autohide_after > 0 && !autohidden)
+	{
+		if (current_ticks > (last_content_chage_ticks + autohide_after * 1000))
+		{
+			autohidden = true;
+			if (autohide_by_transparency)
+			{
+				set_transparency(50, false);
+			} else
+			{
+				ShowWindow(overlay_hwnd, SW_HIDE);
+			}
+		}
+	}
+}
+
+void overlay_window::reset_autohide()
+{
+	if (autohidden)
+	{
+		if (autohide_by_transparency)
+		{
+			set_transparency(overlay_transparency, false);
+		} 
+		autohidden = false;
+	}
+	last_content_chage_ticks = GetTickCount64();
 }
 
 overlay_window::~overlay_window()
@@ -29,7 +71,6 @@ overlay_window::overlay_window()
 	content_updated = false;
 	static int id_counter = 128;
 	id = id_counter++;
-	use_method = sl_window_capture_method::print;
 	orig_handle = nullptr;
 	overlay_hwnd = nullptr;
 	hdc = nullptr;
@@ -37,6 +78,12 @@ overlay_window::overlay_window()
 	manual_position = false;
 	status = overlay_status::creating;
 	rect = {0};
+	
+	overlay_transparency = -1;
+	
+	autohide_after = 5;
+	autohidden = false;
+	autohide_by_transparency = true;
 }
 
 void overlay_window::clean_resources()
@@ -82,7 +129,8 @@ bool overlay_window::apply_new_rect(RECT& new_rect)
 
 	if (overlay_hwnd)
 	{
-		MoveWindow(overlay_hwnd, new_rect.left, new_rect.top, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top, FALSE);
+		MoveWindow(
+		    overlay_hwnd, new_rect.left, new_rect.top, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top, FALSE);
 	}
 
 	return set_rect(new_rect);
@@ -119,7 +167,8 @@ bool overlay_window::set_rect(RECT& new_rect)
 
 bool overlay_window::paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
 {
-	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height << std::endl;
+	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height
+	          << std::endl;
 
 	if (hbmp != nullptr)
 	{
@@ -133,18 +182,50 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 		phmi.bmiHeader.biBitCount = 32;
 		phmi.bmiHeader.biCompression = BI_RGB;
 		workedout = SetDIBitsToDevice(hdc, 0, 0, width, height, 0, 0, 0, height, image_array, &phmi, false);
-		if(workedout != height )
+		if (workedout != height)
 		{
-			log_error << "APP: Saving image from electron with SetDIBitsToDevice failed with workedout = " << workedout << std::endl;			
+			log_error << "APP: Saving image from electron with SetDIBitsToDevice failed with workedout = " << workedout
+			          << std::endl;
 		}
 		content_updated = true;
-		//InvalidateRect(overlay_hwnd, nullptr, TRUE);
+		if (autohidden)
+		{
+			if (autohide_by_transparency) 
+			{
+				set_transparency(overlay_transparency, false);
+			} else
+			{
+				if (!IsWindowVisible(overlay_hwnd))
+				{
+					ShowWindow(overlay_hwnd, SW_SHOW);
+				}
+			}
+			autohidden = false;
+		}
 	} else
 	{
 		log_error << "APP: Saving image from electron failed. no hbmp to save to." << std::endl;
 	}
 
 	return true;
+}
+
+void overlay_window::paint_to_window(HDC window_hdc)
+{
+	RECT overlay_rect = get_rect();
+	BOOL ret = true;
+
+	ret = BitBlt(
+	    window_hdc, 0, 0, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top, hdc, 0, 0, SRCCOPY);
+
+	if (!ret)
+	{
+		log_cout << "APP: paint_to_window had issue " << GetLastError() << std::endl;
+	}
+
+	last_content_chage_ticks = GetTickCount64();
+
+	content_updated = false;
 }
 
 bool overlay_window::apply_size_from_orig()
@@ -159,7 +240,7 @@ bool overlay_window::apply_size_from_orig()
 	int new_height = client_rect.bottom - client_rect.top;
 
 	rect = client_rect;
-	
+
 	return true;
 }
 
@@ -172,7 +253,7 @@ bool overlay_window::create_window_content_buffer()
 
 	ret = GetWindowRect(overlay_hwnd, &client_rect);
 
-	if ( hdcScreen != nullptr)
+	if (hdcScreen != nullptr)
 	{
 		int new_x = client_rect.left;
 		int new_y = client_rect.top;
@@ -200,7 +281,7 @@ bool overlay_window::create_window_content_buffer()
 			hdc = new_hdc;
 			hbmp = new_hbmp;
 			created = true;
- 		}
+		}
 	} else
 	{
 		log_cout << "APP: get_window_screenshot failed to get rect from orig window " << GetLastError() << std::endl;
