@@ -451,7 +451,7 @@ napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
 		return failed_ret;
 
 	int set_autohide_result = -1;
-	if (argc == 2)
+	if (argc == 2 || argc == 3)
 	{
 		int overlay_id = -1;
 		int overlay_autohide;
@@ -461,7 +461,7 @@ napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
 
 		if (napi_get_value_int32(env, argv[1], &overlay_autohide) != napi_ok)
 			return failed_ret;
-
+	
 		log_cout << "APP: SetOverlayAutohide " << overlay_autohide << std::endl;
 		set_autohide_result = set_overlay_autohide(overlay_id, overlay_autohide);
 	}

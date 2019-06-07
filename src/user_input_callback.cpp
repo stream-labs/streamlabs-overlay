@@ -481,6 +481,7 @@ void callback_method_t::async_callback()
 				status = set_callback_args_values(env_this);
 				if (status == napi_ok)
 				{
+					napi_create_object(env_this, &recv);
 					status = napi_make_callback(
 					    env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
 				}

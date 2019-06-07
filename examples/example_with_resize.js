@@ -27,7 +27,7 @@ function createWindow() {
   win1 = new BrowserWindow({
     show: false,
     width: win_width,
-    height: win_height+50,
+    height: win_height,
     frame: false,
     webPreferences: {
       offscreen: true,
@@ -40,7 +40,7 @@ function createWindow() {
   hwnd = win1.getNativeWindowHandle();
   console.log(hwnd);
   overlayid1 = streamlabs_overlays.addHWND(hwnd);
-  streamlabs_overlays.setPosition(overlayid1, 100, 100, win_width, win_height+50);
+  streamlabs_overlays.setPosition(overlayid1, 100, 100, win_width, win_height);
 
   win1.webContents.on('paint', (event, dirty, image) => {
     streamlabs_overlays.paintOverlay(overlayid1, image.getSize().width, image.getSize().height, image.getBitmap());
@@ -53,7 +53,7 @@ function createWindow() {
   win2 = new BrowserWindow({
     show: false,
     width: win_width,
-    height: win_height-50,
+    height: win_height,
     frame: false,
     webPreferences: {
       offscreen: true,
@@ -66,7 +66,7 @@ function createWindow() {
   hwnd = win2.getNativeWindowHandle();
   console.log(hwnd);
   overlayid2 = streamlabs_overlays.addHWND(hwnd);
-  streamlabs_overlays.setPosition(overlayid2, 750,100, win_width, win_height-50);
+  streamlabs_overlays.setPosition(overlayid2, 750,100, win_width, win_height);
 
   win2.webContents.on('paint', (event, dirty, image) => {
     streamlabs_overlays.paintOverlay(overlayid2, image.getSize().width, image.getSize().height, image.getBitmap());
@@ -108,6 +108,10 @@ function step_1() {
   streamlabs_overlays.setTransparency(overlays_ids[0], 30);
   streamlabs_overlays.setTransparency(overlays_ids[1], 230);
   
+  //console.log(' ' + win1.getBounds() );
+  win1.setSize( 250, 250 , false );
+  streamlabs_overlays.setPosition(overlays_ids[0], 100, 50, 250, 250);
+
   setTimeout(step_2, 11000);
 }
 
@@ -123,12 +127,6 @@ function step_2() {
     console.log('Call set overlay transparency 20/255');
     streamlabs_overlays.setTransparency(overlayid, 180);
   }
-
-  win1.setSize( 300, 250 , false );
-  streamlabs_overlays.setPosition(overlays_ids[0], 100, 50, 300, 250);
-
-  win2.setSize( 250, 300 , false );
-  streamlabs_overlays.setPosition(overlays_ids[1], 400, 150, 250, 300);
   
   setTimeout(step_finish, 11000);
 }
