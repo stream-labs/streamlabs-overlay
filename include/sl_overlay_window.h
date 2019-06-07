@@ -40,6 +40,8 @@ class overlay_window
 	void paint_to_window(HDC window_hdc);
 	bool is_content_updated();
 	void set_transparency(int transparency, bool save_as_normal = true);
+	int get_transparency();
+	void apply_interactive_mode(bool is_intercepting);
 	void set_autohide(int timeout);
 	void clean_resources();
 	

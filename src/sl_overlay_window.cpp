@@ -18,6 +18,11 @@ void overlay_window::set_transparency(int transparency, bool save_as_normal)
 	}
 }
 
+int overlay_window::get_transparency()
+{
+	return overlay_transparency;
+}
+
 void overlay_window::set_autohide(int timeout)
 {
 	autohide_after = timeout;
@@ -31,6 +36,20 @@ bool overlay_window::ready_to_create_overlay()
 bool overlay_window::is_content_updated()
 {
 	return content_updated;
+}
+
+void overlay_window::apply_interactive_mode(bool is_intercepting)
+{
+	if (overlay_hwnd != 0)
+	{
+		if (is_intercepting)
+		{
+			set_transparency(255, false);
+		} else
+		{
+			set_transparency(get_transparency(), false);
+		}
+	}
 }
 
 void overlay_window::check_autohide()
@@ -60,7 +79,7 @@ void overlay_window::reset_autohide()
 		if (autohide_by_transparency)
 		{
 			set_transparency(overlay_transparency, false);
-		} 
+		}
 		autohidden = false;
 	}
 	last_content_chage_ticks = GetTickCount64();
@@ -83,9 +102,9 @@ overlay_window::overlay_window()
 	manual_position = false;
 	status = overlay_status::creating;
 	rect = {0};
-	
+
 	overlay_transparency = -1;
-	
+
 	autohide_after = 0;
 	autohidden = false;
 	autohide_by_transparency = true;
@@ -195,7 +214,7 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 		content_updated = true;
 		if (autohidden)
 		{
-			if (autohide_by_transparency) 
+			if (autohide_by_transparency)
 			{
 				set_transparency(overlay_transparency, false);
 			} else

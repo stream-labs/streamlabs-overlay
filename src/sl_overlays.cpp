@@ -40,19 +40,9 @@ bool smg_overlays::process_commands(MSG& msg)
 			hide_overlays();
 		}
 
-		log_cout << "APP: show overlays " << std::endl;
+		showup_overlays();
 		showing_overlays = true;
 		ret = true;
-		{
-			std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-			std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-				if (n->overlay_hwnd != 0)
-				{
-					ShowWindow(n->overlay_hwnd, SW_SHOW);
-					n->reset_autohide();
-				}
-			});
-		}
 	}
 	break;
 	case COMMAND_HIDE_OVERLAYS:
@@ -88,11 +78,16 @@ bool smg_overlays::process_commands(MSG& msg)
 	case COMMAND_TAKE_INPUT:
 	{
 		hook_user_input();
+
+		showup_overlays();
+		apply_interactive_mode_view();
 	}
 	break;
 	case COMMAND_RELEASE_INPUT:
 	{
 		unhook_user_input();
+
+		apply_interactive_mode_view();
 	}
 	break;
 	};
@@ -143,13 +138,16 @@ void smg_overlays::on_update_timer()
 	if (showing_overlays)
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
+		std::for_each( showing_windows.begin(), showing_windows.end(), [is_intercepting = this->is_intercepting](std::shared_ptr<overlay_window>& n) {
 			if (n->is_content_updated())
 			{
 				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
 			} else
 			{
-				n->check_autohide();
+				if (!is_intercepting)
+				{
+					n->check_autohide();
+				}
 			}
 		});
 	}
@@ -159,6 +157,21 @@ void smg_overlays::deinit()
 {
 	log_cout << "APP: deinit " << std::endl;
 	quiting = false;
+}
+
+void smg_overlays::showup_overlays()
+{
+	log_cout << "APP: showup_overlays " << std::endl;
+	{
+		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
+			if (n->overlay_hwnd != 0)
+			{
+				ShowWindow(n->overlay_hwnd, SW_SHOW);
+				n->reset_autohide();
+			}
+		});
+	}
 }
 
 void smg_overlays::hide_overlays()
@@ -171,6 +184,17 @@ void smg_overlays::hide_overlays()
 			ShowWindow(n->overlay_hwnd, SW_HIDE);
 		}
 	});
+}
+
+void smg_overlays::apply_interactive_mode_view()
+{
+	log_cout << "APP: apply_interactive_mode_view " << std::endl;
+	{
+		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+		std::for_each( showing_windows.begin(), showing_windows.end(), [is_intercepting = this->is_intercepting](std::shared_ptr<overlay_window>& n) { 
+			n->apply_interactive_mode(is_intercepting);
+		});
+	}
 }
 
 void smg_overlays::create_overlay_window_class()
@@ -355,16 +379,6 @@ void smg_overlays::unhook_user_input()
 
 		log_cout << "APP: Input unhooked" << std::endl;
 		is_intercepting = false;
-	}
-}
-
-void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
-{
-	std::shared_ptr<overlay_window> work_overlay = get_overlay_by_id(overlay_id);
-	if (work_overlay != nullptr)
-	{
-		work_overlay->orig_handle = orig_window;
-		create_window_for_overlay(work_overlay);
 	}
 }
 

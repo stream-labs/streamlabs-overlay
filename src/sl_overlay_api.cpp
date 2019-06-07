@@ -1,9 +1,9 @@
 #include "sl_overlay_api.h"
 
+#include "overlay_logging.h"
 #include "sl_overlay_window.h"
 #include "sl_overlays.h"
 #include "sl_overlays_settings.h"
-#include "overlay_logging.h"
 
 extern HANDLE overlays_thread;
 extern DWORD overlays_thread_id;
@@ -132,6 +132,11 @@ int WINAPI hide_overlays()
 	}
 }
 
+bool WINAPI is_overlays_hidden()
+{
+	return !smg_overlays::get_instance()->showing_overlays;
+}
+
 int WINAPI remove_overlay(int id)
 {
 	thread_state_mutex.lock();
@@ -248,12 +253,13 @@ int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, si
 			thread_state_mutex.unlock();
 		} else
 		{
-			if( smg_overlays::get_instance()->showing_overlays)
+			if (smg_overlays::get_instance()->showing_overlays)
 			{
 				std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
 				RECT overlay_rect = overlay->get_rect();
 
-				if (overlay != nullptr && width == overlay_rect.right - overlay_rect.left && height == overlay_rect.bottom-overlay_rect.top)
+				if (overlay != nullptr && width == overlay_rect.right - overlay_rect.left &&
+				    height == overlay_rect.bottom - overlay_rect.top)
 				{
 					overlay->paint_window_from_buffer(image_array, array_size, width, height);
 				}
@@ -279,7 +285,7 @@ int WINAPI set_overlay_position(int id, int x, int y, int width, int height)
 		n->top = y;
 		n->right = x + width;
 		n->bottom = y + height;
-	
+
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(n));
 		thread_state_mutex.unlock();
 

@@ -168,8 +168,10 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 
 	if (napi_get_value_bool(env, argv[0], &switch_to) != napi_ok)
 		return failed_ret;
+	
+	bool check_visibility_for_switch = (!is_overlays_hidden()) && switch_to || (!switch_to);
 
-	if (callback_method_t::get_intercept_active() != switch_to)
+	if (callback_method_t::get_intercept_active() != switch_to && check_visibility_for_switch)
 	{
 		set_callback_for_switching_input(&switch_input); // so module can switch itself off by some command
 

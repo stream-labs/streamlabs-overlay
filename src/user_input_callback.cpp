@@ -375,6 +375,7 @@ int switch_input()
 	int ret = -1;
 
 	callback_method_t::set_intercept_active(!callback_method_t::get_intercept_active());
+	
 	switch_overlays_user_input(callback_method_t::get_intercept_active());
 
 	return ret;

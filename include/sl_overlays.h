@@ -12,6 +12,10 @@ class smg_overlays
 	static std::shared_ptr<smg_overlays> instance;
 	bool quiting;
 
+	void hide_overlays();
+	void showup_overlays();
+	void apply_interactive_mode_view();
+
 	public:
 	mutable std::shared_mutex overlays_list_access;
 	bool showing_overlays;
@@ -26,7 +30,6 @@ class smg_overlays
 	void init();
 	void deinit();
 
-	void original_window_ready(int overlay_id, HWND orig_window);
 	void create_windows_overlays();
 	void create_window_for_overlay(std::shared_ptr<overlay_window>& overlay);
 	void create_overlay_window_class();
@@ -42,7 +45,6 @@ class smg_overlays
 	bool on_window_destroy(HWND window);
 	bool on_overlay_destroy(std::shared_ptr<overlay_window> overlay);
 
-	void hide_overlays();
 	void quit();
 
 	//redirect user input

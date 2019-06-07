@@ -36,9 +36,10 @@ function createWindow() {
 	let overlayid = streamlabs_overlays.addHWND(hwnd);
 
 	streamlabs_overlays.show();
+	streamlabs_overlays.setTransparency(overlayid, 100);
 
 	win.webContents.on('paint', (event, dirty, image) => {
-		streamlabs_overlays.paintOverlay(overlayid, 700, 700, image.getBitmap());
+		streamlabs_overlays.paintOverlay(overlayid, image.getSize().width, image.getSize().height, image.getBitmap());
 
 	})
 
