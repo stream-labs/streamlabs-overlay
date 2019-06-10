@@ -25,9 +25,6 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
 
-	// Mark that this process is DPI aware.
-	SetProcessDPIAware();
-
 	// Init COM and double-buffered painting
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE | COINIT_SPEED_OVER_MEMORY);
 	
