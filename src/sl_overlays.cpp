@@ -10,7 +10,6 @@
 #include "overlay_logging.h"
 #include "sl_overlay_api.h"
 
-//#include "tlhelp32.h"
 #pragma comment(lib, "uxtheme.lib")
 
 #pragma comment(lib, "imm32.lib")
@@ -218,6 +217,23 @@ void smg_overlays::create_windows_overlays()
 	});
 }
 
+bool smg_overlays::is_inside_overlay(int x , int y)
+{
+	bool ret = false;
+	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+	std::for_each( showing_windows.begin(), showing_windows.end(), [&ret, &x, &y](std::shared_ptr<overlay_window>& n) { 
+		RECT o_rect = n->get_rect();
+		if( x<=o_rect.right && x>= o_rect.left)
+		{
+			if(y<=o_rect.bottom && y>= o_rect.top)
+			{
+				ret = true;
+			}
+		}
+	});
+	return ret;
+}
+
 void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& overlay)
 {
 	if (overlay->overlay_hwnd == nullptr && overlay->ready_to_create_overlay())
@@ -295,8 +311,18 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 		MSLLHOOKSTRUCT* event = (MSLLHOOKSTRUCT*)lParam;
 		log_cout << "APP: LowLevelMouseProc " << wParam << ", " << event->pt.x << ", " << event->pt.y << ", "
 		         << event->dwExtraInfo << std::endl;
+		
+		std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
+		if( app->is_inside_overlay(event->pt.x, event->pt.y) )
+		{
+			use_callback_for_mouse_input(wParam, lParam);
+		} else {
+			if (wParam != WM_MOUSEMOVE && wParam != WM_MOUSEWHEEL && wParam != WM_MOUSEHWHEEL )
+			{
+				use_callback_for_switching_input();
+			}
+		}
 
-		use_callback_for_mouse_input(wParam, lParam);
 		if (wParam != WM_MOUSEMOVE)
 		{
 			return -1;

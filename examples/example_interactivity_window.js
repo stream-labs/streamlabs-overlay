@@ -1,6 +1,6 @@
 
 const { app, BrowserWindow } = require("electron")
-const streamlabs_overlays = require('../build/Release/streamlabs_overlay.node')
+const streamlabs_overlays = require('../build/Debug/streamlabs_overlay.node')
 const fs = require("fs")
 
 let win;
@@ -37,6 +37,7 @@ function createWindow() {
 
 	streamlabs_overlays.show();
 	streamlabs_overlays.setTransparency(overlayid, 100);
+	streamlabs_overlays.setPosition(overlayid, 100, 100, 700, 700);
 
 	win.webContents.on('paint', (event, dirty, image) => {
 		streamlabs_overlays.paintOverlay(overlayid, image.getSize().width, image.getSize().height, image.getBitmap());
