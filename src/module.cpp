@@ -356,6 +356,8 @@ napi_value SetOverlayPosition(napi_env env, napi_callback_info args)
 
 		if (napi_get_value_int32(env, argv[4], &height) != napi_ok)
 			return failed_ret;
+		
+		log_cout << "APP: SetOverlayPosition " << id << ", size " << width << "x" << height << " at [" << x << ", " << y << "] " << std::endl;
 
 		position_set_result = set_overlay_position(id, x, y, width, height);
 	}
@@ -396,6 +398,8 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 
 		if (incoming_array != nullptr)
 		{
+			log_cout << "APP: PaintOverlay " << overlay_id << ", size " << width << "x" << height << " and buffer size " << array_lenght << std::endl;
+
 			painted = paint_overlay_from_buffer(overlay_id, incoming_array, array_lenght, width, height);
 			incoming_array = nullptr;
 		} else
