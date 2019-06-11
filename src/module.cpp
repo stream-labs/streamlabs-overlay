@@ -487,8 +487,8 @@ napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
 {
 	napi_value ret = nullptr;
 
-	size_t argc = 2;
-	napi_value argv[2];
+	size_t argc = 3;
+	napi_value argv[3];
 
 	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok)
 		return failed_ret;
@@ -513,8 +513,9 @@ napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
 
 		if( argc == 3 )
 		{
-			if (napi_get_value_int32(env, argv[1], &autohide_transparency) != napi_ok)
+			if (napi_get_value_int32(env, argv[2], &autohide_transparency) != napi_ok)
 				return failed_ret;
+
 			if(autohide_transparency > 255 || autohide_transparency < 0) 
 			{
 				autohide_transparency = 0;

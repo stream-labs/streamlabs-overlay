@@ -115,7 +115,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 				if (overlay != nullptr)
 				{
 					int autohide_timeout = msg.lParam >> 10;
-					int autohide_transparency = msg.lParam & 0xFFFFFFF00;
+					int autohide_transparency = msg.lParam % 512;
+					log_debug << "APP: WM_SLO_OVERLAY_SET_AUTOHIDE " << autohide_timeout << ", " << autohide_transparency << std::endl;
 					overlay->set_autohide(autohide_timeout, autohide_transparency);
 				}
 				catched = true;

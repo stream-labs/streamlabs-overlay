@@ -235,16 +235,16 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 		content_updated = true;
 		if (autohidden)
 		{
+			if (!IsWindowVisible(overlay_hwnd))
+			{
+				ShowWindow(overlay_hwnd, SW_SHOW);
+			}
+			
 			if (autohide_by_transparency > 0 )
 			{
 				set_transparency(overlay_transparency, false);
-			} else
-			{
-				if (!IsWindowVisible(overlay_hwnd))
-				{
-					ShowWindow(overlay_hwnd, SW_SHOW);
-				}
 			}
+
 			autohidden = false;
 		}
 	} else
