@@ -113,6 +113,7 @@ overlay_window::~overlay_window()
 
 overlay_window::overlay_window()
 {
+	last_content_chage_ticks = 0;
 	overlay_visibility = true;
 	content_updated = false;
 	static int id_counter = 128;
@@ -258,7 +259,7 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 
 void overlay_window::paint_to_window(HDC window_hdc)
 {
-	RECT overlay_rect = get_rect();
+	const RECT overlay_rect = get_rect();
 	BOOL ret = true;
 
 	ret = BitBlt(
@@ -280,11 +281,6 @@ bool overlay_window::apply_size_from_orig()
 	RECT client_rect = {0};
 	ret = GetWindowRect(orig_handle, &client_rect);
 
-	int new_x = client_rect.left;
-	int new_y = client_rect.top;
-	int new_width = client_rect.right - client_rect.left;
-	int new_height = client_rect.bottom - client_rect.top;
-
 	rect = client_rect;
 
 	return true;
@@ -305,11 +301,9 @@ bool overlay_window::create_window_content_buffer()
 		int new_y = client_rect.top;
 		int new_width = client_rect.right - client_rect.left;
 		int new_height = client_rect.bottom - client_rect.top;
-		RECT cur_rect = get_rect();
 
 		HDC new_hdc = nullptr;
 		HBITMAP new_hbmp = nullptr;
-		bool keep_gdi = false;
 
 		new_hdc = CreateCompatibleDC(hdcScreen);
 		new_hbmp = CreateCompatibleBitmap(hdcScreen, new_width, new_height);
@@ -333,7 +327,7 @@ bool overlay_window::create_window_content_buffer()
 		log_cout << "APP: get_window_screenshot failed to get rect from orig window " << GetLastError() << std::endl;
 	}
 
-	ReleaseDC(NULL, hdcScreen);
+	ReleaseDC(nullptr, hdcScreen);
 
 	return created;
 }

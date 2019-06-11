@@ -137,21 +137,24 @@ void smg_overlays::on_update_timer()
 	if (showing_overlays)
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-		std::for_each( showing_windows.begin(), showing_windows.end(), [is_intercepting = this->is_intercepting](std::shared_ptr<overlay_window>& n) {
-			if(n->is_visible())
-			{
-				if (n->is_content_updated())
-				{
-					InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
-				} else
-				{
-					if (!is_intercepting)
-					{
-						n->check_autohide();
-					}
-				}
-				}
-		});
+		std::for_each(
+		    showing_windows.begin(),
+		    showing_windows.end(),
+		    [is_intercepting = this->is_intercepting](std::shared_ptr<overlay_window>& n) {
+			    if (n->is_visible())
+			    {
+				    if (n->is_content_updated())
+				    {
+					    InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+				    } else
+				    {
+					    if (!is_intercepting)
+					    {
+						    n->check_autohide();
+					    }
+				    }
+			    }
+		    });
 	}
 }
 
@@ -193,9 +196,12 @@ void smg_overlays::apply_interactive_mode_view()
 	log_cout << "APP: apply_interactive_mode_view " << std::endl;
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-		std::for_each( showing_windows.begin(), showing_windows.end(), [is_intercepting = this->is_intercepting](std::shared_ptr<overlay_window>& n) { 
-			n->apply_interactive_mode(is_intercepting);
-		});
+		std::for_each(
+		    showing_windows.begin(),
+		    showing_windows.end(),
+		    [is_intercepting = this->is_intercepting](std::shared_ptr<overlay_window>& n) {
+			    n->apply_interactive_mode(is_intercepting);
+		    });
 	}
 }
 
@@ -220,17 +226,17 @@ void smg_overlays::create_windows_overlays()
 	});
 }
 
-bool smg_overlays::is_inside_overlay(int x , int y)
+bool smg_overlays::is_inside_overlay(int x, int y)
 {
 	bool ret = false;
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-	std::for_each( showing_windows.begin(), showing_windows.end(), [&ret, &x, &y](std::shared_ptr<overlay_window>& n) { 
+	std::for_each(showing_windows.begin(), showing_windows.end(), [&ret, &x, &y](std::shared_ptr<overlay_window>& n) {
 		RECT o_rect = n->get_rect();
-		if(n->is_visible())
+		if (n->is_visible())
 		{
-			if( x<=o_rect.right && x>= o_rect.left)
+			if (x <= o_rect.right && x >= o_rect.left)
 			{
-				if(y<=o_rect.bottom && y>= o_rect.top)
+				if (y <= o_rect.bottom && y >= o_rect.top)
 				{
 					ret = true;
 				}
@@ -317,13 +323,14 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 		MSLLHOOKSTRUCT* event = (MSLLHOOKSTRUCT*)lParam;
 		log_cout << "APP: LowLevelMouseProc " << wParam << ", " << event->pt.x << ", " << event->pt.y << ", "
 		         << event->dwExtraInfo << std::endl;
-		
+
 		std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
-		if( app->is_inside_overlay(event->pt.x, event->pt.y) )
+		if (app->is_inside_overlay(event->pt.x, event->pt.y))
 		{
 			use_callback_for_mouse_input(wParam, lParam);
-		} else {
-			if (wParam != WM_MOUSEMOVE && wParam != WM_MOUSEWHEEL && wParam != WM_MOUSEHWHEEL )
+		} else
+		{
+			if (wParam != WM_MOUSEMOVE && wParam != WM_MOUSEWHEEL && wParam != WM_MOUSEHWHEEL)
 			{
 				use_callback_for_switching_input();
 			}
@@ -539,8 +546,8 @@ void smg_overlays::init()
 
 void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 {
-	PAINTSTRUCT ps;
-	HPAINTBUFFER hBufferedPaint = NULL;
+	PAINTSTRUCT ps = {0};
+	HPAINTBUFFER hBufferedPaint = nullptr;
 	RECT rc;
 
 	GetClientRect(hWnd, &rc);

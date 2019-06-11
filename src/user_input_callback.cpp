@@ -136,9 +136,8 @@ struct wm_event_t
 	wm_event_t(WPARAM _wParam, LPARAM _lParam) noexcept: wParam(_wParam), lParam(_lParam) {}
 };
 
-callback_method_t::callback_method_t() noexcept
+callback_method_t::callback_method_t() 
 {
-	log_cout << "APP: callback_method_t()" << std::endl;
 	ready = false;
 }
 
@@ -154,10 +153,9 @@ void callback_method_t::callback_method_reset() noexcept
 napi_status callback_method_t::set_args_and_call_callback(napi_env env, napi_value callback, napi_value* result)
 {
 	napi_value local_this;
-	napi_status status;
 	log_cout << "APP: set_args_and_call_callback" << std::endl;
 
-	status = set_callback_args_values(env);
+	napi_status  status = set_callback_args_values(env);
 	if (status == napi_ok)
 	{
 		status = napi_get_reference_value(env, js_this, &local_this);
@@ -181,7 +179,7 @@ bool callback_method_t::get_intercept_active() noexcept
 	return is_intercept_active;
 }
 
-napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env) noexcept
+napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 {
 	log_cout << "APP: callback_keyboard_method_t::set_callback_args_values" << std::endl;
 	napi_status status = napi_ok;
@@ -225,7 +223,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env) n
 	{
 		if (status == napi_ok)
 		{
-			const LPKBDLLHOOKSTRUCT key = reinterpret_cast<LPKBDLLHOOKSTRUCT>(event->lParam);
+			LPKBDLLHOOKSTRUCT const key = reinterpret_cast<LPKBDLLHOOKSTRUCT>(event->lParam);
 			const std::string& keyCode = translate_to_electron_keycode(key->vkCode);
 			status = napi_create_string_utf8(env, keyCode.c_str(), keyCode.size(), &argv_to_cb[1]);
 		}
@@ -239,7 +237,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env) n
 	return status;
 }
 
-napi_status callback_mouse_method_t::set_callback_args_values(napi_env env) noexcept
+napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 {
 	log_cout << "APP:  callback_mouse_method_t::set_callback_args_values" << std::endl;
 	napi_status status = napi_ok;
@@ -339,7 +337,7 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 	if (to_send.size() > 256)
 	{
 		log_cout << "APP: Failed to send too many events, will switch input interception off" << std::endl;
-		switch_input();
+		ret = switch_input();
 	}
 
 	return ret;
@@ -353,7 +351,7 @@ int switch_input()
 
 	callback_method_t::set_intercept_active(!callback_method_t::get_intercept_active());
 	
-	switch_overlays_user_input(callback_method_t::get_intercept_active());
+	ret = switch_overlays_user_input(callback_method_t::get_intercept_active());
 
 	return ret;
 }
@@ -397,7 +395,7 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 {
 	size_t argc = 1;
 	napi_value argv[1];
-	napi_value async_name;
+	napi_value async_name = nullptr;
 	napi_status status;
 
 	status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);

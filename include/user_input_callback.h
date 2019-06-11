@@ -56,12 +56,12 @@ struct callback_method_t
 	std::queue<std::shared_ptr<wm_event_t>> to_send;
 	virtual size_t get_argc_to_cb() = 0;
 	virtual napi_value* get_argv_to_cb() = 0;
-	virtual napi_status set_callback_args_values(napi_env env) noexcept
+	virtual napi_status set_callback_args_values(napi_env env) 
 	{
 		return napi_ok;
 	};
 
-	callback_method_t() noexcept;
+	callback_method_t();
 	virtual ~callback_method_t()
 	{
 		napi_delete_reference(env_this, js_this);
@@ -87,7 +87,7 @@ struct callback_keyboard_method_t : callback_method_t
 		return argv_to_cb;
 	};
 
-	napi_status set_callback_args_values(napi_env env) noexcept override;
+	napi_status set_callback_args_values(napi_env env)  override;
 	void set_callback() override;
 };
 
@@ -105,7 +105,7 @@ struct callback_mouse_method_t : callback_method_t
 		return argv_to_cb;
 	};
 
-	napi_status set_callback_args_values(napi_env env) noexcept override;
+	napi_status set_callback_args_values(napi_env env)  override;
 	void set_callback() override;
 };
 

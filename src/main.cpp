@@ -114,8 +114,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 				if (overlay != nullptr)
 				{
-					int autohide_timeout = (int)msg.lParam >> 10;
-					int autohide_transparency = (int)msg.lParam % 512;
+					const int autohide_timeout = (int)msg.lParam >> 10;
+					const int autohide_transparency = (int)msg.lParam % 512;
 					log_debug << "APP: WM_SLO_OVERLAY_SET_AUTOHIDE " << autohide_timeout << ", " << autohide_transparency << std::endl;
 					overlay->set_autohide(autohide_timeout, autohide_transparency);
 				}
@@ -145,7 +145,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			break;
 			case WM_TIMER:
 				//log_cout << "APP: WM_TIMER id = " << (int)msg.wParam << std::endl;
-				if ((int)msg.wParam == OVERLAY_UPDATE_TIMER)
+				if (static_cast<int>(msg.wParam) == OVERLAY_UPDATE_TIMER)
 				{
 					app->on_update_timer();
 					catched = true;
