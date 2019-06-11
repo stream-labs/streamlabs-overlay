@@ -64,6 +64,11 @@ const int COMMAND_RELEASE_INPUT = 8;
 //lParam transparency
 #define WM_SLO_OVERLAY_TRANSPARENCY (WM_USER + 35)
 
+//command for overlay thread to set overlay transparency
+//wParam id
+//lParam transparency
+#define WM_SLO_OVERLAY_VISIBILITY (WM_USER + 39)
+
 //command for web view thread to set overlay position and size
 //wParam id
 //lParam LPRECT. have to delete it after recive

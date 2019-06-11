@@ -138,16 +138,19 @@ void smg_overlays::on_update_timer()
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each( showing_windows.begin(), showing_windows.end(), [is_intercepting = this->is_intercepting](std::shared_ptr<overlay_window>& n) {
-			if (n->is_content_updated())
+			if(n->is_visible())
 			{
-				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
-			} else
-			{
-				if (!is_intercepting)
+				if (n->is_content_updated())
 				{
-					n->check_autohide();
+					InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+				} else
+				{
+					if (!is_intercepting)
+					{
+						n->check_autohide();
+					}
 				}
-			}
+				}
 		});
 	}
 }
@@ -164,7 +167,7 @@ void smg_overlays::showup_overlays()
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			if (n->overlay_hwnd != 0)
+			if (n->overlay_hwnd != 0 && n->is_visible())
 			{
 				ShowWindow(n->overlay_hwnd, SW_SHOW);
 				n->reset_autohide();
@@ -223,11 +226,14 @@ bool smg_overlays::is_inside_overlay(int x , int y)
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 	std::for_each( showing_windows.begin(), showing_windows.end(), [&ret, &x, &y](std::shared_ptr<overlay_window>& n) { 
 		RECT o_rect = n->get_rect();
-		if( x<=o_rect.right && x>= o_rect.left)
+		if(n->is_visible())
 		{
-			if(y<=o_rect.bottom && y>= o_rect.top)
+			if( x<=o_rect.right && x>= o_rect.left)
 			{
-				ret = true;
+				if(y<=o_rect.bottom && y>= o_rect.top)
+				{
+					ret = true;
+				}
 			}
 		}
 	});

@@ -90,8 +90,20 @@ DWORD WINAPI overlay_thread_func(void* data)
 				if (overlay != nullptr)
 				{
 					overlay->set_transparency((int)msg.lParam);
-				} else
-				{}
+				} 
+				catched = true;
+			}
+			break;
+			case WM_SLO_OVERLAY_VISIBILITY:
+			{
+				log_cout << "APP: WM_SLO_OVERLAY_VISIBILITY " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
+				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
+
+				if (overlay != nullptr)
+				{
+					
+					overlay->set_visibility((bool)msg.lParam, app->showing_overlays);
+				} 
 				catched = true;
 			}
 			break;
@@ -102,9 +114,10 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 				if (overlay != nullptr)
 				{
-					overlay->set_autohide((int)msg.lParam);
-				} else
-				{}
+					int autohide_timeout = msg.lParam >> 10;
+					int autohide_transparency = msg.lParam & 0xFFFFFFF00;
+					overlay->set_autohide(autohide_timeout, autohide_transparency);
+				}
 				catched = true;
 			}
 			break;

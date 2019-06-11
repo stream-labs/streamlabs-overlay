@@ -322,7 +322,7 @@ int WINAPI set_overlay_transparency(int id, int transparency)
 	return id;
 }
 
-int WINAPI set_overlay_autohide(int id, int autohide_timeout)
+int WINAPI set_overlay_visibility(int id, bool visibility)
 {
 	thread_state_mutex.lock();
 	if (thread_state != sl_overlay_thread_state::runing)
@@ -331,7 +331,31 @@ int WINAPI set_overlay_autohide(int id, int autohide_timeout)
 		return -1;
 	} else
 	{
-		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SET_AUTOHIDE, id, (LPARAM)(autohide_timeout));
+		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_VISIBILITY, id, (LPARAM)(visibility));
+		thread_state_mutex.unlock();
+
+		if (!ret)
+		{
+			return -1;
+		}
+
+		return id;
+	}
+
+	return id;
+}
+
+int WINAPI set_overlay_autohide(int id, int autohide_timeout, int autohide_transparency)
+{
+	thread_state_mutex.lock();
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
+		thread_state_mutex.unlock();
+		return -1;
+	} else
+	{
+		DWORD autohide_params = ( autohide_timeout << 10) + autohide_transparency;
+		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SET_AUTOHIDE, id, (LPARAM)(autohide_params));
 		thread_state_mutex.unlock();
 
 		if (!ret)

@@ -17,6 +17,7 @@ class overlay_window
 	bool manual_position;
 	std::mutex rect_access;
 	int overlay_transparency;
+	bool overlay_visibility;
 
 	HBITMAP hbmp;
 	HDC hdc;
@@ -25,7 +26,7 @@ class overlay_window
 	int autohide_after;
 	ULONGLONG last_content_chage_ticks;
 	bool autohidden;
-	bool autohide_by_transparency;
+	int autohide_by_transparency;
 
 	public:
 	RECT get_rect();
@@ -41,8 +42,10 @@ class overlay_window
 	bool is_content_updated();
 	void set_transparency(int transparency, bool save_as_normal = true);
 	int get_transparency();
+	void set_visibility(bool visibility,bool overlays_shown);
+	bool is_visible() {return overlay_visibility;};
 	void apply_interactive_mode(bool is_intercepting);
-	void set_autohide(int timeout);
+	void set_autohide(int timeout, int transparency);
 	void clean_resources();
 	
 	void check_autohide();

@@ -1,4 +1,5 @@
 const { app, BrowserWindow } = require("electron")
+const electron = require('electron')
 const streamlabs_overlays = require('../build/Debug/streamlabs_overlay.node')
 const fs = require("fs")
 
@@ -27,7 +28,7 @@ function createWindow() {
   win1 = new BrowserWindow({
     show: false,
     width: win_width,
-    height: win_height,
+    height: win_height+50,
     frame: false,
     webPreferences: {
       offscreen: true,
@@ -37,10 +38,13 @@ function createWindow() {
 
   win1.loadURL(`https://codepen.io/jasonleewilson/pen/gPrxwX`);
 
+  win1.setSize( win_width, win_height+50, false);
   hwnd = win1.getNativeWindowHandle();
   console.log(hwnd);
+
   overlayid1 = streamlabs_overlays.addHWND(hwnd);
-  streamlabs_overlays.setPosition(overlayid1, 100, 100, win_width, win_height);
+  let win1_rect = win1.getBounds();
+  streamlabs_overlays.setPosition(overlayid1, 100, 100, Number(win1_rect.width), Number(win1_rect.height));
 
   win1.webContents.on('paint', (event, dirty, image) => {
     streamlabs_overlays.paintOverlay(overlayid1, image.getSize().width, image.getSize().height, image.getBitmap());
@@ -53,7 +57,7 @@ function createWindow() {
   win2 = new BrowserWindow({
     show: false,
     width: win_width,
-    height: win_height,
+    height: win_height-50,
     frame: false,
     webPreferences: {
       offscreen: true,
@@ -63,11 +67,14 @@ function createWindow() {
 
   win2.loadURL(`https://time.is/`);
   
+  win2.setSize( win_width+50, win_height, false);
   hwnd = win2.getNativeWindowHandle();
   console.log(hwnd);
   overlayid2 = streamlabs_overlays.addHWND(hwnd);
-  streamlabs_overlays.setPosition(overlayid2, 750,100, win_width, win_height);
-
+  
+  let win2_rect = win2.getBounds();
+  streamlabs_overlays.setPosition(overlayid2, 800, 100, Number(win2_rect.width), Number(win2_rect.height));
+  
   win2.webContents.on('paint', (event, dirty, image) => {
     streamlabs_overlays.paintOverlay(overlayid2, image.getSize().width, image.getSize().height, image.getBitmap());
 
@@ -108,10 +115,6 @@ function step_1() {
   streamlabs_overlays.setTransparency(overlays_ids[0], 30);
   streamlabs_overlays.setTransparency(overlays_ids[1], 230);
   
-  //console.log(' ' + win1.getBounds() );
-  win1.setSize( 250, 250 , false );
-  streamlabs_overlays.setPosition(overlays_ids[0], 100, 50, 250, 250);
-
   setTimeout(step_2, 11000);
 }
 
@@ -127,6 +130,14 @@ function step_2() {
     console.log('Call set overlay transparency 20/255');
     streamlabs_overlays.setTransparency(overlayid, 180);
   }
+
+  win1.setSize( 300, 250 , false );
+  let win1_rect = win1.getBounds();
+  streamlabs_overlays.setPosition(overlays_ids[0], 100, 100, Number(win1_rect.width), Number(win1_rect.height));
+
+  win2.setSize( 250, 300 , false );
+  let win2_rect = win2.getBounds();
+  streamlabs_overlays.setPosition(overlays_ids[1], 400, 100, Number(win2_rect.width), Number(win2_rect.height));
   
   setTimeout(step_finish, 11000);
 }
