@@ -10,7 +10,6 @@
 #include "overlay_logging.h"
 #include "sl_overlay_api.h"
 
-//#include "tlhelp32.h"
 #pragma comment(lib, "uxtheme.lib")
 
 #pragma comment(lib, "imm32.lib")
@@ -40,19 +39,9 @@ bool smg_overlays::process_commands(MSG& msg)
 			hide_overlays();
 		}
 
-		log_cout << "APP: show overlays " << std::endl;
+		showup_overlays();
 		showing_overlays = true;
 		ret = true;
-		{
-			std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-			std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-				if (n->overlay_hwnd != 0)
-				{
-					ShowWindow(n->overlay_hwnd, SW_SHOW);
-					n->reset_autohide();
-				}
-			});
-		}
 	}
 	break;
 	case COMMAND_HIDE_OVERLAYS:
@@ -88,11 +77,16 @@ bool smg_overlays::process_commands(MSG& msg)
 	case COMMAND_TAKE_INPUT:
 	{
 		hook_user_input();
+
+		showup_overlays();
+		apply_interactive_mode_view();
 	}
 	break;
 	case COMMAND_RELEASE_INPUT:
 	{
 		unhook_user_input();
+
+		apply_interactive_mode_view();
 	}
 	break;
 	};
@@ -143,14 +137,20 @@ void smg_overlays::on_update_timer()
 	if (showing_overlays)
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
-			if (n->is_content_updated())
+		std::for_each( showing_windows.begin(), showing_windows.end(), [is_intercepting = this->is_intercepting](std::shared_ptr<overlay_window>& n) {
+			if(n->is_visible())
 			{
-				InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
-			} else
-			{
-				n->check_autohide();
-			}
+				if (n->is_content_updated())
+				{
+					InvalidateRect(n->overlay_hwnd, nullptr, TRUE);
+				} else
+				{
+					if (!is_intercepting)
+					{
+						n->check_autohide();
+					}
+				}
+				}
 		});
 	}
 }
@@ -159,6 +159,21 @@ void smg_overlays::deinit()
 {
 	log_cout << "APP: deinit " << std::endl;
 	quiting = false;
+}
+
+void smg_overlays::showup_overlays()
+{
+	log_cout << "APP: showup_overlays " << std::endl;
+	{
+		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
+			if (n->overlay_hwnd != 0 && n->is_visible())
+			{
+				ShowWindow(n->overlay_hwnd, SW_SHOW);
+				n->reset_autohide();
+			}
+		});
+	}
 }
 
 void smg_overlays::hide_overlays()
@@ -171,6 +186,17 @@ void smg_overlays::hide_overlays()
 			ShowWindow(n->overlay_hwnd, SW_HIDE);
 		}
 	});
+}
+
+void smg_overlays::apply_interactive_mode_view()
+{
+	log_cout << "APP: apply_interactive_mode_view " << std::endl;
+	{
+		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+		std::for_each( showing_windows.begin(), showing_windows.end(), [is_intercepting = this->is_intercepting](std::shared_ptr<overlay_window>& n) { 
+			n->apply_interactive_mode(is_intercepting);
+		});
+	}
 }
 
 void smg_overlays::create_overlay_window_class()
@@ -192,6 +218,26 @@ void smg_overlays::create_windows_overlays()
 	std::for_each(showing_windows.begin(), showing_windows.end(), [this](std::shared_ptr<overlay_window>& n) {
 		create_window_for_overlay(n);
 	});
+}
+
+bool smg_overlays::is_inside_overlay(int x , int y)
+{
+	bool ret = false;
+	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+	std::for_each( showing_windows.begin(), showing_windows.end(), [&ret, &x, &y](std::shared_ptr<overlay_window>& n) { 
+		RECT o_rect = n->get_rect();
+		if(n->is_visible())
+		{
+			if( x<=o_rect.right && x>= o_rect.left)
+			{
+				if(y<=o_rect.bottom && y>= o_rect.top)
+				{
+					ret = true;
+				}
+			}
+		}
+	});
+	return ret;
 }
 
 void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& overlay)
@@ -271,8 +317,18 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 		MSLLHOOKSTRUCT* event = (MSLLHOOKSTRUCT*)lParam;
 		log_cout << "APP: LowLevelMouseProc " << wParam << ", " << event->pt.x << ", " << event->pt.y << ", "
 		         << event->dwExtraInfo << std::endl;
+		
+		std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
+		if( app->is_inside_overlay(event->pt.x, event->pt.y) )
+		{
+			use_callback_for_mouse_input(wParam, lParam);
+		} else {
+			if (wParam != WM_MOUSEMOVE && wParam != WM_MOUSEWHEEL && wParam != WM_MOUSEHWHEEL )
+			{
+				use_callback_for_switching_input();
+			}
+		}
 
-		use_callback_for_mouse_input(wParam, lParam);
 		if (wParam != WM_MOUSEMOVE)
 		{
 			return -1;
@@ -355,16 +411,6 @@ void smg_overlays::unhook_user_input()
 
 		log_cout << "APP: Input unhooked" << std::endl;
 		is_intercepting = false;
-	}
-}
-
-void smg_overlays::original_window_ready(int overlay_id, HWND orig_window)
-{
-	std::shared_ptr<overlay_window> work_overlay = get_overlay_by_id(overlay_id);
-	if (work_overlay != nullptr)
-	{
-		work_overlay->orig_handle = orig_window;
-		create_window_for_overlay(work_overlay);
 	}
 }
 

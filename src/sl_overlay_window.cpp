@@ -18,9 +18,35 @@ void overlay_window::set_transparency(int transparency, bool save_as_normal)
 	}
 }
 
-void overlay_window::set_autohide(int timeout)
+void overlay_window::set_visibility(bool visibility, bool overlays_shown)
+{
+	if (overlay_hwnd != 0)
+	{
+		overlay_visibility = visibility;
+		if (IsWindowVisible(overlay_hwnd))
+		{
+			if(!overlay_visibility)
+			{
+				ShowWindow(overlay_hwnd, SW_HIDE);
+			}
+		} else {
+			if(overlay_visibility && overlays_shown)
+			{
+				ShowWindow(overlay_hwnd, SW_SHOW);
+			}
+		}
+	}
+}
+
+int overlay_window::get_transparency()
+{
+	return overlay_transparency;
+}
+
+void overlay_window::set_autohide(int timeout, int transparency)
 {
 	autohide_after = timeout;
+	autohide_by_transparency = transparency;
 }
 
 bool overlay_window::ready_to_create_overlay()
@@ -33,6 +59,20 @@ bool overlay_window::is_content_updated()
 	return content_updated;
 }
 
+void overlay_window::apply_interactive_mode(bool is_intercepting)
+{
+	if (overlay_hwnd != 0)
+	{
+		if (is_intercepting)
+		{
+			set_transparency(255, false);
+		} else
+		{
+			set_transparency(get_transparency(), false);
+		}
+	}
+}
+
 void overlay_window::check_autohide()
 {
 	ULONGLONG current_ticks = GetTickCount64();
@@ -42,9 +82,9 @@ void overlay_window::check_autohide()
 		if (current_ticks > (last_content_chage_ticks + autohide_after * 1000))
 		{
 			autohidden = true;
-			if (autohide_by_transparency)
+			if (autohide_by_transparency > 0)
 			{
-				set_transparency(50, false);
+				set_transparency(autohide_by_transparency, false);
 			} else
 			{
 				ShowWindow(overlay_hwnd, SW_HIDE);
@@ -57,10 +97,10 @@ void overlay_window::reset_autohide()
 {
 	if (autohidden)
 	{
-		if (autohide_by_transparency)
+		if (autohide_by_transparency > 0)
 		{
 			set_transparency(overlay_transparency, false);
-		} 
+		}
 		autohidden = false;
 	}
 	last_content_chage_ticks = GetTickCount64();
@@ -83,12 +123,12 @@ overlay_window::overlay_window()
 	manual_position = false;
 	status = overlay_status::creating;
 	rect = {0};
-	
+
 	overlay_transparency = -1;
-	
+
 	autohide_after = 0;
 	autohidden = false;
-	autohide_by_transparency = true;
+	autohide_by_transparency = 50;
 }
 
 void overlay_window::clean_resources()
@@ -195,7 +235,7 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 		content_updated = true;
 		if (autohidden)
 		{
-			if (autohide_by_transparency) 
+			if (autohide_by_transparency > 0 )
 			{
 				set_transparency(overlay_transparency, false);
 			} else

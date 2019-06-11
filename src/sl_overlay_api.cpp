@@ -1,9 +1,9 @@
 #include "sl_overlay_api.h"
 
+#include "overlay_logging.h"
 #include "sl_overlay_window.h"
 #include "sl_overlays.h"
 #include "sl_overlays_settings.h"
-#include "overlay_logging.h"
 
 extern HANDLE overlays_thread;
 extern DWORD overlays_thread_id;
@@ -132,6 +132,11 @@ int WINAPI hide_overlays()
 	}
 }
 
+bool WINAPI is_overlays_hidden()
+{
+	return !smg_overlays::get_instance()->showing_overlays;
+}
+
 int WINAPI remove_overlay(int id)
 {
 	thread_state_mutex.lock();
@@ -248,12 +253,13 @@ int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, si
 			thread_state_mutex.unlock();
 		} else
 		{
-			if( smg_overlays::get_instance()->showing_overlays)
+			if (smg_overlays::get_instance()->showing_overlays)
 			{
 				std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
 				RECT overlay_rect = overlay->get_rect();
 
-				if (overlay != nullptr && width == overlay_rect.right - overlay_rect.left && height == overlay_rect.bottom-overlay_rect.top)
+				if (overlay != nullptr && width == overlay_rect.right - overlay_rect.left &&
+				    height == overlay_rect.bottom - overlay_rect.top)
 				{
 					overlay->paint_window_from_buffer(image_array, array_size, width, height);
 				}
@@ -279,7 +285,7 @@ int WINAPI set_overlay_position(int id, int x, int y, int width, int height)
 		n->top = y;
 		n->right = x + width;
 		n->bottom = y + height;
-	
+
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_POSITION, id, reinterpret_cast<LPARAM>(n));
 		thread_state_mutex.unlock();
 
@@ -316,7 +322,7 @@ int WINAPI set_overlay_transparency(int id, int transparency)
 	return id;
 }
 
-int WINAPI set_overlay_autohide(int id, int autohide_timeout)
+int WINAPI set_overlay_visibility(int id, bool visibility)
 {
 	thread_state_mutex.lock();
 	if (thread_state != sl_overlay_thread_state::runing)
@@ -325,7 +331,31 @@ int WINAPI set_overlay_autohide(int id, int autohide_timeout)
 		return -1;
 	} else
 	{
-		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SET_AUTOHIDE, id, (LPARAM)(autohide_timeout));
+		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_VISIBILITY, id, (LPARAM)(visibility));
+		thread_state_mutex.unlock();
+
+		if (!ret)
+		{
+			return -1;
+		}
+
+		return id;
+	}
+
+	return id;
+}
+
+int WINAPI set_overlay_autohide(int id, int autohide_timeout, int autohide_transparency)
+{
+	thread_state_mutex.lock();
+	if (thread_state != sl_overlay_thread_state::runing)
+	{
+		thread_state_mutex.unlock();
+		return -1;
+	} else
+	{
+		DWORD autohide_params = ( autohide_timeout << 10) + autohide_transparency;
+		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SET_AUTOHIDE, id, (LPARAM)(autohide_params));
 		thread_state_mutex.unlock();
 
 		if (!ret)

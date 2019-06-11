@@ -82,16 +82,13 @@ function createWindow() {
 
   win2.webContents.setFrameRate(frame_rate);
   win2.webContents.invalidate();
-  
-  streamlabs_overlays.setVisibility(overlayid1, true);
-  streamlabs_overlays.setVisibility(overlayid2, false);
 
   streamlabs_overlays.show();
  
   win1.on("closed", () => { win1 = null });
   win2.on("closed", () => { win2 = null });
 
-  setTimeout(step_1, 4000);
+  setTimeout(step_1, 5000);
 }
 
 app.on("ready", createWindow);
@@ -109,29 +106,40 @@ app.on("activate", () => {
 function step_1() {
   console.log('--------------- step_1');
   console.log('');
-  
-  streamlabs_overlays.setVisibility(overlayid1, false);
-  streamlabs_overlays.setVisibility(overlayid2, true);
 
-  setTimeout(step_2, 4000);
+  console.log('Call get overlays ids');
+  var overlays_ids = streamlabs_overlays.getIds();
+  console.log(overlays_ids);
+
+  console.log('Call set overlay transparency 20/255');
+  streamlabs_overlays.setTransparency(overlays_ids[0], 30);
+  streamlabs_overlays.setTransparency(overlays_ids[1], 230);
+  
+  setTimeout(step_2, 11000);
 }
 
 function step_2() {
   console.log('--------------- step_2');
   console.log('');
+
+  console.log('Call get overlays ids');
+  var overlays_ids = streamlabs_overlays.getIds();
+  console.log(overlays_ids);
+
+  for (let overlayid of overlays_ids) {
+    console.log('Call set overlay transparency 20/255');
+    streamlabs_overlays.setTransparency(overlayid, 180);
+  }
+
+  win1.setSize( 300, 250 , false );
+  let win1_rect = win1.getBounds();
+  streamlabs_overlays.setPosition(overlays_ids[0], 100, 100, Number(win1_rect.width), Number(win1_rect.height));
+
+  win2.setSize( 250, 300 , false );
+  let win2_rect = win2.getBounds();
+  streamlabs_overlays.setPosition(overlays_ids[1], 400, 100, Number(win2_rect.width), Number(win2_rect.height));
   
-  streamlabs_overlays.hide();
-
-  setTimeout(step_3, 4000);
-}
-
-function step_3() {
-  console.log('--------------- step_3');
-  console.log('');
-  
-  streamlabs_overlays.show();
-
-  setTimeout(step_finish, 4000);
+  setTimeout(step_finish, 11000);
 }
 
 function step_finish() {

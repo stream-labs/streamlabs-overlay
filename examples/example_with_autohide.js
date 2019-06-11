@@ -77,11 +77,15 @@ function createWindow() {
   win2.webContents.invalidate();
 
   streamlabs_overlays.show();
- 
+
+  streamlabs_overlays.setAutohide(overlayid1, 5);
+  streamlabs_overlays.setAutohide(overlayid2, 5);
+
+  
   win1.on("closed", () => { win1 = null });
   win2.on("closed", () => { win2 = null });
 
-  setTimeout(step_1, 5000);
+  setTimeout(step_1, 10000);
 }
 
 app.on("ready", createWindow);
@@ -103,10 +107,11 @@ function step_1() {
   console.log('Call get overlays ids');
   var overlays_ids = streamlabs_overlays.getIds();
   console.log(overlays_ids);
-  
-  win2.setSize( 450, 450 , false );
-  streamlabs_overlays.setPosition(overlays_ids[1], 700, 50, 450, 450);
 
+  win1.webContents.invalidate();
+  win2.webContents.invalidate();  
+
+  
   setTimeout(step_2, 11000);
 }
 

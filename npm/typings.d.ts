@@ -70,10 +70,10 @@ export function getIds(): OverlayId[];
  */
 export function getInfo(id: OverlayId): OverlayInfo;
 
-/** Show all overlays */
+/** Show overlays */
 export function show(): void;
 
-/** Hide all overlays */
+/** Hide overlays */
 export function hide(): void;
 
 /**
@@ -116,12 +116,21 @@ export function setPosition(
 export function setTransparency(overlayId: OverlayId, transparency: number): void;
 
 /**
+ * Set an overlay's visibility
+ *
+ * @param overlayId ID of the overlay to set the visibility for
+ * @param visibility if false the overlay stay hidden after even after show() 
+ */
+export function setVisibility(overlayId: OverlayId, transparency: boolean): void;
+
+/**
  * Set an overlay's autohide 
  *
  * @param overlayId ID of the overlay to set the transparency for
- * @param autohideTimeout A number of seconds. If overlay should be repainted at least one in that amount of seconds to stay visible. 
+ * @param autohideTimeout A number of seconds. Overlay should be repainted at least once in that amount of seconds to stay visible. 
+ * @param autohideTransparency Transparency that overlay will have while in a hidden state. 
  */
-export function setTransparency(overlayId: OverlayId, autohideTimeout: number): void;
+export function setAutohide(overlayId: OverlayId, autohideTimeout: number, autohideTransparency: number): void;
 
 /**
  * Set an overlay's transparency
