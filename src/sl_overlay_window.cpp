@@ -79,7 +79,7 @@ void overlay_window::check_autohide()
 
 	if (autohide_after > 0 && !autohidden)
 	{
-		if (current_ticks > (last_content_chage_ticks + autohide_after * 1000))
+		if (current_ticks > (last_content_chage_ticks + 1000 * autohide_after))
 		{
 			autohidden = true;
 			if (autohide_by_transparency > 0)
@@ -113,6 +113,7 @@ overlay_window::~overlay_window()
 
 overlay_window::overlay_window()
 {
+	overlay_visibility = true;
 	content_updated = false;
 	static int id_counter = 128;
 	id = id_counter++;

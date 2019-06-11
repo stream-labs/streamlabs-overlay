@@ -15,7 +15,7 @@
 
 struct wm_event_t;
 
-napi_status napi_create_and_set_named_property(napi_env& env, napi_value& obj, const char* value_name, const int value);
+napi_status napi_create_and_set_named_property(napi_env& env, napi_value& obj, const char* value_name, const int value) noexcept;
 
 struct callback_method_t
 {
@@ -36,7 +36,7 @@ struct callback_method_t
 	napi_callback fail;
 	napi_value result;
 
-	void callback_method_reset();
+	void callback_method_reset() noexcept;
 
 	napi_status set_args_and_call_callback(napi_env env, napi_value callback, napi_value* result);
 	napi_status callback_method_call_tsf(bool block);
@@ -45,9 +45,9 @@ struct callback_method_t
 	int use_callback(WPARAM wParam, LPARAM lParam);
 
 	bool ready;
-	static bool set_intercept_active(bool);
+	static bool set_intercept_active(bool) noexcept;
 
-	static bool get_intercept_active();
+	static bool get_intercept_active() noexcept;
 
 	static void static_async_callback(uv_async_t* handle);
 	void async_callback();
@@ -56,17 +56,21 @@ struct callback_method_t
 	std::queue<std::shared_ptr<wm_event_t>> to_send;
 	virtual size_t get_argc_to_cb() = 0;
 	virtual napi_value* get_argv_to_cb() = 0;
-	virtual napi_status set_callback_args_values(napi_env env)
+	virtual napi_status set_callback_args_values(napi_env env) noexcept
 	{
 		return napi_ok;
 	};
 
-	callback_method_t();
+	callback_method_t() noexcept;
 	virtual ~callback_method_t()
 	{
 		napi_delete_reference(env_this, js_this);
 		napi_async_destroy(env_this, async_context);
 	}
+	callback_method_t(const callback_method_t&) = delete;
+	callback_method_t& operator=(const callback_method_t&) = delete;
+	callback_method_t(callback_method_t&&) = delete;
+	callback_method_t& operator=(callback_method_t&&) = delete;
 };
 
 struct callback_keyboard_method_t : callback_method_t
@@ -74,17 +78,17 @@ struct callback_keyboard_method_t : callback_method_t
 	const static size_t argc_to_cb = 2;
 	napi_value argv_to_cb[argc_to_cb];
 
-	virtual size_t get_argc_to_cb()
+	size_t get_argc_to_cb() noexcept override 
 	{
 		return argc_to_cb;
 	};
-	virtual napi_value* get_argv_to_cb()
+	napi_value* get_argv_to_cb() noexcept override 
 	{
 		return argv_to_cb;
 	};
 
-	virtual napi_status set_callback_args_values(napi_env env);
-	virtual void set_callback();
+	napi_status set_callback_args_values(napi_env env) noexcept override;
+	void set_callback() override;
 };
 
 struct callback_mouse_method_t : callback_method_t
@@ -92,17 +96,17 @@ struct callback_mouse_method_t : callback_method_t
 	const static size_t argc_to_cb = 4;
 	napi_value argv_to_cb[argc_to_cb];
 
-	virtual size_t get_argc_to_cb()
+	size_t get_argc_to_cb() noexcept override 
 	{
 		return argc_to_cb;
 	};
-	virtual napi_value* get_argv_to_cb()
+	napi_value* get_argv_to_cb() noexcept override 
 	{
 		return argv_to_cb;
 	};
 
-	virtual napi_status set_callback_args_values(napi_env env);
-	virtual void set_callback();
+	napi_status set_callback_args_values(napi_env env) noexcept override;
+	void set_callback() override;
 };
 
 extern callback_keyboard_method_t* user_keyboard_callback_info;

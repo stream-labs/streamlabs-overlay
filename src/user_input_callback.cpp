@@ -133,45 +133,22 @@ struct wm_event_t
 	WPARAM wParam;
 	LPARAM lParam;
 
-	wm_event_t(WPARAM _wParam, LPARAM _lParam) : wParam(_wParam), lParam(_lParam) {}
+	wm_event_t(WPARAM _wParam, LPARAM _lParam) noexcept: wParam(_wParam), lParam(_lParam) {}
 };
 
-callback_method_t::callback_method_t()
+callback_method_t::callback_method_t() noexcept
 {
 	log_cout << "APP: callback_method_t()" << std::endl;
 	ready = false;
 }
 
-void callback_method_t::callback_method_reset()
+void callback_method_t::callback_method_reset() noexcept
 {
 	initialized = false;
 	completed = false;
 	success = false;
 	error = 0;
 	result_int = 0;
-}
-
-napi_status callback_method_t::callback_method_call_tsf(bool block)
-{
-	log_cout << "APP: callback_method_call_tsf " << std::endl;
-
-	initialized = true;
-	completed = false;
-	success = false;
-
-	napi_status status = napi_ok;
-
-	if (status == napi_ok)
-	{
-		if (block)
-		{
-			while (!completed)
-			{
-			}
-		}
-	}
-
-	return status;
 }
 
 napi_status callback_method_t::set_args_and_call_callback(napi_env env, napi_value callback, napi_value* result)
@@ -193,18 +170,18 @@ napi_status callback_method_t::set_args_and_call_callback(napi_env env, napi_val
 }
 
 bool is_intercept_active = false;
-bool callback_method_t::set_intercept_active(bool new_state)
+bool callback_method_t::set_intercept_active(bool new_state) noexcept
 {
 	is_intercept_active = new_state;
 	return new_state;
 }
 
-bool callback_method_t::get_intercept_active()
+bool callback_method_t::get_intercept_active() noexcept
 {
 	return is_intercept_active;
 }
 
-napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
+napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env) noexcept
 {
 	log_cout << "APP: callback_keyboard_method_t::set_callback_args_values" << std::endl;
 	napi_status status = napi_ok;
@@ -248,7 +225,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 	{
 		if (status == napi_ok)
 		{
-			LPKBDLLHOOKSTRUCT key = (LPKBDLLHOOKSTRUCT)event->lParam;
+			const LPKBDLLHOOKSTRUCT key = reinterpret_cast<LPKBDLLHOOKSTRUCT>(event->lParam);
 			const std::string& keyCode = translate_to_electron_keycode(key->vkCode);
 			status = napi_create_string_utf8(env, keyCode.c_str(), keyCode.size(), &argv_to_cb[1]);
 		}
@@ -262,7 +239,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 	return status;
 }
 
-napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
+napi_status callback_mouse_method_t::set_callback_args_values(napi_env env) noexcept
 {
 	log_cout << "APP:  callback_mouse_method_t::set_callback_args_values" << std::endl;
 	napi_status status = napi_ok;
@@ -423,7 +400,7 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 	napi_value async_name;
 	napi_status status;
 
-	status = napi_get_cb_info(env, info, &argc, argv, NULL, 0);
+	status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
 
 	if (status == napi_ok)
 	{
@@ -512,7 +489,7 @@ void callback_keyboard_method_t::set_callback()
 	set_callback_for_keyboard_input(&use_callback_keyboard);
 }
 
-napi_status napi_create_and_set_named_property(napi_env& env, napi_value& obj, const char* value_name, const int value)
+napi_status napi_create_and_set_named_property(napi_env& env, napi_value& obj, const char* value_name, const int value) noexcept
 {
 	napi_status status;
 	napi_value set_value;
