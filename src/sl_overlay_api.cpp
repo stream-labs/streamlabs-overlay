@@ -256,7 +256,7 @@ int WINAPI paint_overlay_cached_buffer(int overlay_id, std::shared_ptr<overlay_f
 			{
 				std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
 				RECT overlay_rect = overlay->get_rect();
-
+				
 				if (overlay != nullptr && width == overlay_rect.right - overlay_rect.left &&
 				    height == overlay_rect.bottom - overlay_rect.top)
 				{

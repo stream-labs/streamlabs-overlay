@@ -217,7 +217,17 @@ bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
 	{
 		std::lock_guard<std::mutex> lock(frame_access);
 		frame = save_frame;
-		content_updated = true;
+
+		const RECT overlay_rect = get_rect();
+		void * image_array = nullptr;
+		size_t image_array_size = 0;
+
+		frame->get_array(&image_array, &image_array_size);
+		if( paint_window_from_buffer(image_array, image_array_size, overlay_rect.right-overlay_rect.left, overlay_rect.bottom-overlay_rect.top) )
+		{
+			content_updated = true;
+		}
+		frame = nullptr;
 	}
 
 	if (autohidden)
@@ -234,6 +244,7 @@ bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
 
 		autohidden = false;
 	}
+	
 	return true;
 }
 
@@ -241,7 +252,7 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 {
 	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height
 	          << std::endl;
-
+	bool ret = true;
 	if (hbmp != nullptr)
 	{
 		LONG workedout = 0;
@@ -258,13 +269,14 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 		{
 			log_error << "APP: Saving image from electron with SetDIBitsToDevice failed with workedout = " << workedout
 			          << std::endl;
+			ret = false;
 		}
 	} else
 	{
 		log_error << "APP: Saving image from electron failed. no hbmp to save to." << std::endl;
 	}
 
-	return true;
+	return ret;
 }
 
 void overlay_window::paint_to_window(HDC window_hdc)
@@ -272,21 +284,8 @@ void overlay_window::paint_to_window(HDC window_hdc)
 	const RECT overlay_rect = get_rect();
 	BOOL ret = true;
 
-	if(frame != nullptr)
-	{
-		std::lock_guard<std::mutex> lock(frame_access);
-		void * image_array;
-		size_t image_array_size;
-		frame->get_array(&image_array, &image_array_size);
-		ret = paint_window_from_buffer(image_array, image_array_size, overlay_rect.right-overlay_rect.left, overlay_rect.bottom-overlay_rect.top);
-		frame = nullptr;
-	}
-
-	if(ret)
-	{
-		ret = BitBlt(
-			window_hdc, 0, 0, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top, hdc, 0, 0, SRCCOPY);
-	}
+	ret = BitBlt(
+		window_hdc, 0, 0, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top, hdc, 0, 0, SRCCOPY);
 
 	if (!ret)
 	{

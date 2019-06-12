@@ -1,5 +1,6 @@
 #include "overlay_paint_frame.h"
 #include "overlay_paint_frame_js.h"
+#include "overlay_logging.h"
 
 #include <node_api.h>
 
@@ -16,5 +17,8 @@ overlay_frame::~overlay_frame()
 
 void overlay_frame::get_array( void ** array_ref, size_t * array_size)
 {
-	data->get_array(array_ref, array_size);
+	if(data != nullptr)
+	{
+		data->get_array(array_ref, array_size);
+	}
 }

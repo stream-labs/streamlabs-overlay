@@ -112,7 +112,7 @@ function step_1() {
   console.log(overlays_ids);
 
   console.log('Call set overlay transparency 20/255');
-  streamlabs_overlays.setTransparency(overlays_ids[0], 30);
+  streamlabs_overlays.setTransparency(overlays_ids[0], 100);
   streamlabs_overlays.setTransparency(overlays_ids[1], 230);
   
   setTimeout(step_2, 11000);
@@ -139,7 +139,31 @@ function step_2() {
   let win2_rect = win2.getBounds();
   streamlabs_overlays.setPosition(overlays_ids[1], 400, 100, Number(win2_rect.width), Number(win2_rect.height));
   
-  setTimeout(step_finish, 11000);
+  setTimeout(step_3, 11000);
+}
+
+function step_3() {
+  console.log('--------------- step_2');
+  console.log('');
+
+  console.log('Call get overlays ids');
+  var overlays_ids = streamlabs_overlays.getIds();
+  console.log(overlays_ids);
+
+  for (let overlayid of overlays_ids) {
+    console.log('Call set overlay transparency 20/255');
+    streamlabs_overlays.setTransparency(overlayid, 180);
+  }
+
+  win1.setSize( 600, 650 , false );
+  let win1_rect = win1.getBounds();
+  streamlabs_overlays.setPosition(overlays_ids[0], 100, 100, Number(win1_rect.width), Number(win1_rect.height));
+
+  win2.setSize( 650, 600 , false );
+  let win2_rect = win2.getBounds();
+  streamlabs_overlays.setPosition(overlays_ids[1], 400, 100, Number(win2_rect.width), Number(win2_rect.height));
+  
+  setTimeout(step_finish, 110000);
 }
 
 function step_finish() {
