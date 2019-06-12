@@ -1,6 +1,7 @@
 #pragma once
 #include <mutex>
 #include "stdafx.h"
+#include "overlay_paint_frame.h"
 
 enum class overlay_status : int
 {
@@ -22,6 +23,7 @@ class overlay_window
 	HBITMAP hbmp;
 	HDC hdc;
 	bool content_updated;
+	std::shared_ptr<overlay_frame> frame;
 
 	int autohide_after;
 	ULONGLONG last_content_chage_ticks;
@@ -38,6 +40,7 @@ class overlay_window
 	bool create_window_content_buffer();
 	bool ready_to_create_overlay();
 	bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height);
+	bool set_cached_image(std::shared_ptr<overlay_frame> save_frame);
 	void paint_to_window(HDC window_hdc);
 	bool is_content_updated();
 	void set_transparency(int transparency, bool save_as_normal = true);

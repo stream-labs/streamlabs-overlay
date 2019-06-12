@@ -212,6 +212,28 @@ bool overlay_window::set_rect(RECT& new_rect)
 	return true;
 }
 
+bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
+{
+	frame = save_frame;
+	content_updated = true;
+
+	if (autohidden)
+	{
+		if (!IsWindowVisible(overlay_hwnd))
+		{
+			ShowWindow(overlay_hwnd, SW_SHOW);
+		}
+		
+		if (autohide_by_transparency > 0 )
+		{
+			set_transparency(overlay_transparency, false);
+		}
+
+		autohidden = false;
+	}
+	return true;
+}
+
 bool overlay_window::paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
 {
 	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height
@@ -234,21 +256,6 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 			log_error << "APP: Saving image from electron with SetDIBitsToDevice failed with workedout = " << workedout
 			          << std::endl;
 		}
-		content_updated = true;
-		if (autohidden)
-		{
-			if (!IsWindowVisible(overlay_hwnd))
-			{
-				ShowWindow(overlay_hwnd, SW_SHOW);
-			}
-			
-			if (autohide_by_transparency > 0 )
-			{
-				set_transparency(overlay_transparency, false);
-			}
-
-			autohidden = false;
-		}
 	} else
 	{
 		log_error << "APP: Saving image from electron failed. no hbmp to save to." << std::endl;
@@ -262,8 +269,20 @@ void overlay_window::paint_to_window(HDC window_hdc)
 	const RECT overlay_rect = get_rect();
 	BOOL ret = true;
 
-	ret = BitBlt(
-	    window_hdc, 0, 0, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top, hdc, 0, 0, SRCCOPY);
+	if(frame != nullptr)
+	{
+		void * image_array;
+		size_t image_array_size;
+		frame->get_array(&image_array, &image_array_size);
+		ret = paint_window_from_buffer(image_array, image_array_size, overlay_rect.right-overlay_rect.left, overlay_rect.bottom-overlay_rect.top);
+		frame = nullptr;
+	}
+
+	if(ret)
+	{
+		ret = BitBlt(
+			window_hdc, 0, 0, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top, hdc, 0, 0, SRCCOPY);
+	}
 
 	if (!ret)
 	{

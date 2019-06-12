@@ -56,7 +56,7 @@ bool smg_overlays::process_commands(MSG& msg)
 	{
 		thread_state_mutex.lock();
 
-		log_cout << "APP: COMMAND_QUIT " << (int)thread_state << std::endl;
+		log_cout << "APP: COMMAND_QUIT " << static_cast<int>(thread_state) << std::endl;
 		if (thread_state != sl_overlay_thread_state::runing)
 		{
 			thread_state_mutex.unlock();
@@ -266,7 +266,7 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 			{
 				overlay->set_transparency(app_settings->transparency);
 			}
-			RECT overlay_rect = overlay->get_rect();
+			const RECT overlay_rect = overlay->get_rect();
 			SetWindowPos(
 			    overlay->overlay_hwnd,
 			    HWND_TOPMOST,
@@ -465,7 +465,7 @@ std::shared_ptr<overlay_window> smg_overlays::get_overlay_by_window(HWND overlay
 
 bool smg_overlays::remove_overlay(std::shared_ptr<overlay_window> overlay)
 {
-	log_cout << "APP: RemoveOverlay status " << (int)overlay->status << std::endl;
+	log_cout << "APP: RemoveOverlay status " << static_cast<int>(overlay->status) << std::endl;
 	if (overlay->status != overlay_status::destroing)
 	{
 		overlay->clean_resources();
@@ -479,7 +479,7 @@ bool smg_overlays::on_window_destroy(HWND window)
 {
 	auto overlay = get_overlay_by_window(window);
 	log_cout << "APP: on_window_destroy and overlay found " << (overlay != nullptr) << std::endl;
-	bool removed = on_overlay_destroy(overlay);
+	const bool removed = on_overlay_destroy(overlay);
 	return removed;
 }
 
@@ -488,7 +488,7 @@ bool smg_overlays::on_overlay_destroy(std::shared_ptr<overlay_window> overlay)
 	bool removed = false;
 	if (overlay != nullptr)
 	{
-		log_cout << "APP: overlay status was " << (int)overlay->status << std::endl;
+		log_cout << "APP: overlay status was " << static_cast<int>(overlay->status) << std::endl;
 		if (overlay->status == overlay_status::destroing)
 		{
 			std::unique_lock<std::shared_mutex> lock(overlays_list_access);
@@ -546,7 +546,7 @@ void smg_overlays::init()
 
 void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 {
-	PAINTSTRUCT ps = {0};
+	PAINTSTRUCT ps;
 	HPAINTBUFFER hBufferedPaint = nullptr;
 	RECT rc;
 
@@ -557,7 +557,7 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 	{
 		// Get doublebuffered DC
 		HDC hdcMem;
-		hBufferedPaint = BeginBufferedPaint(hdc, &rc, BPBF_COMPOSITED, NULL, &hdcMem);
+		hBufferedPaint = BeginBufferedPaint(hdc, &rc, BPBF_COMPOSITED, nullptr, &hdcMem);
 		if (hBufferedPaint)
 		{
 			hdc = hdcMem;

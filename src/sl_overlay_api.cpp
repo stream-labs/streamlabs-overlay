@@ -242,10 +242,36 @@ int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 	return ret;
 }
 
+int WINAPI paint_overlay_cahed_buffer(int overlay_id, std::shared_ptr<overlay_frame> frame, int width, int height)
+{
+	int ret = -1;
+	{
+		thread_state_mutex.lock();
+		if (thread_state != sl_overlay_thread_state::runing)
+		{
+			thread_state_mutex.unlock();
+		} else
+		{
+			if (smg_overlays::get_instance()->showing_overlays)
+			{
+				std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
+				RECT overlay_rect = overlay->get_rect();
+
+				if (overlay != nullptr && width == overlay_rect.right - overlay_rect.left &&
+				    height == overlay_rect.bottom - overlay_rect.top)
+				{
+					overlay->set_cached_image(frame);
+				}
+			}
+			thread_state_mutex.unlock();
+		}
+	}
+	return ret;
+}
+
 int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, size_t array_size, int width, int height)
 {
 	int ret = -1;
-	if (true)
 	{
 		thread_state_mutex.lock();
 		if (thread_state != sl_overlay_thread_state::runing)
