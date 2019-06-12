@@ -242,7 +242,7 @@ int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 	return ret;
 }
 
-int WINAPI paint_overlay_cahed_buffer(int overlay_id, std::shared_ptr<overlay_frame> frame, int width, int height)
+int WINAPI paint_overlay_cached_buffer(int overlay_id, std::shared_ptr<overlay_frame> frame, int width, int height)
 {
 	int ret = -1;
 	{

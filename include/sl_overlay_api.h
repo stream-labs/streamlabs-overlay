@@ -20,7 +20,7 @@ int WINAPI remove_overlay(int id);
 
 int WINAPI set_overlay_position(int id, int x, int y, int width, int height);
 int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, size_t array_size, int width, int height);
-int WINAPI paint_overlay_cahed_buffer(int overlay_id, std::shared_ptr<overlay_frame>, int width, int height);
+int WINAPI paint_overlay_cached_buffer(int overlay_id, std::shared_ptr<overlay_frame>, int width, int height);
 int WINAPI set_overlay_transparency(int id, int transparency);
 int WINAPI set_overlay_visibility(int id, bool visibility);
 int WINAPI set_overlay_autohide(int id, int autohide_timeout, int autohide_transparency);

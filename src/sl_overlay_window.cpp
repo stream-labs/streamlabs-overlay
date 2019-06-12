@@ -214,8 +214,11 @@ bool overlay_window::set_rect(RECT& new_rect)
 
 bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
 {
-	frame = save_frame;
-	content_updated = true;
+	{
+		std::lock_guard<std::mutex> lock(frame_access);
+		frame = save_frame;
+		content_updated = true;
+	}
 
 	if (autohidden)
 	{
@@ -271,6 +274,7 @@ void overlay_window::paint_to_window(HDC window_hdc)
 
 	if(frame != nullptr)
 	{
+		std::lock_guard<std::mutex> lock(frame_access);
 		void * image_array;
 		size_t image_array_size;
 		frame->get_array(&image_array, &image_array_size);

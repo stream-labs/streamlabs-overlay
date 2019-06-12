@@ -24,6 +24,7 @@ class overlay_window
 	HDC hdc;
 	bool content_updated;
 	std::shared_ptr<overlay_frame> frame;
+	std::mutex frame_access;
 
 	int autohide_after;
 	ULONGLONG last_content_chage_ticks;

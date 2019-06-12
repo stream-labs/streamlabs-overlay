@@ -396,27 +396,8 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 		
 		overlay_frame_js * for_caching_js = new overlay_frame_js(env, argv[3]);
 		std::shared_ptr<overlay_frame> for_caching = std::make_shared<overlay_frame>(for_caching_js);
-/*
-		void* incoming_array = nullptr;
-		size_t array_lenght = 0;
-		if (napi_get_buffer_info(env, buffer_cache, &incoming_array, &array_lenght) != napi_ok)
-			return failed_ret;
-		
-		buffer_cache = argv[3]; 
-		napi_create_reference(env, buffer_cache, 1, &static_buffer_cache);
 
-		if (incoming_array != nullptr)
-		{
-			log_cout << "APP: PaintOverlay " << overlay_id << ", size " << width << "x" << height << " and buffer size " << array_lenght << std::endl;
-
-			painted = paint_overlay_from_buffer(overlay_id, incoming_array, array_lenght, width, height);
-			incoming_array = nullptr;
-		} else
-		{
-			log_cout << "APP: PaintOverlay failed to get buffer" << argc << std::endl;
-		}
-		*/
-		painted =  paint_overlay_cahed_buffer(overlay_id, for_caching, width, height);
+		painted =  paint_overlay_cached_buffer(overlay_id, for_caching, width, height);
 
 	}
 
