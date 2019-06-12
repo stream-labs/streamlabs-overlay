@@ -3,6 +3,7 @@
 #include <list>
 #include <stdlib.h>
 #include <string>
+#include <memory>
 
 class smg_settings
 {

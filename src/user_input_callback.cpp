@@ -223,7 +223,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 	{
 		if (status == napi_ok)
 		{
-			LPKBDLLHOOKSTRUCT const key = reinterpret_cast<LPKBDLLHOOKSTRUCT>(event->lParam);
+			const LPKBDLLHOOKSTRUCT key = reinterpret_cast<LPKBDLLHOOKSTRUCT>(event->lParam);
 			const std::string& keyCode = translate_to_electron_keycode(key->vkCode);
 			status = napi_create_string_utf8(env, keyCode.c_str(), keyCode.size(), &argv_to_cb[1]);
 		}

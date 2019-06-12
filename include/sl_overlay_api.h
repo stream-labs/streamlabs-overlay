@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include <string>
 
 struct overlay_frame;
 class smg_overlays;
