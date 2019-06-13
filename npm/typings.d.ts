@@ -133,11 +133,25 @@ export function setVisibility(overlayId: OverlayId, transparency: boolean): void
 export function setAutohide(overlayId: OverlayId, autohideTimeout: number, autohideTransparency: number): void;
 
 /**
- * Set an overlay's transparency
+ * Send image from electron window to be painted on overlay 
  *
- *  @param overlayId ID of the overlay to set
+ * @param overlayId ID of the overlay to set
+ * @param width width of image in buffer 
+ * @param height height of image in buffer 
+ * @param image buffer with native image what electron gives
+ * @returns a number :
+ *   1 if it fails
+ *   0 if overlay expected other image size, it will try to resize to it( should be painted again later) 
+ *   1 for success 
+ * @example
+ *   win.webContents.on('paint', (event, dirty, image) => {
+ *     if ( streamlabs_overlays.paintOverlay(overlayid, image.getSize().width, image.getSize().height, image.getBitmap()) == 0 )
+ *     {
+  *       win.webContents.invalidate();
+ *     }
+ *   })
  */
-export function paintOverlay(overlayId: OverlayId, width: number, height: number, image: Buffer): void;
+export function paintOverlay(overlayId: OverlayId, width: number, height: number, image: Buffer): number;
 
 /**
  * Remove an overlay

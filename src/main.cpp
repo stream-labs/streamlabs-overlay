@@ -8,6 +8,8 @@
 #include "sl_overlay_window.h"
 #include "sl_overlays_settings.h"
 
+//#include "shellscalingapi.h"
+
 std::shared_ptr<smg_settings> app_settings;
 
 HANDLE overlays_thread = nullptr;
@@ -24,6 +26,9 @@ DWORD WINAPI overlay_thread_func(void* data)
 	app_settings = std::make_shared<smg_settings>();
 
 	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
+ 	
+	//SetProcessDpiAwareness(PROCESS_DPI_UNAWARE);
+	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
 
 	// Init COM and double-buffered painting
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE | COINIT_SPEED_OVER_MEMORY);

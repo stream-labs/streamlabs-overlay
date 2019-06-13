@@ -4,7 +4,6 @@
 
 struct overlay_frame_js
 {
-	int overlay_id;
 	napi_ref array_cache_ref;
 	napi_env env_ref;
 

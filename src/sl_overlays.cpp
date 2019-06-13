@@ -11,7 +11,7 @@
 #include "sl_overlay_api.h"
 
 #pragma comment(lib, "uxtheme.lib")
-
+#pragma comment(lib, "shcore.lib")
 #pragma comment(lib, "imm32.lib")
 
 wchar_t const g_szWindowClass[] = L"overlays";

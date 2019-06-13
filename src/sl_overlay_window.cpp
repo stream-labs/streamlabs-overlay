@@ -221,13 +221,21 @@ bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
 		const RECT overlay_rect = get_rect();
 		void * image_array = nullptr;
 		size_t image_array_size = 0;
+		size_t expected_array_size = ( overlay_rect.right-overlay_rect.left ) * ( overlay_rect.bottom-overlay_rect.top ) * 4;
 
 		frame->get_array(&image_array, &image_array_size);
-		if( paint_window_from_buffer(image_array, image_array_size, overlay_rect.right-overlay_rect.left, overlay_rect.bottom-overlay_rect.top) )
+		if(image_array_size != expected_array_size)
 		{
-			content_updated = true;
+			log_error << "APP: Saving image from electron array_size = " << image_array_size << ", expected = " << expected_array_size  << std::endl;
+			frame = nullptr;
+			return false;
+		} else {
+			if( paint_window_from_buffer(image_array, image_array_size, overlay_rect.right-overlay_rect.left, overlay_rect.bottom-overlay_rect.top) )
+			{
+				content_updated = true;
+			}
+			frame = nullptr;
 		}
-		frame = nullptr;
 	}
 
 	if (autohidden)
