@@ -250,7 +250,7 @@ void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& ov
 {
 	if (overlay->overlay_hwnd == nullptr && overlay->ready_to_create_overlay())
 	{
-		DWORD const dwStyle = WS_POPUP; // no border or title bar
+		DWORD const dwStyle = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; // no border or title bar
 		DWORD const dwStyleEx =
 		    WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT; // transparent, topmost, with no taskbar
 

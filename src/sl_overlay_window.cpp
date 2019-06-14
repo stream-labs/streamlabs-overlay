@@ -176,8 +176,7 @@ bool overlay_window::apply_new_rect(RECT& new_rect)
 
 	if (overlay_hwnd)
 	{
-		MoveWindow(
-		    overlay_hwnd, new_rect.left, new_rect.top, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top, FALSE);
+		SetWindowPos(overlay_hwnd,HWND_TOPMOST,  new_rect.left, new_rect.top, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top, SWP_NOREDRAW);
 	}
 
 	return set_rect(new_rect);
@@ -199,7 +198,7 @@ bool overlay_window::set_new_position(int x, int y)
 
 	if (overlay_hwnd)
 	{
-		MoveWindow(overlay_hwnd, x, y, ret.right - ret.left, ret.bottom - ret.top, FALSE);
+		SetWindowPos(overlay_hwnd,HWND_TOPMOST, x, y, ret.right - ret.left, ret.bottom - ret.top, SWP_NOREDRAW);
 	}
 
 	return set_rect(ret);

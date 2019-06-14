@@ -256,8 +256,6 @@ int WINAPI paint_overlay_cached_buffer(int overlay_id, std::shared_ptr<overlay_f
 			if( overlay != nullptr )
 			{
 				RECT overlay_rect = overlay->get_rect();
-				
-				log_debug << "APP: paint_overlay_cached_buffer " << overlay_id << ", size " << width << "x" << height << ", for "<< overlay_rect.right - overlay_rect.left << "x" << overlay_rect.bottom - overlay_rect.top << std::endl;
 
 				if ( width == overlay_rect.right - overlay_rect.left && height == overlay_rect.bottom - overlay_rect.top)
 				{
@@ -267,6 +265,8 @@ int WINAPI paint_overlay_cached_buffer(int overlay_id, std::shared_ptr<overlay_f
 							ret = 1;
 					}
 				} else {
+					log_debug << "APP: paint_overlay_cached_buffer " << overlay_id << ", size " << width << "x" << height << ", for "<< overlay_rect.right - overlay_rect.left << "x" << overlay_rect.bottom - overlay_rect.top << std::endl;
+
 					RECT* n = new RECT;
 					n->left = overlay_rect.left;
 					n->top = overlay_rect.top;

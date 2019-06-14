@@ -147,7 +147,7 @@ export function setAutohide(overlayId: OverlayId, autohideTimeout: number, autoh
  *   win.webContents.on('paint', (event, dirty, image) => {
  *     if ( streamlabs_overlays.paintOverlay(overlayid, image.getSize().width, image.getSize().height, image.getBitmap()) == 0 )
  *     {
-  *       win.webContents.invalidate();
+ *       win.webContents.invalidate();
  *     }
  *   })
  */

@@ -50,7 +50,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 		MSG msg;
 		while (GetMessage(&msg, nullptr, 0, 0))
 		{
-			//log_cout << "APP: wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
+			//log_debug << "APP: wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
 			bool catched = false;
 
 			switch (msg.message)
