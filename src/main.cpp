@@ -8,8 +8,6 @@
 #include "sl_overlay_window.h"
 #include "sl_overlays_settings.h"
 
-//#include "shellscalingapi.h"
-
 std::shared_ptr<smg_settings> app_settings;
 
 HANDLE overlays_thread = nullptr;
@@ -17,7 +15,7 @@ DWORD overlays_thread_id = 0;
 sl_overlay_thread_state thread_state = sl_overlay_thread_state::destoyed;
 std::mutex thread_state_mutex;
 
-BOOL g_bDblBuffered = FALSE;
+bool direct2d_paint = true;
 
 UINT_PTR OVERLAY_UPDATE_TIMER = 0;
 
@@ -27,17 +25,13 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
  	
-	//SetProcessDpiAwareness(PROCESS_DPI_UNAWARE);
-	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
+	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
 	// Init COM and double-buffered painting
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE | COINIT_SPEED_OVER_MEMORY);
 	
 	if (SUCCEEDED(hr))
 	{
-		hr = BufferedPaintInit();
-		g_bDblBuffered = SUCCEEDED(hr);
-
 		app->init();
 
 		OVERLAY_UPDATE_TIMER = SetTimer(0, 0, app_settings->redraw_timeout, (TIMERPROC) nullptr);
@@ -72,6 +66,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 				{
 					if (overlay != nullptr)
 					{
+						log_cout << "APP: WM_SLO_OVERLAY_POSITION " << new_rect->left << " " << new_rect->top  << std::endl;
 						overlay->apply_new_rect(*new_rect);
 					}
 					delete new_rect;
@@ -83,6 +78,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			{
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				if(overlay) {
+					overlay->create_render_target(app->m_pDirect2dFactory);
 					overlay->create_window_content_buffer();
 				}
 			}
@@ -166,9 +162,6 @@ DWORD WINAPI overlay_thread_func(void* data)
 			}
 		}
 
-		if (g_bDblBuffered)
-			BufferedPaintUnInit();
-
 		KillTimer(0, OVERLAY_UPDATE_TIMER);
 		OVERLAY_UPDATE_TIMER = 0;
 
@@ -235,7 +228,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	break;
 	case WM_PAINT:
 	{
-		smg_overlays::get_instance()->draw_overlay_gdi(hWnd, g_bDblBuffered);
+		if (direct2d_paint)
+		{
+			smg_overlays::get_instance()->draw_overlay_direct2d(hWnd);
+		} else
+		{
+			smg_overlays::get_instance()->draw_overlay_gdi(hWnd);
+		}
 		return 0;
 	}
 	break;

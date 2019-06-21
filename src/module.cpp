@@ -397,8 +397,11 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 
 		overlay_frame_js * for_caching_js = new overlay_frame_js(env, argv[3]);
 		std::shared_ptr<overlay_frame> for_caching = std::make_shared<overlay_frame>(for_caching_js);
-
-		painted =  paint_overlay_cached_buffer(overlay_id, for_caching, width, height);
+		
+		if(width != 0 && height != 0)
+		{
+			painted =  paint_overlay_cached_buffer(overlay_id, for_caching, width, height);
+		}
 
 	}
 

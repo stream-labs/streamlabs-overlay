@@ -15,8 +15,8 @@ let overlayid2;
 let hwnd;
 
 const frame_rate = 2;
-const win_width = 600;
-const win_height = 600;
+const win_width = 400;
+const win_height = 400;
 
 function createWindow() {
   test_started = true;
@@ -28,7 +28,7 @@ function createWindow() {
   win1 = new BrowserWindow({
     show: false,
     width: win_width,
-    height: win_height+50,
+    height: win_height,
     frame: false,
     webPreferences: {
       offscreen: true,
@@ -38,13 +38,13 @@ function createWindow() {
 
   win1.loadURL(`https://codepen.io/jasonleewilson/pen/gPrxwX`);
 
-  win1.setSize( win_width, win_height+50, false);
+  win1.setSize( win_width, win_height, false);
   hwnd = win1.getNativeWindowHandle();
   console.log(hwnd);
 
   overlayid1 = streamlabs_overlays.addHWND(hwnd);
   let win1_rect = win1.getBounds();
-  streamlabs_overlays.setPosition(overlayid1, 100, 100, Number(win1_rect.width), Number(win1_rect.height));
+  streamlabs_overlays.setPosition(overlayid1, 100, 200, Number(win1_rect.width), Number(win1_rect.height));
 
   win1.webContents.on('paint', (event, dirty, image) => {
     streamlabs_overlays.paintOverlay(overlayid1, image.getSize().width, image.getSize().height, image.getBitmap());
@@ -57,7 +57,7 @@ function createWindow() {
   win2 = new BrowserWindow({
     show: false,
     width: win_width,
-    height: win_height-50,
+    height: win_height,
     frame: false,
     webPreferences: {
       offscreen: true,
@@ -67,13 +67,13 @@ function createWindow() {
 
   win2.loadURL(`https://time.is/`);
   
-  win2.setSize( win_width+50, win_height, false);
+  win2.setSize( win_width, win_height, false);
   hwnd = win2.getNativeWindowHandle();
   console.log(hwnd);
   overlayid2 = streamlabs_overlays.addHWND(hwnd);
   
   let win2_rect = win2.getBounds();
-  streamlabs_overlays.setPosition(overlayid2, 800, 100, Number(win2_rect.width), Number(win2_rect.height));
+  streamlabs_overlays.setPosition(overlayid2, 200, 100, Number(win2_rect.width), Number(win2_rect.height));
   
   win2.webContents.on('paint', (event, dirty, image) => {
     streamlabs_overlays.paintOverlay(overlayid2, image.getSize().width, image.getSize().height, image.getBitmap());

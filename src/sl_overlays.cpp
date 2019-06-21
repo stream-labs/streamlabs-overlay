@@ -14,7 +14,8 @@
 #pragma comment(lib, "shcore.lib")
 #pragma comment(lib, "imm32.lib")
 
-wchar_t const g_szWindowClass[] = L"overlays";
+wchar_t const g_szWindowClass[] = L"overthetop_overlay";
+
 std::shared_ptr<smg_overlays> smg_overlays::instance = nullptr;
 
 extern HANDLE overlays_thread;
@@ -160,6 +161,9 @@ void smg_overlays::on_update_timer()
 
 void smg_overlays::deinit()
 {
+	if (g_bDblBuffered)
+		BufferedPaintUnInit();
+
 	log_cout << "APP: deinit " << std::endl;
 	quiting = false;
 }
@@ -248,41 +252,13 @@ bool smg_overlays::is_inside_overlay(int x, int y)
 
 void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& overlay)
 {
-	if (overlay->overlay_hwnd == nullptr && overlay->ready_to_create_overlay())
+	overlay->create_window();
+	if (showing_overlays)
 	{
-		DWORD const dwStyle = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; // no border or title bar
-		DWORD const dwStyleEx =
-		    WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT; // transparent, topmost, with no taskbar
-
-		overlay->overlay_hwnd =
-		    CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
-
-		if (overlay->overlay_hwnd)
-		{
-			if (app_settings->use_color_key)
-			{
-				SetLayeredWindowAttributes(overlay->overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_COLORKEY);
-			} else
-			{
-				overlay->set_transparency(app_settings->transparency);
-			}
-			const RECT overlay_rect = overlay->get_rect();
-			SetWindowPos(
-			    overlay->overlay_hwnd,
-			    HWND_TOPMOST,
-			    overlay_rect.left,
-			    overlay_rect.top,
-			    overlay_rect.right - overlay_rect.left,
-			    overlay_rect.bottom - overlay_rect.top,
-			    SWP_NOREDRAW);
-			if (showing_overlays)
-			{
-				ShowWindow(overlay->overlay_hwnd, SW_SHOW);
-			} else
-			{
-				ShowWindow(overlay->overlay_hwnd, SW_HIDE);
-			}
-		}
+		ShowWindow(overlay->overlay_hwnd, SW_SHOW);
+	} else
+	{
+		ShowWindow(overlay->overlay_hwnd, SW_HIDE);
 	}
 }
 
@@ -537,14 +513,52 @@ smg_overlays::smg_overlays()
 	log_cout << "APP: start overlays " << std::endl;
 }
 
+smg_overlays::~smg_overlays()
+{
+	if (m_pDirect2dFactory != nullptr)
+	{
+		m_pDirect2dFactory->Release();
+
+		m_pDirect2dFactory = nullptr;
+	}
+}
+
 void smg_overlays::init()
 {
+	HRESULT hr = BufferedPaintInit();
+	g_bDblBuffered = SUCCEEDED(hr);
+
+	D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pDirect2dFactory);
+
 	app_settings->default_init();
 
 	create_overlay_window_class();
 }
 
-void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
+void smg_overlays::draw_overlay_direct2d(HWND& hWnd) 
+{
+	PAINTSTRUCT ps;
+	HPAINTBUFFER hBufferedPaint = nullptr;
+	RECT rc;
+
+	GetClientRect(hWnd, &rc);
+	HDC hdc = BeginPaint(hWnd, &ps);
+
+	{
+		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
+		std::for_each(
+		    showing_windows.begin(),
+		    showing_windows.end(),
+		    [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
+			    if (hWnd == n->overlay_hwnd)
+			    {
+				    n->paint_to_window(hdc);
+			    }
+		    });
+	}
+}
+
+void smg_overlays::draw_overlay_gdi(HWND& hWnd)
 {
 	PAINTSTRUCT ps;
 	HPAINTBUFFER hBufferedPaint = nullptr;
@@ -555,7 +569,6 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 
 	if (g_bDblBuffered)
 	{
-		// Get doublebuffered DC
 		HDC hdcMem;
 		hBufferedPaint = BeginBufferedPaint(hdc, &rc, BPBF_COMPOSITED, nullptr, &hdcMem);
 		if (hBufferedPaint)
@@ -566,17 +579,19 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered)
 
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-		std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
-			if (hWnd == n->overlay_hwnd)
-			{
-				n->paint_to_window(hdc);
-			}
-		});
+		std::for_each(
+		    showing_windows.begin(),
+		    showing_windows.end(),
+		    [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
+			    if (hWnd == n->overlay_hwnd)
+			    {
+				    n->paint_to_window(hdc);
+			    }
+		    });
 	}
 
 	if (hBufferedPaint)
 	{
-		// end painting
 		BufferedPaintMakeOpaque(hBufferedPaint, nullptr);
 		EndBufferedPaint(hBufferedPaint, TRUE);
 	}

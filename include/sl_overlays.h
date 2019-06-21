@@ -26,7 +26,7 @@ class smg_overlays
 	std::list<std::shared_ptr<overlay_window>> showing_windows;
 
 	smg_overlays();
-	virtual ~smg_overlays(){};
+	virtual ~smg_overlays();
 	void init();
 	void deinit();
 
@@ -62,5 +62,9 @@ class smg_overlays
 	//events
 	void on_update_timer();
 
-	void draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered);
+	void draw_overlay_gdi(HWND& hWnd);
+	void draw_overlay_direct2d(HWND& hWnd);
+
+	BOOL g_bDblBuffered = FALSE;
+	ID2D1Factory* m_pDirect2dFactory;
 };

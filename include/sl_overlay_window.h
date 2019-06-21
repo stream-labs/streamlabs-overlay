@@ -3,6 +3,8 @@
 #include "stdafx.h"
 #include "overlay_paint_frame.h"
 
+extern wchar_t const g_szWindowClass[];
+
 enum class overlay_status : int
 {
 	creating = 1,
@@ -38,11 +40,13 @@ class overlay_window
 	bool set_new_position(int x, int y);
 	bool apply_size_from_orig();
 
+	bool create_window();
 	bool create_window_content_buffer();
 	bool ready_to_create_overlay();
 	bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height);
 	bool set_cached_image(std::shared_ptr<overlay_frame> save_frame);
 	void paint_to_window(HDC window_hdc);
+	void create_render_target(ID2D1Factory* m_pDirect2dFactory); 
 	bool is_content_updated();
 	void set_transparency(int transparency, bool save_as_normal = true);
 	int get_transparency();
@@ -62,4 +66,8 @@ class overlay_window
 	int id;
 	HWND orig_handle;
 	HWND overlay_hwnd;
+
+	ID2D1HwndRenderTarget* m_pRenderTarget;
+	ID2D1Bitmap* m_pBitmap;
+	ID2D1SolidColorBrush* m_pLightSlateGrayBrush;
 };

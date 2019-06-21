@@ -25,12 +25,13 @@ void overlay_window::set_visibility(bool visibility, bool overlays_shown)
 		overlay_visibility = visibility;
 		if (IsWindowVisible(overlay_hwnd))
 		{
-			if(!overlay_visibility)
+			if (!overlay_visibility)
 			{
 				ShowWindow(overlay_hwnd, SW_HIDE);
 			}
-		} else {
-			if(overlay_visibility && overlays_shown)
+		} else
+		{
+			if (overlay_visibility && overlays_shown)
 			{
 				ShowWindow(overlay_hwnd, SW_SHOW);
 			}
@@ -131,6 +132,9 @@ overlay_window::overlay_window()
 	autohide_after = 0;
 	autohidden = false;
 	autohide_by_transparency = 50;
+	m_pRenderTarget = nullptr;
+	m_pBitmap = nullptr;
+	m_pLightSlateGrayBrush = nullptr;
 }
 
 void overlay_window::clean_resources()
@@ -161,6 +165,18 @@ void overlay_window::clean_resources()
 			PostMessage(0, WM_SLO_OVERLAY_WINDOW_DESTOYED, id, NULL);
 		}
 	}
+
+	if (m_pRenderTarget != nullptr)
+	{
+		m_pRenderTarget->Release();
+		m_pRenderTarget = nullptr;
+	}
+
+	if (m_pLightSlateGrayBrush != nullptr)
+	{
+		m_pLightSlateGrayBrush->Release();
+		m_pLightSlateGrayBrush = nullptr;
+	}
 }
 
 RECT overlay_window::get_rect()
@@ -176,7 +192,14 @@ bool overlay_window::apply_new_rect(RECT& new_rect)
 
 	if (overlay_hwnd)
 	{
-		SetWindowPos(overlay_hwnd,HWND_TOPMOST,  new_rect.left, new_rect.top, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top, SWP_NOREDRAW);
+		SetWindowPos(
+		    overlay_hwnd,
+		    HWND_TOPMOST,
+		    new_rect.left,
+		    new_rect.top,
+		    new_rect.right - new_rect.left,
+		    new_rect.bottom - new_rect.top,
+		    SWP_NOREDRAW);
 	}
 
 	return set_rect(new_rect);
@@ -198,7 +221,7 @@ bool overlay_window::set_new_position(int x, int y)
 
 	if (overlay_hwnd)
 	{
-		SetWindowPos(overlay_hwnd,HWND_TOPMOST, x, y, ret.right - ret.left, ret.bottom - ret.top, SWP_NOREDRAW);
+		SetWindowPos(overlay_hwnd, HWND_TOPMOST, x, y, ret.right - ret.left, ret.bottom - ret.top, SWP_NOREDRAW);
 	}
 
 	return set_rect(ret);
@@ -218,18 +241,24 @@ bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
 		frame = save_frame;
 
 		const RECT overlay_rect = get_rect();
-		void * image_array = nullptr;
+		void* image_array = nullptr;
 		size_t image_array_size = 0;
-		size_t expected_array_size = ( overlay_rect.right-overlay_rect.left ) * ( overlay_rect.bottom-overlay_rect.top ) * 4;
+		size_t expected_array_size = (overlay_rect.right - overlay_rect.left) * (overlay_rect.bottom - overlay_rect.top) * 4;
 
 		frame->get_array(&image_array, &image_array_size);
-		if(image_array_size != expected_array_size)
+		if (image_array_size != expected_array_size)
 		{
-			log_error << "APP: Saving image from electron array_size = " << image_array_size << ", expected = " << expected_array_size  << std::endl;
+			log_error << "APP: Saving image from electron array_size = " << image_array_size
+			          << ", expected = " << expected_array_size << std::endl;
 			frame = nullptr;
 			return false;
-		} else {
-			if( paint_window_from_buffer(image_array, image_array_size, overlay_rect.right-overlay_rect.left, overlay_rect.bottom-overlay_rect.top) )
+		} else
+		{
+			if (paint_window_from_buffer(
+			        image_array,
+			        image_array_size,
+			        overlay_rect.right - overlay_rect.left,
+			        overlay_rect.bottom - overlay_rect.top))
 			{
 				content_updated = true;
 			}
@@ -243,15 +272,15 @@ bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
 		{
 			ShowWindow(overlay_hwnd, SW_SHOW);
 		}
-		
-		if (autohide_by_transparency > 0 )
+
+		if (autohide_by_transparency > 0)
 		{
 			set_transparency(overlay_transparency, false);
 		}
 
 		autohidden = false;
 	}
-	
+
 	return true;
 }
 
@@ -283,20 +312,87 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 		log_error << "APP: Saving image from electron failed. no hbmp to save to." << std::endl;
 	}
 
+	if (m_pBitmap != nullptr)
+	{
+		D2D1_RECT_U bits_size = {0, 0, width, height};
+		m_pBitmap->CopyFromMemory(&bits_size, image_array, width * 4);
+	}
+
 	return ret;
+}
+
+void overlay_window::create_render_target(ID2D1Factory* m_pDirect2dFactory)
+{
+	if (!m_pRenderTarget)
+	{
+		HRESULT hr = S_OK;
+		RECT rc;
+		GetClientRect(overlay_hwnd, &rc);
+
+		D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+
+		// Create a Direct2D render target.
+		hr = m_pDirect2dFactory->CreateHwndRenderTarget(
+		    D2D1::RenderTargetProperties(
+		        D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+		    D2D1::HwndRenderTargetProperties(overlay_hwnd, size),
+		    &m_pRenderTarget);
+
+		if (SUCCEEDED(hr))
+		{
+			// Create a gray brush.
+			hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::LightSlateGray), &m_pLightSlateGrayBrush);
+		}
+	}
 }
 
 void overlay_window::paint_to_window(HDC window_hdc)
 {
-	const RECT overlay_rect = get_rect();
-	BOOL ret = true;
-
-	ret = BitBlt(
-		window_hdc, 0, 0, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top, hdc, 0, 0, SRCCOPY);
-
-	if (!ret)
+	if (m_pRenderTarget)
 	{
-		log_cout << "APP: paint_to_window had issue " << GetLastError() << std::endl;
+		HRESULT hr = S_OK;
+
+		m_pRenderTarget->BeginDraw();
+
+		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+
+		m_pRenderTarget->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f));
+
+		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
+
+		// Draw a grid background.
+		int width = static_cast<int>(rtSize.width);
+		int height = static_cast<int>(rtSize.height);
+
+		m_pLightSlateGrayBrush->SetColor(D2D1::ColorF(0.0f, 0.0f, 1.0f, 0.5f));
+
+		if (m_pBitmap != nullptr)
+		{
+			m_pRenderTarget->DrawBitmap(
+			    m_pBitmap, D2D1::RectF(0, 0, width, height), 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, nullptr);
+		}
+
+		hr = m_pRenderTarget->EndDraw();
+	} else
+	{
+		const RECT overlay_rect = get_rect();
+		BOOL ret = true;
+
+		ret = BitBlt(
+		    window_hdc,
+		    0,
+		    0,
+		    overlay_rect.right - overlay_rect.left,
+		    overlay_rect.bottom - overlay_rect.top,
+		    hdc,
+		    0,
+		    0,
+		    SRCCOPY);
+
+		if (!ret)
+		{
+			log_cout << "APP: paint_to_window had issue " << GetLastError() << std::endl;
+		}
 	}
 
 	last_content_chage_ticks = GetTickCount64();
@@ -315,6 +411,44 @@ bool overlay_window::apply_size_from_orig()
 	return true;
 }
 
+bool overlay_window::create_window()
+{
+	if (overlay_hwnd == nullptr && ready_to_create_overlay())
+	{
+		DWORD const dwStyle = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; // no border or title bar
+		DWORD const dwStyleEx = WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | 0x00000800;
+		//| 0x40000000
+		//| 0x80000000
+		//| 0x20000000;
+		// transparent, topmost, with no taskbar
+
+		overlay_hwnd =
+		    CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
+
+		if (overlay_hwnd)
+		{
+			if (app_settings->use_color_key)
+			{
+				SetLayeredWindowAttributes(overlay_hwnd, RGB(0xFF, 0xFF, 0xFF), 0xD0, LWA_COLORKEY);
+			} else
+			{
+				set_transparency(app_settings->transparency);
+			}
+			const RECT overlay_rect = get_rect();
+			SetWindowPos(
+			    overlay_hwnd,
+			    HWND_TOPMOST,
+			    overlay_rect.left,
+			    overlay_rect.top,
+			    overlay_rect.right - overlay_rect.left,
+			    overlay_rect.bottom - overlay_rect.top,
+			    SWP_NOREDRAW);
+			return true;
+		}
+	}
+	return false;
+}
+
 bool overlay_window::create_window_content_buffer()
 {
 	bool created = false;
@@ -330,6 +464,8 @@ bool overlay_window::create_window_content_buffer()
 		int new_y = client_rect.top;
 		int new_width = client_rect.right - client_rect.left;
 		int new_height = client_rect.bottom - client_rect.top;
+
+		log_cout << "APP: create_window_content_buffer  rect at [" << new_x << " , " << new_y << "]" << std::endl;
 
 		HDC new_hdc = nullptr;
 		HBITMAP new_hbmp = nullptr;
@@ -353,10 +489,44 @@ bool overlay_window::create_window_content_buffer()
 		}
 	} else
 	{
-		log_cout << "APP: get_window_screenshot failed to get rect from orig window " << GetLastError() << std::endl;
+		log_error << "APP: create_window_content_buffer failed to get rect from orig window " << GetLastError() << std::endl;
 	}
 
 	ReleaseDC(nullptr, hdcScreen);
+
+	if (m_pRenderTarget)
+	{
+		HRESULT hr = S_OK;
+		// Note: This method can fail, but it's okay to ignore the
+		// error here, because the error will be returned again
+		// the next time EndDraw is called.
+		int new_width = client_rect.right - client_rect.left;
+		int new_height = client_rect.bottom - client_rect.top;
+		m_pRenderTarget->Resize(D2D1::SizeU(new_width, new_height));
+		log_debug << "APP: create_window_content_buffer d2d width " << new_width << ", height " << new_height << std::endl;
+		if (m_pBitmap != nullptr)
+		{
+			m_pBitmap->Release();
+			m_pBitmap = nullptr;
+		}
+
+		if (m_pBitmap == nullptr)
+		{
+
+			D2D1_SIZE_U bitmap_size;
+			bitmap_size.width = new_width;
+			bitmap_size.height = new_height;
+
+			float dpi_x, dpi_y;
+			m_pRenderTarget->GetDpi(&dpi_x, &dpi_y);
+
+			hr = m_pRenderTarget->CreateBitmap(
+			    bitmap_size,
+			    D2D1::BitmapProperties(
+			        D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi_x, dpi_y),
+			    &m_pBitmap);
+		}
+	}
 
 	return created;
 }

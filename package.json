@@ -9,7 +9,7 @@
     "name": "Streamlabs",
     "url": "https://streamlabs.com"
   },
-  "version": "0.0.31d",
+  "version": "0.0.32d",
   "license": "SEE LICENSE IN COPYRIGHT LAW",
   "engines": {
     "node": ">= 8"
@@ -21,7 +21,7 @@
   "scripts": {
     "install": "",
     "pack": "node scripts/pack.js",
-    "build": "node-gyp configure --msvs_version=2017 && node-gyp rebuild --target=2.0.16 --dist-url=https://atom.io/download/atom-shell",
+    "build": "node-gyp configure --msvs_version=2017 && node-gyp rebuild --target=5.0.3 --dist-url=https://atom.io/download/atom-shell",
     "test": ""
   },
   "binary": {
@@ -49,7 +49,7 @@
   "devDependencies": {
     "@types/node": "^11.10.4",
     "aws-sdk": "^2.x",
-    "electron": "^2.0.16",
+    "electron": "^5.0.3",
     "fs-extra": "7.0.1",
     "prettier": "^1.16.4",
     "standard-version": "^5.0.1",
