@@ -525,6 +525,10 @@ bool overlay_window::create_window_content_buffer()
 			    D2D1::BitmapProperties(
 			        D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi_x, dpi_y),
 			    &m_pBitmap);
+			if( hr >= 0)
+			{
+				log_debug << "APP: create_window_content_buffer d2d hr " << hr << std::endl;
+			}
 		}
 	}
 

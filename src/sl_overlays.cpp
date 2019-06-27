@@ -12,7 +12,6 @@
 
 #pragma comment(lib, "uxtheme.lib")
 #pragma comment(lib, "shcore.lib")
-#pragma comment(lib, "imm32.lib")
 
 wchar_t const g_szWindowClass[] = L"overthetop_overlay";
 
@@ -326,7 +325,7 @@ void smg_overlays::hook_user_input()
 
 	if (!is_intercepting)
 	{
-		game_hwnd = GetForegroundWindow();
+		HWND game_hwnd = GetForegroundWindow();
 		if (game_hwnd != nullptr)
 		{
 			//print window title
@@ -334,32 +333,15 @@ void smg_overlays::hook_user_input()
 			GetWindowText(game_hwnd, title, 256);
 			std::wstring title_wstr(title);
 			std::string title_str(title_wstr.begin(), title_wstr.end());
-			log_cout << "APP: hook_user_input catch window - " << title_str << std::endl;
-
-			llkeyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
-			llmouse_hook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
-
-			our_IMC = ImmCreateContext();
-			if (our_IMC)
-			{
-				original_IMC = ImmAssociateContext(game_hwnd, our_IMC);
-				if (!original_IMC)
-				{
-					game_hwnd = nullptr;
-					ImmDestroyContext(our_IMC);
-					our_IMC = nullptr;
-				} else
-				{
-					is_intercepting = true;
-				}
-			} else
-			{
-				game_hwnd = nullptr;
-			}
-			is_intercepting = true;
-
-			log_cout << "APP: Input hooked" << std::endl;
+			log_debug << "APP: hook_user_input catch window - " << title_str << std::endl;
 		}
+
+		llkeyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
+		llmouse_hook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
+
+		is_intercepting = true;
+
+		log_cout << "APP: Input hooked" << std::endl;
 	}
 }
 
@@ -382,14 +364,6 @@ void smg_overlays::unhook_user_input()
 		{
 			UnhookWindowsHookEx(llmouse_hook);
 			llmouse_hook = nullptr;
-		}
-
-		if (our_IMC)
-		{
-			ImmReleaseContext(game_hwnd, our_IMC);
-			ImmDestroyContext(our_IMC);
-			our_IMC = nullptr;
-			game_hwnd = nullptr;
 		}
 
 		log_cout << "APP: Input unhooked" << std::endl;

@@ -49,10 +49,7 @@ class smg_overlays
 	void quit();
 
 	//redirect user input
-	HIMC our_IMC = nullptr;
-	HIMC original_IMC = nullptr;
 	bool is_intercepting = false;
-	HWND game_hwnd = nullptr;
 	void hook_user_input();
 	void unhook_user_input();
 
