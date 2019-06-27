@@ -21,7 +21,7 @@ class overlay_window
 	std::mutex rect_access;
 	int overlay_transparency;
 	bool overlay_visibility;
-	
+
 	bool content_updated;
 	std::shared_ptr<overlay_frame> frame;
 	std::mutex frame_access;
@@ -45,7 +45,7 @@ class overlay_window
 	bool set_cached_image(std::shared_ptr<overlay_frame> save_frame);
 	virtual bool create_window_content_buffer() = 0;
 	virtual bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height) = 0;
-	virtual void paint_to_window(HDC window_hdc)=0;
+	virtual void paint_to_window(HDC window_hdc) = 0;
 	virtual void create_render_target(ID2D1Factory* m_pDirect2dFactory){};
 	bool is_content_updated();
 	void set_transparency(int transparency, bool save_as_normal = true);
@@ -71,6 +71,7 @@ class overlay_window_gdi : public overlay_window
 {
 	HBITMAP hbmp;
 	HDC hdc;
+	bool g_bDblBuffered = false;
 
 	public:
 	overlay_window_gdi();
@@ -79,6 +80,7 @@ class overlay_window_gdi : public overlay_window
 	virtual bool paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height) override;
 	virtual bool create_window_content_buffer() override;
 	virtual void paint_to_window(HDC window_hdc) override;
+	void set_dbl_buffering(bool enable);
 };
 
 class overlay_window_direct2d : public overlay_window

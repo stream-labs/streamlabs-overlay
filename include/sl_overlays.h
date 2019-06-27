@@ -59,8 +59,6 @@ class smg_overlays
 	//events
 	void on_update_timer();
 
-	void draw_overlay_gdi(HWND& hWnd);
-	void draw_overlay_direct2d(HWND& hWnd);
 	void draw_overlay(HWND& hWnd);
 
 	BOOL g_bDblBuffered = FALSE;

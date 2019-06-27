@@ -49,7 +49,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			{
 			case WM_SLO_OVERLAY_CLOSE:
 			{
-				log_cout << "APP: WM_SLO_OVERLAY_CLOSE" << (int)msg.wParam << std::endl;
+				log_cout << "APP: WM_SLO_OVERLAY_CLOSE " << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
 				catched = true;
@@ -76,12 +76,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 			{
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				if(overlay) {
-					if(app->direct2d_paint)
-					{
-						overlay->create_render_target(app->m_pDirect2dFactory);
-					} 
+					overlay->create_render_target(app->m_pDirect2dFactory);
 					overlay->create_window_content_buffer();
-					
 				}
 			}
 			break;
@@ -146,7 +142,6 @@ DWORD WINAPI overlay_thread_func(void* data)
 			}
 			break;
 			case WM_TIMER:
-				//log_cout << "APP: WM_TIMER id = " << (int)msg.wParam << std::endl;
 				if (static_cast<int>(msg.wParam) == OVERLAY_UPDATE_TIMER)
 				{
 					app->on_update_timer();

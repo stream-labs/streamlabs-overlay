@@ -120,7 +120,9 @@ int smg_overlays::create_overlay_window_by_hwnd(HWND hwnd)
 		new_overlay_window = std::make_shared<overlay_window_direct2d>();
 	} else
 	{
-		new_overlay_window = std::make_shared<overlay_window_gdi>();
+		std::shared_ptr<overlay_window_gdi> new_overlay_window_gdi = std::make_shared<overlay_window_gdi>();
+		new_overlay_window_gdi->set_dbl_buffering(g_bDblBuffered);
+		new_overlay_window = new_overlay_window_gdi;
 	}
 	
 	new_overlay_window->orig_handle = hwnd;
@@ -528,71 +530,16 @@ void smg_overlays::init()
 	create_overlay_window_class();
 }
 
-void smg_overlays::draw_overlay_direct2d(HWND& hWnd)
-{
-	PAINTSTRUCT ps;
-	HPAINTBUFFER hBufferedPaint = nullptr;
-	RECT rc;
-
-	GetClientRect(hWnd, &rc);
-	HDC hdc = BeginPaint(hWnd, &ps);
-
-	{
-		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-		std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
-			if (hWnd == n->overlay_hwnd)
-			{
-				n->paint_to_window(hdc);
-			}
-		});
-	}
-}
-
 void smg_overlays::draw_overlay(HWND& hWnd)
 {
-	if (direct2d_paint)
-	{
-		draw_overlay_direct2d(hWnd);
-	} else
-	{
-		draw_overlay_gdi(hWnd);
-	}
-}
-
-void smg_overlays::draw_overlay_gdi(HWND& hWnd)
-{
-	PAINTSTRUCT ps;
-	HPAINTBUFFER hBufferedPaint = nullptr;
-	RECT rc;
-
-	GetClientRect(hWnd, &rc);
-	HDC hdc = BeginPaint(hWnd, &ps);
-
-	if (g_bDblBuffered)
-	{
-		HDC hdcMem;
-		hBufferedPaint = BeginBufferedPaint(hdc, &rc, BPBF_COMPOSITED, nullptr, &hdcMem);
-		if (hBufferedPaint)
-		{
-			hdc = hdcMem;
-		}
-	}
-
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-		std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
+		std::for_each(showing_windows.begin(), showing_windows.end(), [&hWnd](std::shared_ptr<overlay_window>& n) {
 			if (hWnd == n->overlay_hwnd)
 			{
-				n->paint_to_window(hdc);
+				n->paint_to_window(0);
 			}
 		});
 	}
-
-	if (hBufferedPaint)
-	{
-		BufferedPaintMakeOpaque(hBufferedPaint, nullptr);
-		EndBufferedPaint(hBufferedPaint, TRUE);
-	}
-
-	EndPaint(hWnd, &ps);
 }
+

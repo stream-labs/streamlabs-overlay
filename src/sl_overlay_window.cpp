@@ -384,18 +384,49 @@ void overlay_window_direct2d::create_render_target(ID2D1Factory* m_pDirect2dFact
 	}
 }
 
+void overlay_window_gdi::set_dbl_buffering(bool enable)
+{
+	g_bDblBuffered = enable;
+}
+
 void overlay_window_gdi::paint_to_window(HDC window_hdc)
 {
 	const RECT overlay_rect = get_rect();
 	BOOL ret = true;
+	PAINTSTRUCT ps;
+	HPAINTBUFFER hBufferedPaint = nullptr;
+	RECT rc;
 
+	GetClientRect(overlay_hwnd, &rc);
+	HDC hdc = BeginPaint(overlay_hwnd, &ps);
+
+	if (g_bDblBuffered)
+	{
+		HDC hdcMem;
+		hBufferedPaint = BeginBufferedPaint(hdc, &rc, BPBF_COMPOSITED, nullptr, &hdcMem);
+		if (hBufferedPaint)
+		{
+			hdc = hdcMem;
+		}
+	}
+	
 	ret = BitBlt(
 	    window_hdc, 0, 0, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top, hdc, 0, 0, SRCCOPY);
 
 	if (!ret)
 	{
-		log_cout << "APP: paint_to_window had issue " << GetLastError() << std::endl;
+		log_error << "APP: paint_to_window had issue " << GetLastError() << std::endl;
 	}
+
+	if (hBufferedPaint)
+	{
+		BufferedPaintMakeOpaque(hBufferedPaint, nullptr);
+		EndBufferedPaint(hBufferedPaint, TRUE);
+	}
+
+	EndPaint(overlay_hwnd, &ps);
+	
+	ValidateRect(overlay_hwnd, &rect);
 
 	last_content_chage_ticks = GetTickCount64();
 
@@ -404,6 +435,9 @@ void overlay_window_gdi::paint_to_window(HDC window_hdc)
 
 void overlay_window_direct2d::paint_to_window(HDC window_hdc)
 {
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(overlay_hwnd, &ps);
+
 	if (m_pRenderTarget)
 	{
 		HRESULT hr = S_OK;
@@ -430,6 +464,9 @@ void overlay_window_direct2d::paint_to_window(HDC window_hdc)
 
 		hr = m_pRenderTarget->EndDraw();
 	}
+	EndPaint(overlay_hwnd, &ps);
+
+	ValidateRect(overlay_hwnd, &rect);
 
 	last_content_chage_ticks = GetTickCount64();
 
