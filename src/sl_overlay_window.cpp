@@ -60,6 +60,11 @@ bool overlay_window::is_content_updated()
 	return content_updated;
 }
 
+bool overlay_window::is_visible()
+{
+	return overlay_visibility;
+}
+
 void overlay_window::apply_interactive_mode(bool is_intercepting)
 {
 	if (overlay_hwnd != 0)
@@ -121,8 +126,6 @@ overlay_window::overlay_window()
 	id = id_counter++;
 	orig_handle = nullptr;
 	overlay_hwnd = nullptr;
-	hdc = nullptr;
-	hbmp = nullptr;
 	manual_position = false;
 	status = overlay_status::creating;
 	rect = {0};
@@ -132,6 +135,16 @@ overlay_window::overlay_window()
 	autohide_after = 0;
 	autohidden = false;
 	autohide_by_transparency = 50;
+}
+
+overlay_window_gdi::overlay_window_gdi() 
+{
+	hdc = nullptr;
+	hbmp = nullptr;
+}
+
+overlay_window_direct2d::overlay_window_direct2d()
+{
 	m_pRenderTarget = nullptr;
 	m_pBitmap = nullptr;
 	m_pLightSlateGrayBrush = nullptr;
@@ -143,18 +156,6 @@ void overlay_window::clean_resources()
 	{
 		status = overlay_status::destroing;
 		log_cout << "APP: clean_resources for " << id << std::endl;
-		if (hdc != nullptr)
-		{
-
-			DeleteDC(hdc);
-			hdc = nullptr;
-		}
-
-		if (hbmp != nullptr)
-		{
-			DeleteObject(hbmp);
-			hbmp = nullptr;
-		}
 
 		if (overlay_hwnd != nullptr)
 		{
@@ -165,18 +166,46 @@ void overlay_window::clean_resources()
 			PostMessage(0, WM_SLO_OVERLAY_WINDOW_DESTOYED, id, NULL);
 		}
 	}
+}
 
-	if (m_pRenderTarget != nullptr)
+void overlay_window_gdi::clean_resources()
+{
+	if (status != overlay_status::destroing)
 	{
-		m_pRenderTarget->Release();
-		m_pRenderTarget = nullptr;
+		if (hdc != nullptr)
+		{
+			DeleteDC(hdc);
+			hdc = nullptr;
+		}
+
+		if (hbmp != nullptr)
+		{
+			DeleteObject(hbmp);
+			hbmp = nullptr;
+		}
 	}
 
-	if (m_pLightSlateGrayBrush != nullptr)
+	overlay_window::clean_resources();
+}
+
+void overlay_window_direct2d::clean_resources()
+{
+	if (status != overlay_status::destroing)
 	{
-		m_pLightSlateGrayBrush->Release();
-		m_pLightSlateGrayBrush = nullptr;
+		if (m_pRenderTarget != nullptr)
+		{
+			m_pRenderTarget->Release();
+			m_pRenderTarget = nullptr;
+		}
+
+		if (m_pLightSlateGrayBrush != nullptr)
+		{
+			m_pLightSlateGrayBrush->Release();
+			m_pLightSlateGrayBrush = nullptr;
+		}
 	}
+
+	overlay_window::clean_resources();
 }
 
 RECT overlay_window::get_rect()
@@ -284,7 +313,7 @@ bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
 	return true;
 }
 
-bool overlay_window::paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
+bool overlay_window_gdi::paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
 {
 	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height
 	          << std::endl;
@@ -312,6 +341,15 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 		log_error << "APP: Saving image from electron failed. no hbmp to save to." << std::endl;
 	}
 
+	return ret;
+}
+
+bool overlay_window_direct2d::paint_window_from_buffer(const void* image_array, size_t array_size, int width, int height)
+{
+	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height
+	          << std::endl;
+	bool ret = true;
+
 	if (m_pBitmap != nullptr)
 	{
 		D2D1_RECT_U bits_size = {0, 0, width, height};
@@ -321,7 +359,7 @@ bool overlay_window::paint_window_from_buffer(const void* image_array, size_t ar
 	return ret;
 }
 
-void overlay_window::create_render_target(ID2D1Factory* m_pDirect2dFactory)
+void overlay_window_direct2d::create_render_target(ID2D1Factory* m_pDirect2dFactory)
 {
 	if (!m_pRenderTarget)
 	{
@@ -346,7 +384,25 @@ void overlay_window::create_render_target(ID2D1Factory* m_pDirect2dFactory)
 	}
 }
 
-void overlay_window::paint_to_window(HDC window_hdc)
+void overlay_window_gdi::paint_to_window(HDC window_hdc)
+{
+	const RECT overlay_rect = get_rect();
+	BOOL ret = true;
+
+	ret = BitBlt(
+	    window_hdc, 0, 0, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top, hdc, 0, 0, SRCCOPY);
+
+	if (!ret)
+	{
+		log_cout << "APP: paint_to_window had issue " << GetLastError() << std::endl;
+	}
+
+	last_content_chage_ticks = GetTickCount64();
+
+	content_updated = false;
+}
+
+void overlay_window_direct2d::paint_to_window(HDC window_hdc)
 {
 	if (m_pRenderTarget)
 	{
@@ -373,26 +429,6 @@ void overlay_window::paint_to_window(HDC window_hdc)
 		}
 
 		hr = m_pRenderTarget->EndDraw();
-	} else
-	{
-		const RECT overlay_rect = get_rect();
-		BOOL ret = true;
-
-		ret = BitBlt(
-		    window_hdc,
-		    0,
-		    0,
-		    overlay_rect.right - overlay_rect.left,
-		    overlay_rect.bottom - overlay_rect.top,
-		    hdc,
-		    0,
-		    0,
-		    SRCCOPY);
-
-		if (!ret)
-		{
-			log_cout << "APP: paint_to_window had issue " << GetLastError() << std::endl;
-		}
 	}
 
 	last_content_chage_ticks = GetTickCount64();
@@ -449,14 +485,13 @@ bool overlay_window::create_window()
 	return false;
 }
 
-bool overlay_window::create_window_content_buffer()
+bool overlay_window_gdi::create_window_content_buffer()
 {
 	bool created = false;
-	BOOL ret = false;
 	RECT client_rect = {0};
-	HDC hdcScreen = GetDC(overlay_hwnd);
+	GetWindowRect(overlay_hwnd, &client_rect);
 
-	ret = GetWindowRect(overlay_hwnd, &client_rect);
+	HDC hdcScreen = GetDC(overlay_hwnd);
 
 	if (hdcScreen != nullptr)
 	{
@@ -494,15 +529,21 @@ bool overlay_window::create_window_content_buffer()
 
 	ReleaseDC(nullptr, hdcScreen);
 
+	return created;
+}
+bool overlay_window_direct2d::create_window_content_buffer()
+{
+	bool created = false;
+	RECT client_rect = {0};
+	GetWindowRect(overlay_hwnd, &client_rect);
+
 	if (m_pRenderTarget)
 	{
 		HRESULT hr = S_OK;
-		// Note: This method can fail, but it's okay to ignore the
-		// error here, because the error will be returned again
-		// the next time EndDraw is called.
 		int new_width = client_rect.right - client_rect.left;
 		int new_height = client_rect.bottom - client_rect.top;
 		m_pRenderTarget->Resize(D2D1::SizeU(new_width, new_height));
+
 		log_debug << "APP: create_window_content_buffer d2d width " << new_width << ", height " << new_height << std::endl;
 		if (m_pBitmap != nullptr)
 		{
@@ -510,27 +551,23 @@ bool overlay_window::create_window_content_buffer()
 			m_pBitmap = nullptr;
 		}
 
-		if (m_pBitmap == nullptr)
+		D2D1_SIZE_U bitmap_size;
+		bitmap_size.width = new_width;
+		bitmap_size.height = new_height;
+
+		float dpi_x, dpi_y;
+		m_pRenderTarget->GetDpi(&dpi_x, &dpi_y);
+
+		hr = m_pRenderTarget->CreateBitmap(
+		    bitmap_size,
+		    D2D1::BitmapProperties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi_x, dpi_y),
+		    &m_pBitmap);
+
+		log_debug << "APP: create_window_content_buffer d2d hr " << hr << std::endl;
+		if (SUCCEEDED(hr))
 		{
-
-			D2D1_SIZE_U bitmap_size;
-			bitmap_size.width = new_width;
-			bitmap_size.height = new_height;
-
-			float dpi_x, dpi_y;
-			m_pRenderTarget->GetDpi(&dpi_x, &dpi_y);
-
-			hr = m_pRenderTarget->CreateBitmap(
-			    bitmap_size,
-			    D2D1::BitmapProperties(
-			        D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi_x, dpi_y),
-			    &m_pBitmap);
-			if( hr >= 0)
-			{
-				log_debug << "APP: create_window_content_buffer d2d hr " << hr << std::endl;
-			}
+			created = true;
 		}
 	}
-
 	return created;
 }

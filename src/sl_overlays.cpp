@@ -114,7 +114,15 @@ void smg_overlays::quit()
 
 int smg_overlays::create_overlay_window_by_hwnd(HWND hwnd)
 {
-	std::shared_ptr<overlay_window> new_overlay_window = std::make_shared<overlay_window>();
+	std::shared_ptr<overlay_window> new_overlay_window;
+	if (direct2d_paint)
+	{
+		new_overlay_window = std::make_shared<overlay_window_direct2d>();
+	} else
+	{
+		new_overlay_window = std::make_shared<overlay_window_gdi>();
+	}
+	
 	new_overlay_window->orig_handle = hwnd;
 	new_overlay_window->apply_size_from_orig();
 
@@ -499,17 +507,28 @@ smg_overlays::~smg_overlays()
 
 void smg_overlays::init()
 {
-	HRESULT hr = BufferedPaintInit();
-	g_bDblBuffered = SUCCEEDED(hr);
+	HRESULT hr;
+	if (direct2d_paint)
+	{
+		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &m_pDirect2dFactory);
+		if (!SUCCEEDED(hr))
+		{
+			direct2d_paint = false;
+		}
+	}
 
-	D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pDirect2dFactory);
+	if (!direct2d_paint)
+	{
+		HRESULT hr = BufferedPaintInit();
+		g_bDblBuffered = SUCCEEDED(hr);
+	}
 
 	app_settings->default_init();
 
 	create_overlay_window_class();
 }
 
-void smg_overlays::draw_overlay_direct2d(HWND& hWnd) 
+void smg_overlays::draw_overlay_direct2d(HWND& hWnd)
 {
 	PAINTSTRUCT ps;
 	HPAINTBUFFER hBufferedPaint = nullptr;
@@ -520,15 +539,23 @@ void smg_overlays::draw_overlay_direct2d(HWND& hWnd)
 
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-		std::for_each(
-		    showing_windows.begin(),
-		    showing_windows.end(),
-		    [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
-			    if (hWnd == n->overlay_hwnd)
-			    {
-				    n->paint_to_window(hdc);
-			    }
-		    });
+		std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
+			if (hWnd == n->overlay_hwnd)
+			{
+				n->paint_to_window(hdc);
+			}
+		});
+	}
+}
+
+void smg_overlays::draw_overlay(HWND& hWnd)
+{
+	if (direct2d_paint)
+	{
+		draw_overlay_direct2d(hWnd);
+	} else
+	{
+		draw_overlay_gdi(hWnd);
 	}
 }
 
@@ -553,15 +580,12 @@ void smg_overlays::draw_overlay_gdi(HWND& hWnd)
 
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-		std::for_each(
-		    showing_windows.begin(),
-		    showing_windows.end(),
-		    [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
-			    if (hWnd == n->overlay_hwnd)
-			    {
-				    n->paint_to_window(hdc);
-			    }
-		    });
+		std::for_each(showing_windows.begin(), showing_windows.end(), [&hdc, &hWnd](std::shared_ptr<overlay_window>& n) {
+			if (hWnd == n->overlay_hwnd)
+			{
+				n->paint_to_window(hdc);
+			}
+		});
 	}
 
 	if (hBufferedPaint)

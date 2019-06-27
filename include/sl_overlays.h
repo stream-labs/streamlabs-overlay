@@ -61,7 +61,9 @@ class smg_overlays
 
 	void draw_overlay_gdi(HWND& hWnd);
 	void draw_overlay_direct2d(HWND& hWnd);
+	void draw_overlay(HWND& hWnd);
 
 	BOOL g_bDblBuffered = FALSE;
 	ID2D1Factory* m_pDirect2dFactory;
+	bool direct2d_paint = true;
 };

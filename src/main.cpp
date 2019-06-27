@@ -15,8 +15,6 @@ DWORD overlays_thread_id = 0;
 sl_overlay_thread_state thread_state = sl_overlay_thread_state::destoyed;
 std::mutex thread_state_mutex;
 
-bool direct2d_paint = true;
-
 UINT_PTR OVERLAY_UPDATE_TIMER = 0;
 
 DWORD WINAPI overlay_thread_func(void* data)
@@ -78,8 +76,12 @@ DWORD WINAPI overlay_thread_func(void* data)
 			{
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				if(overlay) {
-					overlay->create_render_target(app->m_pDirect2dFactory);
+					if(app->direct2d_paint)
+					{
+						overlay->create_render_target(app->m_pDirect2dFactory);
+					} 
 					overlay->create_window_content_buffer();
+					
 				}
 			}
 			break;
@@ -228,13 +230,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	break;
 	case WM_PAINT:
 	{
-		if (direct2d_paint)
-		{
-			smg_overlays::get_instance()->draw_overlay_direct2d(hWnd);
-		} else
-		{
-			smg_overlays::get_instance()->draw_overlay_gdi(hWnd);
-		}
+		smg_overlays::get_instance()->draw_overlay(hWnd);
 		return 0;
 	}
 	break;
