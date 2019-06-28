@@ -253,7 +253,7 @@ int WINAPI paint_overlay_cached_buffer(int overlay_id, std::shared_ptr<overlay_f
 		} else
 		{
 			std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
-			if( overlay != nullptr )
+			if( overlay != nullptr && width > 0 && height > 0 )
 			{
 				RECT overlay_rect = overlay->get_rect();
 
@@ -354,6 +354,11 @@ int WINAPI set_overlay_transparency(int id, int transparency)
 		return -1;
 	} else
 	{
+		if(transparency < 0 || transparency> 255)
+		{
+			transparency = 0;
+		}
+
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_TRANSPARENCY, id, (LPARAM)(transparency));
 		thread_state_mutex.unlock();
 
@@ -400,6 +405,16 @@ int WINAPI set_overlay_autohide(int id, int autohide_timeout, int autohide_trans
 		return -1;
 	} else
 	{
+		if (autohide_timeout < 0)
+		{
+			autohide_timeout = 0;
+		}
+
+		if (autohide_transparency > 255 || autohide_transparency < 0)
+		{
+			autohide_transparency = 0;
+		}
+
 		DWORD autohide_params = ( autohide_timeout << 10) + autohide_transparency;
 		BOOL ret = PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SET_AUTOHIDE, id, (LPARAM)(autohide_params));
 		thread_state_mutex.unlock();

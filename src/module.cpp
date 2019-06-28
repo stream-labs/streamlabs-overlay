@@ -12,7 +12,7 @@
 
 #include "overlay_paint_frame.h"
 #include "overlay_paint_frame_js.h"
-
+/*
 const napi_value failed_ret = nullptr;
 
 napi_value Start(napi_env env, napi_callback_info args)
@@ -331,6 +331,10 @@ napi_value GetOverlaysIDs(napi_env env, napi_callback_info args)
 	return ret;
 }
 
+*/
+
+#include <napi.h>
+
 napi_value SetOverlayPosition(napi_env env, napi_callback_info args)
 {
 	napi_value ret = nullptr;
@@ -371,259 +375,135 @@ napi_value SetOverlayPosition(napi_env env, napi_callback_info args)
 	return ret;
 }
 
-napi_value PaintOverlay(napi_env env, napi_callback_info args)
-{
-	napi_value ret = nullptr;
 
-	size_t argc = 4;
-	napi_value argv[4];
-	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok)
-		return failed_ret;
+Napi::Value PaintOverlay(const Napi::CallbackInfo& info)
+{
+	Napi::Env env = info.Env();
+	
+	int overlay_id = -1;
+	int width = 0;
+	int height = 0;
 
 	int painted = -1;
-	if (argc == 4)
+
+	if(info.Length() >= 4)
 	{
-		int overlay_id = -1;
-		int width = 0;
-		int height = 0;
+		overlay_id = info[0].ToNumber();
+		width = info[1].ToNumber();
+		height = info[2].ToNumber();
 
-		if (napi_get_value_int32(env, argv[0], &overlay_id) != napi_ok)
-			return failed_ret;
-		if (napi_get_value_int32(env, argv[1], &width) != napi_ok)
-			return failed_ret;
-		if (napi_get_value_int32(env, argv[2], &height) != napi_ok)
-			return failed_ret;
-		
-
-		overlay_frame_js * for_caching_js = new overlay_frame_js(env, argv[3]);
+		overlay_frame_napi * for_caching_js = new overlay_frame_napi(env, info[3]);
 		std::shared_ptr<overlay_frame> for_caching = std::make_shared<overlay_frame>(for_caching_js);
-		
-		if(width != 0 && height != 0)
-		{
-			painted =  paint_overlay_cached_buffer(overlay_id, for_caching, width, height);
-		}
+
+		painted =  paint_overlay_cached_buffer(overlay_id, for_caching, width, height);
 
 	}
 
-	if (napi_create_int32(env, painted, &ret) != napi_ok)
-		return failed_ret;
-
-	return ret;
+	return Napi::Number::New(env, painted);
 }
 
-napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
+
+napi_value PaintOverlay(napi_env env, napi_callback_info args)
 {
-	napi_value ret = nullptr;
 
-	size_t argc = 2;
-	napi_value argv[2];
+	
 
-	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok)
-		return failed_ret;
+}
 
+Napi::Value SetOverlayTransparency(const Napi::CallbackInfo& info)
+{
+	Napi::Env env = info.Env();
+	
+	int overlay_id = -1;
+	int overlay_transparency = 0;
 	int set_transparency_result = -1;
-	if (argc == 2)
+
+	if(info.Length() >= 2)
 	{
-		int overlay_id = -1;
-		int overlay_transparency;
-
-		if (napi_get_value_int32(env, argv[0], &overlay_id) != napi_ok)
-			return failed_ret;
-
-		if (napi_get_value_int32(env, argv[1], &overlay_transparency) != napi_ok)
-			return failed_ret;
+		overlay_id = info[0].ToNumber();
+		overlay_transparency = info[1].ToNumber();
 		
-		if(overlay_transparency < 0 || overlay_transparency> 255)
-		{
-			overlay_transparency = 0;
-		}
-
-		log_cout << "APP: SetOverlayTransparency " << overlay_transparency << std::endl;
+		log_cout << "APP: SetOverlayTransparency " << overlay_id << ", " << overlay_transparency <<  std::endl;
 		set_transparency_result = set_overlay_transparency(overlay_id, overlay_transparency);
 	}
 
-	if (napi_create_int32(env, set_transparency_result, &ret) != napi_ok)
-		return failed_ret;
-
-	return ret;
+	return Napi::Number::New(env, set_transparency_result);
 }
 
-napi_value SetOverlayVisibility(napi_env env, napi_callback_info args)
+Napi::Value SetOverlayVisibility(const Napi::CallbackInfo& info)
 {
-	napi_value ret = nullptr;
-
-	size_t argc = 2;
-	napi_value argv[2];
-
-	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok)
-		return failed_ret;
-
+	Napi::Env env = info.Env();
+	
 	int set_overlay_visibility_result = -1;
-	if (argc == 2)
+	int overlay_id = -1;
+	bool overlay_visibility;
+
+	if(info.Length() >= 2)
 	{
-		int overlay_id = -1;
-		bool overlay_visibility;
+		overlay_id = info[0].ToNumber();
 
-		if (napi_get_value_int32(env, argv[0], &overlay_id) != napi_ok)
-			return failed_ret;
-
-		if (napi_get_value_bool(env, argv[1], &overlay_visibility) != napi_ok)
-			return failed_ret;
+		overlay_visibility = info[1].ToBoolean();
 
 		log_cout << "APP: SetOverlayVisibility " << overlay_visibility << std::endl;
 		set_overlay_visibility_result = set_overlay_visibility(overlay_id, overlay_visibility);
 	}
 
-	if (napi_create_int32(env, set_overlay_visibility_result, &ret) != napi_ok)
-		return failed_ret;
-
-	return ret;
+	return Napi::Number::New(env, set_overlay_visibility_result);
 }
 
-napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
+Napi::Value SetOverlayAutohide(const Napi::CallbackInfo& info)
 {
-	napi_value ret = nullptr;
-
-	size_t argc = 3;
-	napi_value argv[3];
-
-	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok)
-		return failed_ret;
-
+	Napi::Env env = info.Env();
+	
+	int overlay_id = -1;
+	int autohide_seconds = 0;
+	int autohide_transparency = 0;
 	int set_autohide_result = -1;
-	if (argc == 2 || argc == 3)
+
+	if(info.Length() >= 2)
 	{
-		int overlay_id = -1;
-		int autohide_seconds = 0;
-		int autohide_transparency = 0;
-
-		if (napi_get_value_int32(env, argv[0], &overlay_id) != napi_ok)
-			return failed_ret;
-
-		if (napi_get_value_int32(env, argv[1], &autohide_seconds) != napi_ok)
-			return failed_ret;
+		overlay_id = info[0].ToNumber();
+		autohide_seconds = info[1].ToNumber();
 		
-		if(autohide_seconds < 0 )
+		if(info.Length() == 3)
 		{
-			autohide_seconds  = 0;
+			autohide_transparency = info[2].ToNumber();
 		}
-
-		if( argc == 3 )
-		{
-			if (napi_get_value_int32(env, argv[2], &autohide_transparency) != napi_ok)
-				return failed_ret;
-
-			if(autohide_transparency > 255 || autohide_transparency < 0) 
-			{
-				autohide_transparency = 0;
-			}
-		}
-
-		log_cout << "APP: SetOverlayAutohide "<< autohide_seconds<< ", " << autohide_transparency <<  std::endl;
+		
+		log_cout << "APP: SetOverlayAutohide " << overlay_id << ", " << autohide_seconds<< ", " << autohide_transparency <<  std::endl;
 		set_autohide_result = set_overlay_autohide(overlay_id, autohide_seconds, autohide_transparency);
 	}
 
-	if (napi_create_int32(env, set_autohide_result, &ret) != napi_ok)
-		return failed_ret;
-
-	return ret;
+	return Napi::Number::New(env, set_autohide_result);
 }
 
-napi_value init(napi_env env, napi_value exports)
+Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
-	napi_value fn;
+/*	exports.Set(Napi::String::New(env, "start"), Napi::Function::New(env, Start));
+	exports.Set(Napi::String::New(env, "stop"), Napi::Function::New(env, Stop));
+	exports.Set(Napi::String::New(env, "getStatus"), Napi::Function::New(env, GetStatus));
+	exports.Set(Napi::String::New(env, "getCount"), Napi::Function::New(env, GetOverlaysCount));
+	exports.Set(Napi::String::New(env, "getIds"), Napi::Function::New(env, GetOverlaysIDs));
 
-	if (napi_create_function(env, nullptr, 0, Start, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "start", fn) != napi_ok)
-		return failed_ret;
 
-	if (napi_create_function(env, nullptr, 0, Stop, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "stop", fn) != napi_ok)
-		return failed_ret;
+	exports.Set(Napi::String::New(env, "getInfo"), Napi::Function::New(env, GetOverlayInfo));
+	exports.Set(Napi::String::New(env, "show"), Napi::Function::New(env, ShowOverlays));	
+	exports.Set(Napi::String::New(env, "hide"), Napi::Function::New(env, HideOverlays));
+	exports.Set(Napi::String::New(env, "addHWND"), Napi::Function::New(env, AddOverlayHWND));
+	*/
+	exports.Set(Napi::String::New(env, "setPosition"), Napi::Function::New(env, SetOverlayPosition));
+	exports.Set(Napi::String::New(env, "paintOverlay"), Napi::Function::New(env, PaintOverlay));
 
-	if (napi_create_function(env, nullptr, 0, GetStatus, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "getStatus", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, GetOverlaysCount, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "getCount", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, GetOverlaysIDs, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "getIds", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, GetOverlayInfo, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "getInfo", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, ShowOverlays, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "show", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, HideOverlays, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "hide", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, AddOverlayHWND, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "addHWND", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, SetOverlayPosition, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "setPosition", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, PaintOverlay, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "paintOverlay", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, SetOverlayTransparency, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "setTransparency", fn) != napi_ok)
-		return failed_ret;
-	
-	if (napi_create_function(env, nullptr, 0, SetOverlayVisibility, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "setVisibility", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, SetOverlayAutohide, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "setAutohide", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, RemoveOverlay, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "remove", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, SwitchToInteractive, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "switchInteractiveMode", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, SetKeyboardCallback, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "setKeyboardCallback", fn) != napi_ok)
-		return failed_ret;
-
-	if (napi_create_function(env, nullptr, 0, SetMouseCallback, nullptr, &fn) != napi_ok)
-		return failed_ret;
-	if (napi_set_named_property(env, exports, "setMouseCallback", fn) != napi_ok)
-		return failed_ret;
-
+	exports.Set(Napi::String::New(env, "setTransparency"), Napi::Function::New(env, SetOverlayTransparency));
+	exports.Set(Napi::String::New(env, "setVisibility"), Napi::Function::New(env, SetOverlayVisibility));
+	exports.Set(Napi::String::New(env, "setAutohide"), Napi::Function::New(env, SetOverlayAutohide));
+	/*
+	exports.Set(Napi::String::New(env, "remove"), Napi::Function::New(env, RemoveOverlay));
+	exports.Set(Napi::String::New(env, "switchInteractiveMode"), Napi::Function::New(env, SwitchToInteractive));
+	exports.Set(Napi::String::New(env, "setKeyboardCallback"), Napi::Function::New(env, SetKeyboardCallback));
+	exports.Set(Napi::String::New(env, "setMouseCallback"), Napi::Function::New(env, SetMouseCallback));
+*/	
 	return exports;
 }
 
-NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
+NODE_API_MODULE(NODE_GYP_MODULE_NAME, Init)

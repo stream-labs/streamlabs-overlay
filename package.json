@@ -21,18 +21,8 @@
   "scripts": {
     "install": "",
     "pack": "node scripts/pack.js",
-    "build": "node-gyp configure --msvs_version=2017 && node-gyp rebuild --target=5.0.3 --dist-url=https://atom.io/download/atom-shell",
+    "build": "node-gyp configure --msvs_version=2017 && node-gyp rebuild --target=5.0.6 --dist-url=https://atom.io/download/atom-shell",
     "test": ""
-  },
-  "binary": {
-    "module_name": "streamlabs_overlay",
-    "module_path": "./build/{configuration}/{node_abi}-{napi_build_version}-{platform}-{arch}/",
-    "remote_path": "./{module_name}/v{version}/{configuration}/",
-    "package_name": "{module_name}-v{version}-{node_abi}-{napi_build_version}-{platform}-{arch}.tar.gz",
-    "host": "https://streamlabs-overlay-binary.s3-us-east-1.amazonaws.com",
-    "napi_versions": [
-      1
-    ]
   },
   "prettier": {
     "singleQuote": true,
@@ -47,15 +37,15 @@
     "build/*/*/streamlabs_overlay.node"
   ],
   "devDependencies": {
-    "@types/node": "^11.10.4",
-    "aws-sdk": "^2.x",
-    "electron": "^5.0.3",
+    "@types/node": "^10.10.1",
+    "electron": "^5.0.6",
     "fs-extra": "7.0.1",
     "prettier": "^1.16.4",
     "standard-version": "^5.0.1",
-    "node-gyp": "^4.0.0",
+    "node-gyp": "^5.0.1",
     "tar": "^4.4.8"
   },
   "dependencies": {
+    "node-addon-api": "^1.6.3"
   }
 }

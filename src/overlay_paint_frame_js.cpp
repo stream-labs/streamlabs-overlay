@@ -28,3 +28,29 @@ void overlay_frame_js::clean()
 {
     napi_delete_reference(env_ref, array_cache_ref);
 }
+
+overlay_frame_napi::overlay_frame_napi(Napi::Env env, napi_value array)
+{
+    env_ref = env;
+    array_cache_ref = Napi::Persistent(array);
+}
+
+void overlay_frame_napi::get_array( void ** array_ref, size_t * array_size)
+{
+    napi_status status = napi_ok;
+    napi_value buffer_cache = nullptr;;
+    try {
+        if( napi_get_reference_value(env_ref, array_cache_ref, &buffer_cache) == napi_ok)
+        {
+            status = napi_get_buffer_info(env_ref, buffer_cache, array_ref, array_size) ;
+        }
+    } catch (...) {
+    }
+
+    return;
+}
+
+void overlay_frame_napi::clean()
+{
+    napi_delete_reference(env_ref, array_cache_ref);
+}

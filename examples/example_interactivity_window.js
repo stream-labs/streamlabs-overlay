@@ -55,39 +55,23 @@ function createWindow() {
 	});
 
 	streamlabs_overlays.setMouseCallback((eventType, x, y, modifier) => {
-		console.log('get first MouseCallback: ' + eventType + ', ' + x + ', ' + y + ', ' + modifier);
+		console.log('get MouseCallback: ' + eventType + ', ' + x + ', ' + y + ', ' + modifier);
 		return 1;
 	});	
 
 	streamlabs_overlays.setKeyboardCallback((eventType, keyCodeValue) => {
-		//console.log('get KeyboardCallback: '+ eventType +', '+ keyCodeValue + ', '+ BrowserWindow.getAllWindows[0].getNativeWindowHandle());
 		console.log('get KeyboardCallback: ' + eventType + ', ' + keyCodeValue);
-		//console.log('get KeyboardCallback: app ' + app.getPath("test") );
 
-		//BrowserWindow.getAllWindows()[0].webContents.sendInputEvent({type:eventType, x:10, y:10, keyCode:keyCodeValue});
 		try {
 			win.webContents.sendInputEvent({ type: eventType, keyCode: keyCodeValue });
-			//win.webContents.invalidate();
-			//win.loadURL(`https://www.google.com/search?q=`+keyCodeValue);
-			//let hwnd = win.getNativeWindowHandle();
-			//console.log(hwnd);
 		} catch (error) {
 			console.log(error);
 		}
 
 		if (keyCodeValue == 38) {
-			streamlabs_overlays.switchInteractiveMode(false);
-		} else {
+		//	streamlabs_overlays.switchInteractiveMode(false);
+		} 
 
-			// win.focusOnWebView();
-			// win.webContents.sendInputEvent({type:eventType, keyCode:keyCodeValue});
-			// //win.loadURL(`https://www.google.com/search?q=2`)
-			// win.webContents.invalidate();
-		}
-		// win.focus();
-		//win.webContents.sendInputEvent({type:'keyDown', x:10, y:10, keyCode:'A'});
-		//win.webContents.sendInputEvent({type:'contextMenu', x:10, y:10});
-		//win.webContents.sendInputEvent({type:'char', x:10, y:10, keyCode:'A'});		
 		return 2;
 	});
 

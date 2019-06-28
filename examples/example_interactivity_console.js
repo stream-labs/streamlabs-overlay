@@ -1,5 +1,4 @@
-//const streamlabs_overlays = require('../build-tmp-napi-v1/Release/streamlabs_overlay.node')
-const streamlabs_overlays = require('../build/Release/streamlabs_overlay.node')
+const streamlabs_overlays = require('../build/Debug/streamlabs_overlay.node')
 
 console.log('Call start');
 streamlabs_overlays.start();

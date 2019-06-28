@@ -3,7 +3,8 @@
     {
       "target_name": "streamlabs_overlay",
       "include_dirs": [
-        "include"
+        "./include",
+        "<!@(node -p \"require('node-addon-api').include\")"
       ],
       "sources": [
         "src\*.cpp"
