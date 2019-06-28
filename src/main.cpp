@@ -19,21 +19,18 @@ UINT_PTR OVERLAY_UPDATE_TIMER = 0;
 
 bool set_dpi_awareness()
 {
-	HMODULE user32_dll = LoadLibraryA("user32.dll");
-	if (!user32_dll)
+	HMODULE user32_dll = LoadLibrary(L"user32.dll");
+	if (user32_dll)
 	{
-		return false;
+		typedef DPI_AWARENESS_CONTEXT(WINAPI * SetThreadDpiAwarenessContext_Fn)(DPI_AWARENESS_CONTEXT);
+		SetThreadDpiAwarenessContext_Fn pfnSetDPIAwareness =
+		    (SetThreadDpiAwarenessContext_Fn)GetProcAddress(user32_dll, "SetThreadDpiAwarenessContext");
+		if (pfnSetDPIAwareness)
+		{
+			pfnSetDPIAwareness(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+		}
+		FreeLibrary(user32_dll);
 	}
-
-	typedef DPI_AWARENESS_CONTEXT(WINAPI * SetThreadDpiAwarenessContext_Fn)(DPI_AWARENESS_CONTEXT);
-	SetThreadDpiAwarenessContext_Fn pfnSetDPIAwareness =
-	    (SetThreadDpiAwarenessContext_Fn)GetProcAddress(user32_dll, "SetThreadDpiAwarenessContext");
-	if (!pfnSetDPIAwareness)
-	{
-		return false;
-	}
-
-	pfnSetDPIAwareness(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
 	return true;
 }
