@@ -18,6 +18,7 @@
               "UNICODE",
               "_UNICODE "
             ],
+            "libraries": ['-ld2d1.lib '],
             "msvs_settings": {
               "VCCLCompilerTool": {
                 "WarningLevel": 3,

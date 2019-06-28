@@ -26,7 +26,7 @@ class smg_overlays
 	std::list<std::shared_ptr<overlay_window>> showing_windows;
 
 	smg_overlays();
-	virtual ~smg_overlays(){};
+	virtual ~smg_overlays();
 	void init();
 	void deinit();
 
@@ -49,10 +49,7 @@ class smg_overlays
 	void quit();
 
 	//redirect user input
-	HIMC our_IMC = nullptr;
-	HIMC original_IMC = nullptr;
 	bool is_intercepting = false;
-	HWND game_hwnd = nullptr;
 	void hook_user_input();
 	void unhook_user_input();
 
@@ -62,5 +59,9 @@ class smg_overlays
 	//events
 	void on_update_timer();
 
-	void draw_overlay_gdi(HWND& hWnd, bool g_bDblBuffered);
+	void draw_overlay(HWND& hWnd);
+
+	BOOL g_bDblBuffered = FALSE;
+	ID2D1Factory* m_pDirect2dFactory;
+	bool direct2d_paint = true;
 };

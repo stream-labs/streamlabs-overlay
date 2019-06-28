@@ -15,8 +15,6 @@ DWORD overlays_thread_id = 0;
 sl_overlay_thread_state thread_state = sl_overlay_thread_state::destoyed;
 std::mutex thread_state_mutex;
 
-BOOL g_bDblBuffered = FALSE;
-
 UINT_PTR OVERLAY_UPDATE_TIMER = 0;
 
 DWORD WINAPI overlay_thread_func(void* data)
@@ -24,15 +22,14 @@ DWORD WINAPI overlay_thread_func(void* data)
 	app_settings = std::make_shared<smg_settings>();
 
 	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
+ 	
+	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
 	// Init COM and double-buffered painting
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE | COINIT_SPEED_OVER_MEMORY);
 	
 	if (SUCCEEDED(hr))
 	{
-		hr = BufferedPaintInit();
-		g_bDblBuffered = SUCCEEDED(hr);
-
 		app->init();
 
 		OVERLAY_UPDATE_TIMER = SetTimer(0, 0, app_settings->redraw_timeout, (TIMERPROC) nullptr);
@@ -45,14 +42,14 @@ DWORD WINAPI overlay_thread_func(void* data)
 		MSG msg;
 		while (GetMessage(&msg, nullptr, 0, 0))
 		{
-			//log_cout << "APP: wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
+			//log_debug << "APP: wnd proc msg id " << msg.message << " for hwnd " << msg.hwnd << std::endl;
 			bool catched = false;
 
 			switch (msg.message)
 			{
 			case WM_SLO_OVERLAY_CLOSE:
 			{
-				log_cout << "APP: WM_SLO_OVERLAY_CLOSE" << (int)msg.wParam << std::endl;
+				log_cout << "APP: WM_SLO_OVERLAY_CLOSE " << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
 				catched = true;
@@ -67,6 +64,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 				{
 					if (overlay != nullptr)
 					{
+						log_cout << "APP: WM_SLO_OVERLAY_POSITION " << new_rect->left << " " << new_rect->top  << std::endl;
 						overlay->apply_new_rect(*new_rect);
 					}
 					delete new_rect;
@@ -78,6 +76,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			{
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				if(overlay) {
+					overlay->create_render_target(app->m_pDirect2dFactory);
 					overlay->create_window_content_buffer();
 				}
 			}
@@ -114,8 +113,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 				if (overlay != nullptr)
 				{
-					int autohide_timeout = msg.lParam >> 10;
-					int autohide_transparency = msg.lParam & 0xFFFFFFF00;
+					const int autohide_timeout = (int)msg.lParam >> 10;
+					const int autohide_transparency = (int)msg.lParam % 512;
 					overlay->set_autohide(autohide_timeout, autohide_transparency);
 				}
 				catched = true;
@@ -143,8 +142,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			}
 			break;
 			case WM_TIMER:
-				//log_cout << "APP: WM_TIMER id = " << (int)msg.wParam << std::endl;
-				if ((int)msg.wParam == OVERLAY_UPDATE_TIMER)
+				if (static_cast<int>(msg.wParam) == OVERLAY_UPDATE_TIMER)
 				{
 					app->on_update_timer();
 					catched = true;
@@ -160,9 +158,6 @@ DWORD WINAPI overlay_thread_func(void* data)
 				DispatchMessage(&msg);
 			}
 		}
-
-		if (g_bDblBuffered)
-			BufferedPaintUnInit();
 
 		KillTimer(0, OVERLAY_UPDATE_TIMER);
 		OVERLAY_UPDATE_TIMER = 0;
@@ -230,7 +225,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	break;
 	case WM_PAINT:
 	{
-		smg_overlays::get_instance()->draw_overlay_gdi(hWnd, g_bDblBuffered);
+		smg_overlays::get_instance()->draw_overlay(hWnd);
 		return 0;
 	}
 	break;

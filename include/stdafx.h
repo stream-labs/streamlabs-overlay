@@ -27,6 +27,10 @@
 
 #include <uxtheme.h> // for dbl-buffered painting
 
+#include <d2d1.h>
+#include <d2d1_1.h>
+#include <d2d1helper.h>
+
 /*
 Concepts:
 overlay window - window drawing over all other windows 

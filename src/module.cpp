@@ -10,6 +10,9 @@
 #include <node_api.h>
 #include "overlay_logging.h"
 
+#include "overlay_paint_frame.h"
+#include "overlay_paint_frame_js.h"
+
 const napi_value failed_ret = nullptr;
 
 napi_value Start(napi_env env, napi_callback_info args)
@@ -217,7 +220,7 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 	if (is_function == napi_function)
 	{
 		//save reference and go to creating threadsafe function
-		if (napi_create_reference(env, argv[0], 0, &user_keyboard_callback_info->js_this) != napi_ok)
+		if (napi_create_reference(env, argv[0], 1, &user_keyboard_callback_info->js_this) != napi_ok)
 			return failed_ret;
 
 		user_keyboard_callback_info->callback_init(env, args, "func_keyboard");
@@ -255,7 +258,7 @@ napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 	if (is_function == napi_function)
 	{
 		//save reference and go to creating threadsafe function
-		if (napi_create_reference(env, argv[0], 0, &user_mouse_callback_info->js_this) != napi_ok)
+		if (napi_create_reference(env, argv[0], 1, &user_mouse_callback_info->js_this) != napi_ok)
 			return failed_ret;
 
 		user_mouse_callback_info->callback_init(env, args, "func_mouse");
@@ -390,22 +393,16 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 			return failed_ret;
 		if (napi_get_value_int32(env, argv[2], &height) != napi_ok)
 			return failed_ret;
+		
 
-		void* incoming_array = nullptr;
-		size_t array_lenght = 0;
-		if (napi_get_buffer_info(env, argv[3], &incoming_array, &array_lenght) != napi_ok)
-			return failed_ret;
-
-		if (incoming_array != nullptr)
+		overlay_frame_js * for_caching_js = new overlay_frame_js(env, argv[3]);
+		std::shared_ptr<overlay_frame> for_caching = std::make_shared<overlay_frame>(for_caching_js);
+		
+		if(width != 0 && height != 0)
 		{
-			log_cout << "APP: PaintOverlay " << overlay_id << ", size " << width << "x" << height << " and buffer size " << array_lenght << std::endl;
-
-			painted = paint_overlay_from_buffer(overlay_id, incoming_array, array_lenght, width, height);
-			incoming_array = nullptr;
-		} else
-		{
-			log_cout << "APP: PaintOverlay failed to get buffer" << argc << std::endl;
+			painted =  paint_overlay_cached_buffer(overlay_id, for_caching, width, height);
 		}
+
 	}
 
 	if (napi_create_int32(env, painted, &ret) != napi_ok)
@@ -487,8 +484,8 @@ napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
 {
 	napi_value ret = nullptr;
 
-	size_t argc = 2;
-	napi_value argv[2];
+	size_t argc = 3;
+	napi_value argv[3];
 
 	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok)
 		return failed_ret;
@@ -513,8 +510,9 @@ napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
 
 		if( argc == 3 )
 		{
-			if (napi_get_value_int32(env, argv[1], &autohide_transparency) != napi_ok)
+			if (napi_get_value_int32(env, argv[2], &autohide_transparency) != napi_ok)
 				return failed_ret;
+
 			if(autohide_transparency > 255 || autohide_transparency < 0) 
 			{
 				autohide_transparency = 0;

@@ -129,5 +129,5 @@ function step_1() {
 
 	streamlabs_overlays.switchInteractiveMode(true);
 
-	setTimeout(step_2, 5000);
+	setTimeout(step_2, 10000);
 }

@@ -133,16 +133,22 @@ struct wm_event_t
 	WPARAM wParam;
 	LPARAM lParam;
 
-	wm_event_t(WPARAM _wParam, LPARAM _lParam) : wParam(_wParam), lParam(_lParam) {}
+	wm_event_t(WPARAM _wParam, LPARAM _lParam) noexcept : wParam(_wParam), lParam(_lParam) {}
 };
 
 callback_method_t::callback_method_t()
 {
-	log_cout << "APP: callback_method_t()" << std::endl;
 	ready = false;
 }
 
-void callback_method_t::callback_method_reset()
+callback_method_t ::~callback_method_t()
+{
+	log_debug << "APP: ~callback_method_t" << std::endl;
+	napi_delete_reference(env_this, js_this);
+	napi_async_destroy(env_this, async_context);
+}
+
+void callback_method_t::callback_method_reset() noexcept
 {
 	initialized = false;
 	completed = false;
@@ -151,55 +157,14 @@ void callback_method_t::callback_method_reset()
 	result_int = 0;
 }
 
-napi_status callback_method_t::callback_method_call_tsf(bool block)
-{
-	log_cout << "APP: callback_method_call_tsf " << std::endl;
-
-	initialized = true;
-	completed = false;
-	success = false;
-
-	napi_status status = napi_ok;
-
-	if (status == napi_ok)
-	{
-		if (block)
-		{
-			while (!completed)
-			{
-			}
-		}
-	}
-
-	return status;
-}
-
-napi_status callback_method_t::set_args_and_call_callback(napi_env env, napi_value callback, napi_value* result)
-{
-	napi_value local_this;
-	napi_status status;
-	log_cout << "APP: set_args_and_call_callback" << std::endl;
-
-	status = set_callback_args_values(env);
-	if (status == napi_ok)
-	{
-		status = napi_get_reference_value(env, js_this, &local_this);
-		if (status == napi_ok)
-		{
-			status = napi_call_function(env, local_this, callback, get_argc_to_cb(), get_argv_to_cb(), result);
-		}
-	}
-	return status;
-}
-
 bool is_intercept_active = false;
-bool callback_method_t::set_intercept_active(bool new_state)
+bool callback_method_t::set_intercept_active(bool new_state) noexcept
 {
 	is_intercept_active = new_state;
 	return new_state;
 }
 
-bool callback_method_t::get_intercept_active()
+bool callback_method_t::get_intercept_active() noexcept
 {
 	return is_intercept_active;
 }
@@ -248,7 +213,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 	{
 		if (status == napi_ok)
 		{
-			LPKBDLLHOOKSTRUCT key = (LPKBDLLHOOKSTRUCT)event->lParam;
+			const LPKBDLLHOOKSTRUCT key = reinterpret_cast<LPKBDLLHOOKSTRUCT>(event->lParam);
 			const std::string& keyCode = translate_to_electron_keycode(key->vkCode);
 			status = napi_create_string_utf8(env, keyCode.c_str(), keyCode.size(), &argv_to_cb[1]);
 		}
@@ -362,7 +327,7 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 	if (to_send.size() > 256)
 	{
 		log_cout << "APP: Failed to send too many events, will switch input interception off" << std::endl;
-		switch_input();
+		ret = switch_input();
 	}
 
 	return ret;
@@ -375,8 +340,8 @@ int switch_input()
 	int ret = -1;
 
 	callback_method_t::set_intercept_active(!callback_method_t::get_intercept_active());
-	
-	switch_overlays_user_input(callback_method_t::get_intercept_active());
+
+	ret = switch_overlays_user_input(callback_method_t::get_intercept_active());
 
 	return ret;
 }
@@ -420,10 +385,10 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 {
 	size_t argc = 1;
 	napi_value argv[1];
-	napi_value async_name;
+	napi_value async_name = nullptr;
 	napi_status status;
 
-	status = napi_get_cb_info(env, info, &argc, argv, NULL, 0);
+	status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
 
 	if (status == napi_ok)
 	{
@@ -482,9 +447,24 @@ void callback_method_t::async_callback()
 				status = set_callback_args_values(env_this);
 				if (status == napi_ok)
 				{
-					napi_create_object(env_this, &recv);
-					status = napi_make_callback(
-					    env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
+					status = napi_create_object(env_this, &recv);
+					if (status == napi_ok)
+					{
+						if (async_context)
+						{
+						
+							status = napi_make_callback(
+								env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
+						} else
+						{
+							napi_value global;
+							status = napi_get_global(env_this, &global);
+							if (status == napi_ok)
+							{
+								status = napi_call_function(env_this, global, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -494,7 +474,7 @@ void callback_method_t::async_callback()
 
 	if (status != napi_ok)
 	{
-		log_cout << "APP: failed async_callback to send callback with status " << status << std::endl;
+		log_error << "APP: failed async_callback to send callback with status " << status << std::endl;
 		while (to_send.size() > 0)
 		{
 			to_send.pop();
@@ -512,7 +492,7 @@ void callback_keyboard_method_t::set_callback()
 	set_callback_for_keyboard_input(&use_callback_keyboard);
 }
 
-napi_status napi_create_and_set_named_property(napi_env& env, napi_value& obj, const char* value_name, const int value)
+napi_status napi_create_and_set_named_property(napi_env& env, napi_value& obj, const char* value_name, const int value) noexcept
 {
 	napi_status status;
 	napi_value set_value;

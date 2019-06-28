@@ -242,10 +242,56 @@ int WINAPI add_overlay_by_hwnd(const void* hwnd_array, size_t array_size)
 	return ret;
 }
 
+int WINAPI paint_overlay_cached_buffer(int overlay_id, std::shared_ptr<overlay_frame> frame, int width, int height)
+{
+	int ret = -1;
+	{
+		thread_state_mutex.lock();
+		if (thread_state != sl_overlay_thread_state::runing)
+		{
+			thread_state_mutex.unlock();
+		} else
+		{
+			std::shared_ptr<overlay_window> overlay = smg_overlays::get_instance()->get_overlay_by_id(overlay_id);
+			if( overlay != nullptr )
+			{
+				RECT overlay_rect = overlay->get_rect();
+
+				if ( width == overlay_rect.right - overlay_rect.left && height == overlay_rect.bottom - overlay_rect.top)
+				{
+					if (smg_overlays::get_instance()->showing_overlays)
+					{
+						if( overlay->set_cached_image(frame) )
+							ret = 1;
+					}
+				} else {
+					log_debug << "APP: paint_overlay_cached_buffer " << overlay_id << ", size " << width << "x" << height << ", for "<< overlay_rect.right - overlay_rect.left << "x" << overlay_rect.bottom - overlay_rect.top << std::endl;
+
+					RECT* n = new RECT;
+					n->left = overlay_rect.left;
+					n->top = overlay_rect.top;
+					n->right = overlay_rect.left+width;
+					n->bottom = overlay_rect.top+height;
+					
+					if(!PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_POSITION, overlay_id, reinterpret_cast<LPARAM>(n)))
+					{
+						delete n;
+						n = nullptr;
+					}
+
+					ret = 0;
+				}
+			}
+		
+			thread_state_mutex.unlock();
+		}
+	}
+	return ret;
+}
+
 int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, size_t array_size, int width, int height)
 {
 	int ret = -1;
-	if (true)
 	{
 		thread_state_mutex.lock();
 		if (thread_state != sl_overlay_thread_state::runing)
