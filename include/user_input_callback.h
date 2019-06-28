@@ -62,11 +62,8 @@ struct callback_method_t
 	};
 
 	callback_method_t();
-	virtual ~callback_method_t()
-	{
-		napi_delete_reference(env_this, js_this);
-		napi_async_destroy(env_this, async_context);
-	}
+	
+	virtual ~callback_method_t() ;
 	callback_method_t(const callback_method_t&) = delete;
 	callback_method_t& operator=(const callback_method_t&) = delete;
 	callback_method_t(callback_method_t&&) = delete;

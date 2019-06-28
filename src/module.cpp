@@ -220,7 +220,7 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 	if (is_function == napi_function)
 	{
 		//save reference and go to creating threadsafe function
-		if (napi_create_reference(env, argv[0], 0, &user_keyboard_callback_info->js_this) != napi_ok)
+		if (napi_create_reference(env, argv[0], 1, &user_keyboard_callback_info->js_this) != napi_ok)
 			return failed_ret;
 
 		user_keyboard_callback_info->callback_init(env, args, "func_keyboard");
@@ -258,7 +258,7 @@ napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 	if (is_function == napi_function)
 	{
 		//save reference and go to creating threadsafe function
-		if (napi_create_reference(env, argv[0], 0, &user_mouse_callback_info->js_this) != napi_ok)
+		if (napi_create_reference(env, argv[0], 1, &user_mouse_callback_info->js_this) != napi_ok)
 			return failed_ret;
 
 		user_mouse_callback_info->callback_init(env, args, "func_mouse");

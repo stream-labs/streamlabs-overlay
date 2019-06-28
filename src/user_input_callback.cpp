@@ -133,12 +133,19 @@ struct wm_event_t
 	WPARAM wParam;
 	LPARAM lParam;
 
-	wm_event_t(WPARAM _wParam, LPARAM _lParam) noexcept: wParam(_wParam), lParam(_lParam) {}
+	wm_event_t(WPARAM _wParam, LPARAM _lParam) noexcept : wParam(_wParam), lParam(_lParam) {}
 };
 
-callback_method_t::callback_method_t() 
+callback_method_t::callback_method_t()
 {
 	ready = false;
+}
+
+callback_method_t ::~callback_method_t()
+{
+	log_debug << "APP: ~callback_method_t" << std::endl;
+	napi_delete_reference(env_this, js_this);
+	napi_async_destroy(env_this, async_context);
 }
 
 void callback_method_t::callback_method_reset() noexcept
@@ -148,23 +155,6 @@ void callback_method_t::callback_method_reset() noexcept
 	success = false;
 	error = 0;
 	result_int = 0;
-}
-
-napi_status callback_method_t::set_args_and_call_callback(napi_env env, napi_value callback, napi_value* result)
-{
-	napi_value local_this;
-	log_cout << "APP: set_args_and_call_callback" << std::endl;
-
-	napi_status  status = set_callback_args_values(env);
-	if (status == napi_ok)
-	{
-		status = napi_get_reference_value(env, js_this, &local_this);
-		if (status == napi_ok)
-		{
-			status = napi_call_function(env, local_this, callback, get_argc_to_cb(), get_argv_to_cb(), result);
-		}
-	}
-	return status;
 }
 
 bool is_intercept_active = false;
@@ -350,7 +340,7 @@ int switch_input()
 	int ret = -1;
 
 	callback_method_t::set_intercept_active(!callback_method_t::get_intercept_active());
-	
+
 	ret = switch_overlays_user_input(callback_method_t::get_intercept_active());
 
 	return ret;
@@ -457,9 +447,24 @@ void callback_method_t::async_callback()
 				status = set_callback_args_values(env_this);
 				if (status == napi_ok)
 				{
-					napi_create_object(env_this, &recv);
-					status = napi_make_callback(
-					    env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
+					status = napi_create_object(env_this, &recv);
+					if (status == napi_ok)
+					{
+						if (async_context)
+						{
+						
+							status = napi_make_callback(
+								env_this, async_context, recv, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
+						} else
+						{
+							napi_value global;
+							status = napi_get_global(env_this, &global);
+							if (status == napi_ok)
+							{
+								status = napi_call_function(env_this, global, js_cb, get_argc_to_cb(), get_argv_to_cb(), &ret_value);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -469,7 +474,7 @@ void callback_method_t::async_callback()
 
 	if (status != napi_ok)
 	{
-		log_cout << "APP: failed async_callback to send callback with status " << status << std::endl;
+		log_error << "APP: failed async_callback to send callback with status " << status << std::endl;
 		while (to_send.size() > 0)
 		{
 			to_send.pop();
