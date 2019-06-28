@@ -17,17 +17,38 @@ std::mutex thread_state_mutex;
 
 UINT_PTR OVERLAY_UPDATE_TIMER = 0;
 
+bool set_dpi_awareness()
+{
+	HMODULE user32_dll = LoadLibraryA("user32.dll");
+	if (!user32_dll)
+	{
+		return false;
+	}
+
+	typedef DPI_AWARENESS_CONTEXT(WINAPI * SetThreadDpiAwarenessContext_Fn)(DPI_AWARENESS_CONTEXT);
+	SetThreadDpiAwarenessContext_Fn pfnSetDPIAwareness =
+	    (SetThreadDpiAwarenessContext_Fn)GetProcAddress(user32_dll, "SetThreadDpiAwarenessContext");
+	if (!pfnSetDPIAwareness)
+	{
+		return false;
+	}
+
+	pfnSetDPIAwareness(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+
+	return true;
+}
+
 DWORD WINAPI overlay_thread_func(void* data)
 {
 	app_settings = std::make_shared<smg_settings>();
 
 	std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
- 	
-	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+
+	set_dpi_awareness();
 
 	// Init COM and double-buffered painting
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE | COINIT_SPEED_OVER_MEMORY);
-	
+
 	if (SUCCEEDED(hr))
 	{
 		app->init();
@@ -64,7 +85,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 				{
 					if (overlay != nullptr)
 					{
-						log_cout << "APP: WM_SLO_OVERLAY_POSITION " << new_rect->left << " " << new_rect->top  << std::endl;
+						log_cout << "APP: WM_SLO_OVERLAY_POSITION " << new_rect->left << " " << new_rect->top << std::endl;
 						overlay->apply_new_rect(*new_rect);
 					}
 					delete new_rect;
@@ -75,7 +96,8 @@ DWORD WINAPI overlay_thread_func(void* data)
 			case WM_SLO_OVERLAY_SIZE_CHANGED:
 			{
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
-				if(overlay) {
+				if (overlay)
+				{
 					overlay->create_render_target(app->m_pDirect2dFactory);
 					overlay->create_window_content_buffer();
 				}
@@ -89,7 +111,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 				if (overlay != nullptr)
 				{
 					overlay->set_transparency((int)msg.lParam);
-				} 
+				}
 				catched = true;
 			}
 			break;
@@ -100,9 +122,9 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 				if (overlay != nullptr)
 				{
-					
+
 					overlay->set_visibility((bool)msg.lParam, app->showing_overlays);
-				} 
+				}
 				catched = true;
 			}
 			break;
@@ -176,7 +198,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 	overlays_thread = nullptr;
 	overlays_thread_id = 0;
 	thread_state = sl_overlay_thread_state::destoyed;
-	
+
 	thread_state_mutex.unlock();
 
 	return 0;
@@ -192,9 +214,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 	{
 		auto overlay = smg_overlays::get_instance()->get_overlay_by_window(hWnd);
-		if(overlay) {
-			PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SIZE_CHANGED, overlay->id, NULL);		
-		}		
+		if (overlay)
+		{
+			PostThreadMessage(overlays_thread_id, WM_SLO_OVERLAY_SIZE_CHANGED, overlay->id, NULL);
+		}
 	}
 	break;
 	case WM_CLOSE:
