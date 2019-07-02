@@ -27,7 +27,7 @@ bool set_dpi_awareness()
 		    (SetThreadDpiAwarenessContext_Fn)GetProcAddress(user32_dll, "SetThreadDpiAwarenessContext");
 		if (pfnSetDPIAwareness)
 		{
-			pfnSetDPIAwareness(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+			pfnSetDPIAwareness(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 		}
 		FreeLibrary(user32_dll);
 	}
@@ -82,7 +82,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 				{
 					if (overlay != nullptr)
 					{
-						log_cout << "APP: WM_SLO_OVERLAY_POSITION " << new_rect->left << " " << new_rect->top << std::endl;
+						log_debug << "APP: WM_SLO_OVERLAY_POSITION " << new_rect->left << " " << new_rect->top << std::endl;
 						overlay->apply_new_rect(*new_rect);
 					}
 					delete new_rect;

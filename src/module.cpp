@@ -123,7 +123,7 @@ napi_value AddOverlayHWND(napi_env env, napi_callback_info args)
 			incoming_array = nullptr;
 		} else
 		{
-			log_cout << "APP: AddOverlayHWND failed to get hwnd" << argc << std::endl;
+			log_error << "APP: AddOverlayHWND failed to get hwnd" << argc << std::endl;
 		}
 	}
 
@@ -198,8 +198,7 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 	{
 		user_keyboard_callback_info->ready = false;
 		napi_delete_reference(env, user_keyboard_callback_info->js_this);
-	} else
-	{}
+	}  
 
 	size_t argc = 1;
 	napi_value argv[1];
@@ -236,8 +235,7 @@ napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 	{
 		user_mouse_callback_info->ready = false;
 		napi_delete_reference(env, user_mouse_callback_info->js_this);
-	} else
-	{}
+	}  
 
 	size_t argc = 1;
 	napi_value argv[1];
@@ -398,11 +396,7 @@ napi_value PaintOverlay(napi_env env, napi_callback_info args)
 		overlay_frame_js * for_caching_js = new overlay_frame_js(env, argv[3]);
 		std::shared_ptr<overlay_frame> for_caching = std::make_shared<overlay_frame>(for_caching_js);
 		
-		if(width != 0 && height != 0)
-		{
-			painted =  paint_overlay_cached_buffer(overlay_id, for_caching, width, height);
-		}
-
+		painted = paint_overlay_cached_buffer(overlay_id, for_caching, width, height);
 	}
 
 	if (napi_create_int32(env, painted, &ret) != napi_ok)
@@ -432,11 +426,6 @@ napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
 
 		if (napi_get_value_int32(env, argv[1], &overlay_transparency) != napi_ok)
 			return failed_ret;
-		
-		if(overlay_transparency < 0 || overlay_transparency> 255)
-		{
-			overlay_transparency = 0;
-		}
 
 		log_cout << "APP: SetOverlayTransparency " << overlay_transparency << std::endl;
 		set_transparency_result = set_overlay_transparency(overlay_id, overlay_transparency);
@@ -494,33 +483,23 @@ napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
 	if (argc == 2 || argc == 3)
 	{
 		int overlay_id = -1;
-		int autohide_seconds = 0;
+		int autohide_timeout = 0;
 		int autohide_transparency = 0;
 
 		if (napi_get_value_int32(env, argv[0], &overlay_id) != napi_ok)
 			return failed_ret;
 
-		if (napi_get_value_int32(env, argv[1], &autohide_seconds) != napi_ok)
+		if (napi_get_value_int32(env, argv[1], &autohide_timeout) != napi_ok)
 			return failed_ret;
 		
-		if(autohide_seconds < 0 )
-		{
-			autohide_seconds  = 0;
-		}
-
 		if( argc == 3 )
 		{
 			if (napi_get_value_int32(env, argv[2], &autohide_transparency) != napi_ok)
 				return failed_ret;
-
-			if(autohide_transparency > 255 || autohide_transparency < 0) 
-			{
-				autohide_transparency = 0;
-			}
 		}
 
-		log_cout << "APP: SetOverlayAutohide "<< autohide_seconds<< ", " << autohide_transparency <<  std::endl;
-		set_autohide_result = set_overlay_autohide(overlay_id, autohide_seconds, autohide_transparency);
+		log_cout << "APP: SetOverlayAutohide " << autohide_timeout  << ", " << autohide_transparency << std::endl;
+		set_autohide_result = set_overlay_autohide(overlay_id, autohide_timeout, autohide_transparency);
 	}
 
 	if (napi_create_int32(env, set_autohide_result, &ret) != napi_ok)

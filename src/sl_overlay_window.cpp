@@ -219,13 +219,19 @@ bool overlay_window::apply_new_rect(RECT& new_rect)
 {
 	manual_position = true;
 
-	if (overlay_hwnd)
+	if (orig_handle)
 	{
+		int iDpi = GetDpiForWindow(orig_handle); 
+		int dpiScaledX = MulDiv(new_rect.left, iDpi, 96);
+		int dpiScaledY = MulDiv(new_rect.top, iDpi, 96); 
+		
+		log_debug << "APP: apply_new_rect " << new_rect.left << " to " << dpiScaledX << std::endl;
+
 		SetWindowPos(
 		    overlay_hwnd,
 		    HWND_TOPMOST,
-		    new_rect.left,
-		    new_rect.top,
+		    dpiScaledX,
+			dpiScaledY,
 		    new_rect.right - new_rect.left,
 		    new_rect.bottom - new_rect.top,
 		    SWP_NOREDRAW);
@@ -476,12 +482,10 @@ void overlay_window_direct2d::paint_to_window(HDC window_hdc)
 bool overlay_window::apply_size_from_orig()
 {
 	BOOL ret = false;
-	RECT client_rect = {0};
-	ret = GetWindowRect(orig_handle, &client_rect);
 
-	rect = client_rect;
+	ret = GetWindowRect(orig_handle, &rect);
 
-	return true;
+	return ret;
 }
 
 bool overlay_window::create_window()
