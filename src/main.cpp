@@ -17,23 +17,6 @@ std::mutex thread_state_mutex;
 
 UINT_PTR OVERLAY_UPDATE_TIMER = 0;
 
-bool set_dpi_awareness()
-{
-	HMODULE user32_dll = LoadLibrary(L"user32.dll");
-	if (user32_dll)
-	{
-		typedef DPI_AWARENESS_CONTEXT(WINAPI * SetThreadDpiAwarenessContext_Fn)(DPI_AWARENESS_CONTEXT);
-		SetThreadDpiAwarenessContext_Fn pfnSetDPIAwareness =
-		    (SetThreadDpiAwarenessContext_Fn)GetProcAddress(user32_dll, "SetThreadDpiAwarenessContext");
-		if (pfnSetDPIAwareness)
-		{
-			pfnSetDPIAwareness(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-		}
-		FreeLibrary(user32_dll);
-	}
-
-	return true;
-}
 
 DWORD WINAPI overlay_thread_func(void* data)
 {

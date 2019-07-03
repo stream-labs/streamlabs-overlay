@@ -221,7 +221,7 @@ bool overlay_window::apply_new_rect(RECT& new_rect)
 
 	if (orig_handle)
 	{
-		int iDpi = GetDpiForWindow(orig_handle); 
+		int iDpi = try_to_get_dpi(orig_handle);
 		int dpiScaledX = MulDiv(new_rect.left, iDpi, 96);
 		int dpiScaledY = MulDiv(new_rect.top, iDpi, 96); 
 		
