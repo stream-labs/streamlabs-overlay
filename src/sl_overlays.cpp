@@ -200,7 +200,7 @@ void smg_overlays::showup_overlays()
 			if (n->overlay_hwnd != 0 && n->is_visible())
 			{
 				ShowWindow(n->overlay_hwnd, SW_SHOW);
-				n->reset_autohide();
+				n->reset_autohide_timer();
 			}
 		});
 	}

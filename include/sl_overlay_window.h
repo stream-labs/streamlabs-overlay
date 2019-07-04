@@ -55,12 +55,13 @@ class overlay_window
 	bool is_visible();
 	void apply_interactive_mode(bool is_intercepting);
 	void set_autohide(int timeout, int transparency);
+	bool reset_autohide();
 	virtual void clean_resources();
 
 	virtual std::string get_status() = 0;
 
 	void check_autohide();
-	void reset_autohide();
+	void reset_autohide_timer();
 
 	virtual ~overlay_window();
 

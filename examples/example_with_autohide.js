@@ -115,8 +115,8 @@ function step_1() {
   streamlabs_overlays.setAutohide(overlayid1, 3, 50 );
   streamlabs_overlays.setAutohide(overlayid2, 3, 50 );
 
-  win1.webContents.invalidate();
-  win2.webContents.invalidate();  
+  //win1.webContents.invalidate();
+  //win2.webContents.invalidate();  
 
   
   setTimeout(step_2, 11000);

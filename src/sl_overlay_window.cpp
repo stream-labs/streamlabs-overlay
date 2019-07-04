@@ -62,6 +62,8 @@ void overlay_window::set_autohide(int timeout, int transparency)
 {
 	autohide_after = timeout;
 	autohide_by_transparency = transparency;
+	content_updated = true;
+	reset_autohide();
 }
 
 bool overlay_window::ready_to_create_overlay()
@@ -113,7 +115,7 @@ void overlay_window::check_autohide()
 	}
 }
 
-void overlay_window::reset_autohide()
+void overlay_window::reset_autohide_timer()
 {
 	if (autohidden)
 	{
@@ -235,7 +237,7 @@ bool overlay_window::apply_new_rect(RECT& new_rect)
 
 		log_debug << "APP: apply_new_rect " << new_rect.left << " to " << dpiScaledX << std::endl;
 
-		SetWindowPos( overlay_hwnd,HWND_TOPMOST, dpiScaledX, dpiScaledY, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top, SWP_NOREDRAW);
+		SetWindowPos(overlay_hwnd, HWND_TOPMOST, dpiScaledX, dpiScaledY, new_rect.right - new_rect.left, new_rect.bottom - new_rect.top, SWP_NOREDRAW);
 	}
 
 	return set_rect(new_rect);
@@ -289,14 +291,21 @@ bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
 			return false;
 		} else
 		{
-			if (apply_image_from_buffer(image_array,image_array_size,overlay_rect.right - overlay_rect.left,overlay_rect.bottom - overlay_rect.top))
+			if (apply_image_from_buffer(image_array, image_array_size, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top))
 			{
 				content_updated = true;
 			}
 			frame = nullptr;
 		}
 	}
+	
+	reset_autohide(); 
 
+	return true;
+}
+
+bool overlay_window::reset_autohide() 
+{
 	if (autohidden)
 	{
 		if (!IsWindowVisible(overlay_hwnd))
@@ -311,14 +320,11 @@ bool overlay_window::set_cached_image(std::shared_ptr<overlay_frame> save_frame)
 
 		autohidden = false;
 	}
-
 	return true;
 }
-
 bool overlay_window_gdi::apply_image_from_buffer(const void* image_array, size_t array_size, int width, int height)
 {
-	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height
-	          << std::endl;
+	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height << std::endl;
 	bool ret = true;
 	if (hbmp != nullptr)
 	{
@@ -334,8 +340,7 @@ bool overlay_window_gdi::apply_image_from_buffer(const void* image_array, size_t
 		workedout = SetDIBitsToDevice(hdc, 0, 0, width, height, 0, 0, 0, height, image_array, &phmi, false);
 		if (workedout != height)
 		{
-			log_error << "APP: Saving image from electron with SetDIBitsToDevice failed with workedout = " << workedout
-			          << std::endl;
+			log_error << "APP: Saving image from electron with SetDIBitsToDevice failed with workedout = " << workedout << std::endl;
 			ret = false;
 		} else
 		{
@@ -351,8 +356,7 @@ bool overlay_window_gdi::apply_image_from_buffer(const void* image_array, size_t
 
 bool overlay_window_direct2d::apply_image_from_buffer(const void* image_array, size_t array_size, int width, int height)
 {
-	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height
-	          << std::endl;
+	log_debug << "APP: Saving image from electron array_size = " << array_size << ", w " << width << ", h " << height << std::endl;
 	bool ret = true;
 
 	if (m_pBitmap != nullptr)
@@ -376,7 +380,10 @@ void overlay_window_direct2d::create_render_target(ID2D1Factory* m_pDirect2dFact
 		D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
 
 		// Create a Direct2D render target.
-		hr = m_pDirect2dFactory->CreateHwndRenderTarget( D2D1::RenderTargetProperties( D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)), D2D1::HwndRenderTargetProperties(overlay_hwnd, size), &m_pRenderTarget);
+		hr = m_pDirect2dFactory->CreateHwndRenderTarget(
+		    D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+		    D2D1::HwndRenderTargetProperties(overlay_hwnd, size),
+		    &m_pRenderTarget);
 	}
 }
 
@@ -432,16 +439,7 @@ void overlay_window_gdi::paint_to_window(HDC window_hdc)
 		}
 	}
 
-	ret = BitBlt(
-	    window_hdc,
-	    0,
-	    0,
-	    overlay_rect.right - overlay_rect.left,
-	    overlay_rect.bottom - overlay_rect.top,
-	    display_hdc,
-	    0,
-	    0,
-	    SRCCOPY);
+	ret = BitBlt(window_hdc, 0, 0, overlay_rect.right - overlay_rect.left, overlay_rect.bottom - overlay_rect.top, display_hdc, 0, 0, SRCCOPY);
 
 	if (!ret)
 	{
@@ -481,17 +479,17 @@ void overlay_window_direct2d::paint_to_window(HDC window_hdc)
 		// Draw a grid background.
 		int width = static_cast<int>(rtSize.width);
 		int height = static_cast<int>(rtSize.height);
-		
-		if (m_pBitmap != nullptr && content_set )
+
+		if (m_pBitmap != nullptr && content_set)
 		{
-			m_pRenderTarget->DrawBitmap( m_pBitmap, D2D1::RectF(0, 0, width, height), 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, nullptr);
+			m_pRenderTarget->DrawBitmap(m_pBitmap, D2D1::RectF(0, 0, width, height), 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, nullptr);
 		} else
 		{
 			m_pRenderTarget->Clear(D2D1::ColorF(0.0f, 0.0f));
 		}
 
 		hr = m_pRenderTarget->EndDraw();
-	} 
+	}
 
 	EndPaint(overlay_hwnd, &ps);
 
@@ -522,8 +520,7 @@ bool overlay_window::create_window()
 		//| 0x20000000;
 		// transparent, topmost, with no taskbar
 
-		overlay_hwnd =
-		    CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
+		overlay_hwnd = CreateWindowEx(dwStyleEx, g_szWindowClass, NULL, dwStyle, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
 
 		if (overlay_hwnd)
 		{
@@ -535,8 +532,7 @@ bool overlay_window::create_window()
 				set_transparency(app_settings->transparency);
 			}
 
-			SetWindowPos(
-			    overlay_hwnd, HWND_TOPMOST, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOREDRAW);
+			SetWindowPos(overlay_hwnd, HWND_TOPMOST, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOREDRAW);
 			return true;
 		}
 	}
@@ -617,10 +613,7 @@ bool overlay_window_direct2d::create_window_content_buffer()
 		float dpi_x, dpi_y;
 		m_pRenderTarget->GetDpi(&dpi_x, &dpi_y);
 
-		hr = m_pRenderTarget->CreateBitmap(
-		    bitmap_size,
-		    D2D1::BitmapProperties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi_x, dpi_y),
-		    &m_pBitmap);
+		hr = m_pRenderTarget->CreateBitmap(bitmap_size, D2D1::BitmapProperties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi_x, dpi_y), &m_pBitmap);
 
 		log_debug << "APP: create_window_content_buffer d2d hr " << hr << std::endl;
 		if (SUCCEEDED(hr))
