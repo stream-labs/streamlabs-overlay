@@ -316,6 +316,12 @@ napi_value GetOverlayInfo(napi_env env, napi_callback_info args)
 		if (napi_create_and_set_named_property(env, ret, "y", overlay_rect.top) != napi_ok)
 			return failed_ret;
 
+		std::string overlay_status = requested_overlay->get_status();
+		napi_value overlay_status_value;
+		if (napi_create_string_utf8(env, overlay_status.c_str(), overlay_status.size(), &overlay_status_value) == napi_ok)
+			if (napi_set_named_property(env, ret, "status", overlay_status_value) != napi_ok)
+			return failed_ret;
+
 		return ret;
 	}
 
