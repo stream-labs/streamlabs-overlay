@@ -48,12 +48,10 @@
   ],
   "devDependencies": {
     "@types/node": "^11.10.4",
-    "aws-sdk": "^2.x",
-    "electron": "^5.0.6",
-    "fs-extra": "7.0.1",
+    "electron": "^5.0.8",
+    "fs-extra": "^7.0.1",
     "prettier": "^1.16.4",
-    "standard-version": "^5.0.1",
-    "node-gyp": "^4.0.0",
+    "node-gyp": "^5.0.3",
     "tar": "^4.4.8"
   },
   "dependencies": {
