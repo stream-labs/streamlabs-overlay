@@ -40,6 +40,6 @@ steps:
     awsCredentials: 'Streamlabs AWS'
     regionName: 'us-west-2'
     bucketName: 'streamlabs-overlay-binary'
-    globExpressions: 'game-overlay-$(version).tgz'
+    globExpressions: 'game-overlay-$(version).tar.gz'
     filesAcl: 'public-read'
   displayName: 'Upload artifact to S3'
