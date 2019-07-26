@@ -10,7 +10,7 @@ pool:
   vmImage: 'vs2017-win2016'
 
 steps:
-- powershell: git config --global core.autocrlf false
+- powershell: 'git config --global core.autocrlf false'
   displayName: 'Set Unix checkout for git'
 
 - checkout: self
@@ -21,7 +21,7 @@ steps:
   inputs:
     versionSpec: '10.x'
 
-- powershell: 'Write-Host "##vso[task.setvariable variable=version]$((yarn run get-version) | Out-String)"'
+- powershell: 'Write-Host "##vso[task.setvariable variable=version]$((yarn.cmd run get-version) | Out-String)"'
   displayName: 'Get artifact name'
 
 - script: 'yarn install'
