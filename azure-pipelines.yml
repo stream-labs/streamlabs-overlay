@@ -1,0 +1,43 @@
+trigger:
+  branches:
+    include:
+      - master
+
+workspace:
+  clean: all
+
+pool:
+  vmImage: 'vs2017-win2016'
+
+steps:
+- powershell: git config --global core.autocrlf false
+  displayName: 'Set Unix checkout for git'
+
+- checkout: self
+  fetchDepth: 10
+
+- task: NodeTool@0
+  displayName: 'Install Node'
+  inputs:
+    versionSpec: '10.x'
+
+- powershell: 'Write-Host "##vso[task.setvariable variable=version]$((yarn run get-version) | Out-String)"'
+  displayName: 'Get artifact name'
+
+- script: 'yarn install'
+  displayName: 'Install dependencies'
+
+- script: 'yarn build'
+  displayName: 'Build module'
+
+- script: 'node scripts/pack.js'
+  displayName: 'Package module'
+
+- task: S3Upload@1
+  inputs:
+    awsCredentials: 'Streamlabs AWS'
+    regionName: 'us-west-2'
+    bucketName: 'streamlabs-overlay-binary'
+    globExpressions: 'game-overlay-$(version).tgz'
+    filesAcl: 'public-read'
+  displayName: 'Upload artifact to S3'

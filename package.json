@@ -22,7 +22,8 @@
     "install": "",
     "pack": "node scripts/pack.js",
     "build": "node-gyp configure --msvs_version=2017 && node-gyp rebuild --target=5.0.6 --dist-url=https://atom.io/download/atom-shell",
-    "test": ""
+    "test": "",
+    "get-version": "echo %npm_package_version%"
   },
   "binary": {
     "module_name": "streamlabs_overlay",
