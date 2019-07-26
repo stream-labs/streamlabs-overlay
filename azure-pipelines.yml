@@ -43,3 +43,6 @@ steps:
     globExpressions: 'game-overlay-v$(version).tar.gz'
     filesAcl: 'public-read'
   displayName: 'Upload artifact to S3'
+  condition: and(succeeded(), ne(variables['previousVersion'], $(version)))
+
+- powershell: 'Write-Host "##vso[task.setvariable variable=previousVersion]$(version)'
