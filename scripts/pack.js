@@ -10,7 +10,7 @@ const npm_dir_path  = path.join(__dirname, "..", 'npm');
 const module_name   = 'streamlabs_overlay.node';
 const module_search_path = path.join(__dirname, '..', 'build*', 'Release', module_name);
 var node_module_path = '';
-var pack_version = '0.0.0';
+var pack_version = process.env.MODULE_VERSION;
 // Make dist dir and move files to it 
 try {
   fse.ensureDir(dist_dir_path);
@@ -31,14 +31,11 @@ try {
 
 // Get version and save to relase package.json 
 try {
-  let package_rawdata = fse.readFileSync(path.join(__dirname, '..', 'package.json'));  
-  let package_info = JSON.parse(package_rawdata);  
-  console.log('Releasing version : ' + package_info.version );  
-  pack_version = package_info.version ;
+  console.log('Releasing version : ' + pack_version);
 
   let release_package_rawdata = fse.readFileSync(path.join(prepack_path, 'package.json'));  
   let release_package_info = JSON.parse(release_package_rawdata);  
-  release_package_info.version = package_info.version;
+  release_package_info.version = pack_version;
   let release_data = JSON.stringify(release_package_info);  
   fse.writeFileSync(path.join(prepack_path, 'package.json'), release_data);  
 } catch (err) {
