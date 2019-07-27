@@ -2,6 +2,9 @@ trigger:
   branches:
     include:
       - master
+  tags:
+    include:
+      - '*'
 
 workspace:
   clean: all
@@ -21,8 +24,8 @@ steps:
   inputs:
     versionSpec: '10.x'
 
-- powershell: 'Write-Host "##vso[task.setvariable variable=version]$((yarn run get-version) | Out-String)"'
-  displayName: 'Get artifact name'
+- powershell: 'Write-Host "##vso[task.setvariable variable=version]$((git.exe describe --tags --abbrev=0) | Out-String)"'
+  displayName: 'Get version'
 
 - script: 'yarn install'
   displayName: 'Install dependencies'
@@ -31,6 +34,8 @@ steps:
   displayName: 'Build module'
 
 - script: 'node scripts/pack.js'
+  env:
+    MODULE_VERSION: $(version)
   displayName: 'Package module'
 
 - task: S3Upload@1
@@ -41,3 +46,4 @@ steps:
     globExpressions: 'game-overlay-$(version).tgz'
     filesAcl: 'public-read'
   displayName: 'Upload artifact to S3'
+  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
