@@ -42,8 +42,8 @@ steps:
   inputs:
     awsCredentials: 'Streamlabs AWS'
     regionName: 'us-west-2'
-    bucketName: 'streamlabs-overlay-binary'
-    globExpressions: 'game-overlay-$(version).tgz'
+    bucketName: 'obs-studio-deployment'
+    globExpressions: 'game-overlay-v$(version).tar.gz'
     filesAcl: 'public-read'
   displayName: 'Upload artifact to S3'
   condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
