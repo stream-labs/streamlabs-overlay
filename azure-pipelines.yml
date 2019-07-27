@@ -2,6 +2,9 @@ trigger:
   branches:
     include:
       - master
+  tags:
+    include:
+      - '*'
 
 workspace:
   clean: all
@@ -21,7 +24,7 @@ steps:
   inputs:
     versionSpec: '10.x'
 
-- powershell: 'Write-Host "##vso[task.setvariable variable=version]$((npm.cmd run get-version --silent) | Out-String)"'
+- powershell: Write-Host "##vso[task.setvariable variable=version]$((git.exe describe --tags --abbrev=0) | Out-String)"
   displayName: 'Get artifact name'
 
 - script: 'echo %version%'
@@ -33,6 +36,8 @@ steps:
   displayName: 'Build module'
 
 - script: 'node scripts/pack.js'
+  env:
+    MODULE_VERSION: $(version)
   displayName: 'Package module'
 
 - task: S3Upload@1
@@ -43,6 +48,4 @@ steps:
     globExpressions: 'game-overlay-v$(version).tar.gz'
     filesAcl: 'public-read'
   displayName: 'Upload artifact to S3'
-  condition: and(succeeded(), ne(variables['previousVersion'], $(version)))
-
-- powershell: 'Write-Host "##vso[task.setvariable variable=previousVersion]$(version)'
+  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))

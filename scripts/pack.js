@@ -34,11 +34,11 @@ try {
   let package_rawdata = fse.readFileSync(path.join(__dirname, '..', 'package.json'));  
   let package_info = JSON.parse(package_rawdata);  
   console.log('Releasing version : ' + package_info.version );  
-  pack_version = package_info.version ;
+  pack_version = process.env.MODULE_VERSION;
 
   let release_package_rawdata = fse.readFileSync(path.join(prepack_path, 'package.json'));  
   let release_package_info = JSON.parse(release_package_rawdata);  
-  release_package_info.version = package_info.version;
+  release_package_info.version = process.env.MODULE_VERSION;
   let release_data = JSON.stringify(release_package_info);  
   fse.writeFileSync(path.join(prepack_path, 'package.json'), release_data);  
 } catch (err) {
