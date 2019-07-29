@@ -24,6 +24,7 @@ To work on electron 2 it can be required to set older version of nodejs
 
 ```
 nvm use 8.x.x
+set MODULE_VERSION=x.x.x
 yarn install 
 yarn build  
 node scripts\pack.js 

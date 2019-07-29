@@ -1,0 +1,49 @@
+trigger:
+  branches:
+    include:
+      - master
+  tags:
+    include:
+      - '*'
+
+workspace:
+  clean: all
+
+pool:
+  vmImage: 'vs2017-win2016'
+
+steps:
+- powershell: git config --global core.autocrlf false
+  displayName: 'Set Unix checkout for git'
+
+- checkout: self
+  fetchDepth: 10
+
+- task: NodeTool@0
+  displayName: 'Install Node'
+  inputs:
+    versionSpec: '10.x'
+
+- powershell: 'Write-Host "##vso[task.setvariable variable=version]$((git.exe describe --tags --abbrev=0) | Out-String)"'
+  displayName: 'Get version'
+
+- script: 'yarn install'
+  displayName: 'Install dependencies'
+
+- script: 'yarn build'
+  displayName: 'Build module'
+
+- script: 'node scripts/pack.js'
+  env:
+    MODULE_VERSION: $(version)
+  displayName: 'Package module'
+
+- task: S3Upload@1
+  inputs:
+    awsCredentials: 'Streamlabs AWS'
+    regionName: 'us-west-2'
+    bucketName: 'obs-studio-deployment'
+    globExpressions: 'game-overlay-v$(version).tar.gz'
+    filesAcl: 'public-read'
+  displayName: 'Upload artifact to S3'
+  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
