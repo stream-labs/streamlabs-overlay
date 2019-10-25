@@ -28,11 +28,30 @@
 #include "overlay_paint_frame_js.h"
 
 const napi_value failed_ret = nullptr;
-
 napi_value Start(napi_env env, napi_callback_info args)
 {
 	int thread_start_status = 0;
 	napi_value ret = nullptr;
+	
+	size_t argc = 1;
+	napi_value argv[1];
+	if (napi_get_cb_info(env, args, &argc, argv, NULL, NULL) != napi_ok)
+		return failed_ret;
+
+	if (argc == 1)
+	{
+		napi_status status;
+		size_t result;
+		char log_path_name[256];
+		status = napi_get_value_string_utf8(env, argv[0], log_path_name, sizeof(log_path_name), &result);
+		if(status == napi_ok)
+		{
+			static std::string log_path = "";
+			log_path = std::string( log_path_name );
+			logging_start(log_path);
+		} 
+		log_info << "Start game overlay thread command just called "<< std::endl;
+	}
 
 	thread_start_status = start_overlays_thread();
 	if (thread_start_status != 0)
@@ -71,6 +90,9 @@ napi_value Stop(napi_env env, napi_callback_info args)
 	napi_value ret = nullptr;
 
 	thread_stop_status = stop_overlays_thread();
+
+	log_info << "Stop game overlay thread command complited " << std::endl;
+	logging_end();
 
 	if (napi_create_int32(env, thread_stop_status, &ret) != napi_ok)
 		return failed_ret;
@@ -131,7 +153,7 @@ napi_value AddOverlayHWND(napi_env env, napi_callback_info args)
 
 		if (incoming_array != nullptr)
 		{
-			log_cout << "APP: AddOverlayHWND " << argc << std::endl;
+			log_info << "APP: AddOverlayHWND " << argc << std::endl;
 
 			crated_overlay_id = add_overlay_by_hwnd(incoming_array, array_lenght);
 			incoming_array = nullptr;
@@ -160,7 +182,7 @@ napi_value RemoveOverlay(napi_env env, napi_callback_info args)
 	if (napi_get_value_int32(env, argv[0], &overlay_id) != napi_ok)
 		return failed_ret;
 
-	log_cout << "APP: RemoveOverlay " << overlay_id << std::endl;
+	log_info << "APP: RemoveOverlay " << overlay_id << std::endl;
 	remove_overlay(overlay_id);
 
 	return ret;
@@ -170,7 +192,7 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 {
 	if (!user_keyboard_callback_info->ready || !user_mouse_callback_info->ready)
 	{
-		log_cout << "APP: SwitchToInteractive rejected as callbacks not set" << std::endl;
+		log_info << "APP: SwitchToInteractive rejected as callbacks not set" << std::endl;
 		return failed_ret;
 	}
 
@@ -194,7 +216,7 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 
 		switch_input();
 
-		log_cout << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
+		log_info << "APP: SwitchToInteractive " << callback_method_t::get_intercept_active() << std::endl;
 
 		switched = 1;
 	}
@@ -207,7 +229,7 @@ napi_value SwitchToInteractive(napi_env env, napi_callback_info args)
 
 napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 {
-	log_cout << "APP: SetKeyboardCallback " << std::endl;
+	log_info << "APP: SetKeyboardCallback " << std::endl;
 	if (user_keyboard_callback_info->ready)
 	{
 		user_keyboard_callback_info->ready = false;
@@ -244,7 +266,7 @@ napi_value SetKeyboardCallback(napi_env env, napi_callback_info args)
 
 napi_value SetMouseCallback(napi_env env, napi_callback_info args)
 {
-	log_cout << "APP: SetMouseCallback " << std::endl;
+	log_info << "APP: SetMouseCallback " << std::endl;
 	if (user_mouse_callback_info->ready)
 	{
 		user_mouse_callback_info->ready = false;
@@ -290,7 +312,7 @@ napi_value GetOverlayInfo(napi_env env, napi_callback_info args)
 	if (napi_get_value_int32(env, argv[0], &overlay_id) != napi_ok)
 		return failed_ret;
 
-	log_cout << "APP: GetOverlayInfo look for " << overlay_id << std::endl;
+	log_info << "APP: GetOverlayInfo look for " << overlay_id << std::endl;
 	std::shared_ptr<overlay_window> requested_overlay = get_overlays()->get_overlay_by_id(overlay_id);
 
 	if (requested_overlay)
@@ -378,7 +400,7 @@ napi_value SetOverlayPosition(napi_env env, napi_callback_info args)
 		if (napi_get_value_int32(env, argv[4], &height) != napi_ok)
 			return failed_ret;
 		
-		log_cout << "APP: SetOverlayPosition " << id << ", size " << width << "x" << height << " at [" << x << ", " << y << "] " << std::endl;
+		log_info << "APP: SetOverlayPosition " << id << ", size " << width << "x" << height << " at [" << x << ", " << y << "] " << std::endl;
 
 		position_set_result = set_overlay_position(id, x, y, width, height);
 	}
@@ -447,7 +469,7 @@ napi_value SetOverlayTransparency(napi_env env, napi_callback_info args)
 		if (napi_get_value_int32(env, argv[1], &overlay_transparency) != napi_ok)
 			return failed_ret;
 
-		log_cout << "APP: SetOverlayTransparency " << overlay_transparency << std::endl;
+		log_info << "APP: SetOverlayTransparency " << overlay_transparency << std::endl;
 		set_transparency_result = set_overlay_transparency(overlay_id, overlay_transparency);
 	}
 
@@ -479,7 +501,7 @@ napi_value SetOverlayVisibility(napi_env env, napi_callback_info args)
 		if (napi_get_value_bool(env, argv[1], &overlay_visibility) != napi_ok)
 			return failed_ret;
 
-		log_cout << "APP: SetOverlayVisibility " << overlay_visibility << std::endl;
+		log_info << "APP: SetOverlayVisibility " << overlay_visibility << std::endl;
 		set_overlay_visibility_result = set_overlay_visibility(overlay_id, overlay_visibility);
 	}
 
@@ -518,7 +540,7 @@ napi_value SetOverlayAutohide(napi_env env, napi_callback_info args)
 				return failed_ret;
 		}
 
-		log_cout << "APP: SetOverlayAutohide " << autohide_timeout  << ", " << autohide_transparency << std::endl;
+		log_info << "APP: SetOverlayAutohide " << autohide_timeout  << ", " << autohide_transparency << std::endl;
 		set_autohide_result = set_overlay_autohide(overlay_id, autohide_timeout, autohide_transparency);
 	}
 

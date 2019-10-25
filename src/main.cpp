@@ -64,7 +64,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			{
 			case WM_SLO_OVERLAY_CLOSE:
 			{
-				log_cout << "APP: WM_SLO_OVERLAY_CLOSE " << (int)msg.wParam << std::endl;
+				log_info << "APP: WM_SLO_OVERLAY_CLOSE " << (int)msg.wParam << std::endl;
 				auto closed = app->get_overlay_by_id((int)msg.wParam);
 				app->remove_overlay(closed);
 				catched = true;
@@ -72,7 +72,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			break;
 			case WM_SLO_OVERLAY_POSITION:
 			{
-				log_cout << "APP: WM_SLO_OVERLAY_POSITION " << (int)msg.wParam << std::endl;
+				log_info << "APP: WM_SLO_OVERLAY_POSITION " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				RECT* new_rect = reinterpret_cast<RECT*>(msg.lParam);
 				if (new_rect != nullptr)
@@ -90,7 +90,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 			case WM_SLO_OVERLAY_TRANSPARENCY:
 			{
-				log_cout << "APP: WM_SLO_OVERLAY_TRANSPARENCY " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
+				log_info << "APP: WM_SLO_OVERLAY_TRANSPARENCY " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 
 				if (overlay != nullptr)
@@ -102,7 +102,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			break;
 			case WM_SLO_OVERLAY_VISIBILITY:
 			{
-				log_cout << "APP: WM_SLO_OVERLAY_VISIBILITY " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
+				log_info << "APP: WM_SLO_OVERLAY_VISIBILITY " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 
 				if (overlay != nullptr)
@@ -115,7 +115,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			break;
 			case WM_SLO_OVERLAY_SET_AUTOHIDE:
 			{
-				log_cout << "APP: WM_SLO_OVERLAY_SET_AUTOHIDE " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
+				log_info << "APP: WM_SLO_OVERLAY_SET_AUTOHIDE " << (int)msg.wParam << ", " << (int)msg.lParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 
 				if (overlay != nullptr)
@@ -129,7 +129,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			break;
 			case WM_SLO_OVERLAY_WINDOW_DESTOYED:
 			{
-				log_cout << "APP: WM_OVERLAY_WINDOW_DESTOYED " << (int)msg.wParam << std::endl;
+				log_info << "APP: WM_OVERLAY_WINDOW_DESTOYED " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				app->on_overlay_destroy(overlay);
 				catched = true;
@@ -142,7 +142,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 			break;
 			case WM_SLO_HWND_SOURCE_READY:
 			{
-				log_cout << "APP: WM_SLO_HWND_SOURCE_READY " << (int)msg.wParam << std::endl;
+				log_info << "APP: WM_SLO_HWND_SOURCE_READY " << (int)msg.wParam << std::endl;
 				std::shared_ptr<overlay_window> overlay = app->get_overlay_by_id((int)msg.wParam);
 				app->create_window_for_overlay(overlay);
 				catched = true;
@@ -174,7 +174,7 @@ DWORD WINAPI overlay_thread_func(void* data)
 
 	app->deinit(); //todo clean singleton in case some one start thread another time after stop
 
-	log_cout << "APP: exit from thread " << std::endl;
+	log_info << "APP: exit from thread " << std::endl;
 
 	thread_state_mutex.lock();
 
@@ -209,12 +209,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CLOSE:
 	{
 		//todo some how window wants to be closed so need to remove its overlay object
-		log_cout << "APP: WndProc WM_CLOSE for " << hWnd << std::endl;
+		log_info << "APP: WndProc WM_CLOSE for " << hWnd << std::endl;
 	}
 	break;
 	case WM_DESTROY:
 	{
-		log_cout << "APP: WndProc WM_DESTROY for " << hWnd << std::endl;
+		log_info << "APP: WndProc WM_DESTROY for " << hWnd << std::endl;
 		smg_overlays::get_instance()->on_window_destroy(hWnd);
 
 		return 0;
@@ -229,7 +229,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_QUIT:
 	{
-		log_cout << "APP: WndProc WM_QUIT for " << hWnd << std::endl;
+		log_info << "APP: WndProc WM_QUIT for " << hWnd << std::endl;
 	}
 	break;
 	case WM_PAINT:
