@@ -171,11 +171,11 @@ void overlay_window::clean_resources()
 	if (status != overlay_status::destroing)
 	{
 		status = overlay_status::destroing;
-		log_cout << "APP: clean_resources for " << id << std::endl;
+		log_info << "APP: clean_resources for " << id << std::endl;
 
 		if (overlay_hwnd != nullptr)
 		{
-			log_cout << "APP: clean_resources close overlay window hwnd " << overlay_hwnd << std::endl;
+			log_info << "APP: clean_resources close overlay window hwnd " << overlay_hwnd << std::endl;
 			DestroyWindow(overlay_hwnd);
 		} else
 		{
@@ -361,7 +361,7 @@ bool overlay_window_direct2d::apply_image_from_buffer(const void* image_array, s
 
 	if (m_pBitmap != nullptr)
 	{
-		D2D1_RECT_U bits_size = {0, 0, width, height};
+		D2D1_RECT_U bits_size = {0, 0, (uint32_t)width, (uint32_t)height};
 		m_pBitmap->CopyFromMemory(&bits_size, image_array, width * 4);
 		content_set = true;
 	}
@@ -554,7 +554,7 @@ bool overlay_window_gdi::create_window_content_buffer()
 		int new_width = client_rect.right - client_rect.left;
 		int new_height = client_rect.bottom - client_rect.top;
 
-		log_cout << "APP: create_window_content_buffer  rect at [" << new_x << " , " << new_y << "]" << std::endl;
+		log_info << "APP: create_window_content_buffer  rect at [" << new_x << " , " << new_y << "]" << std::endl;
 
 		HDC new_hdc = nullptr;
 		HBITMAP new_hbmp = nullptr;

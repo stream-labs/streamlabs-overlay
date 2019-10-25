@@ -185,7 +185,7 @@ bool callback_method_t::get_intercept_active() noexcept
 
 napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 {
-	log_cout << "APP: callback_keyboard_method_t::set_callback_args_values" << std::endl;
+	log_info << "APP: callback_keyboard_method_t::set_callback_args_values" << std::endl;
 	napi_status status = napi_ok;
 
 	std::shared_ptr<wm_event_t> event;
@@ -243,7 +243,7 @@ napi_status callback_keyboard_method_t::set_callback_args_values(napi_env env)
 
 napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 {
-	log_cout << "APP:  callback_mouse_method_t::set_callback_args_values" << std::endl;
+	log_info << "APP: callback_mouse_method_t::set_callback_args_values" << std::endl;
 	napi_status status = napi_ok;
 
 	std::shared_ptr<wm_event_t> event;
@@ -327,7 +327,7 @@ napi_status callback_mouse_method_t::set_callback_args_values(napi_env env)
 
 int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 {
-	log_cout << "APP: use_callback called" << std::endl;
+	log_info << "APP: use_callback called" << std::endl;
 
 	int ret = -1;
 
@@ -340,7 +340,7 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 
 	if (to_send.size() > 256)
 	{
-		log_cout << "APP: Failed to send too many events, will switch input interception off" << std::endl;
+		log_info << "APP: Failed to send too many events, will switch input interception off" << std::endl;
 		ret = switch_input();
 	}
 
@@ -349,7 +349,7 @@ int callback_method_t::use_callback(WPARAM wParam, LPARAM lParam)
 
 int switch_input()
 {
-	log_cout << "APP: switch_input " << std::endl;
+	log_info << "APP: switch_input " << std::endl;
 
 	int ret = -1;
 
@@ -362,7 +362,7 @@ int switch_input()
 
 int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
 {
-	log_cout << "APP: use_callback_keyboard  " << std::endl;
+	log_info << "APP: use_callback_keyboard  " << std::endl;
 
 	int ret = -1;
 
@@ -377,7 +377,7 @@ int use_callback_keyboard(WPARAM wParam, LPARAM lParam)
 
 int use_callback_mouse(WPARAM wParam, LPARAM lParam)
 {
-	log_cout << "APP: use_callback_mouse  " << std::endl;
+	log_info << "APP: use_callback_mouse  " << std::endl;
 
 	int ret = -1;
 
@@ -392,7 +392,7 @@ int use_callback_mouse(WPARAM wParam, LPARAM lParam)
 
 void callback_finalize(napi_env env, void* data, void* hint)
 {
-	log_cout << "APP: callback_finalize " << std::endl;
+	log_info << "APP: callback_finalize " << std::endl;
 }
 
 napi_status callback_method_t::callback_init(napi_env env, napi_callback_info info, const char* name)
@@ -418,7 +418,7 @@ napi_status callback_method_t::callback_init(napi_env env, napi_callback_info in
 		uv_async_this.data = this;
 		env_this = env;
 
-		log_cout << "APP: user_input_callback_method_init status = " << status << std::endl;
+		log_info << "APP: user_input_callback_method_init status = " << status << std::endl;
 
 		if (status == napi_ok)
 		{

@@ -41,7 +41,7 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 bool smg_overlays::process_commands(MSG& msg)
 {
 	bool ret = false;
-	log_cout << "APP: process_commands id " << msg.wParam << std::endl;
+	log_info << "APP: process_commands id " << msg.wParam << std::endl;
 	switch (msg.wParam)
 	{
 	case COMMAND_SHOW_OVERLAYS:
@@ -70,7 +70,7 @@ bool smg_overlays::process_commands(MSG& msg)
 	{
 		thread_state_mutex.lock();
 
-		log_cout << "APP: COMMAND_QUIT " << static_cast<int>(thread_state) << std::endl;
+		log_info << "APP: COMMAND_QUIT " << static_cast<int>(thread_state) << std::endl;
 		if (thread_state != sl_overlay_thread_state::runing)
 		{
 			thread_state_mutex.unlock();
@@ -110,7 +110,7 @@ bool smg_overlays::process_commands(MSG& msg)
 
 void smg_overlays::quit()
 {
-	log_cout << "APP: quit " << std::endl;
+	log_info << "APP: quit " << std::endl;
 	quiting = true;
 
 	if (showing_windows.size() != 0)
@@ -187,13 +187,13 @@ void smg_overlays::deinit()
 	if (g_bDblBuffered)
 		BufferedPaintUnInit();
 
-	log_cout << "APP: deinit " << std::endl;
+	log_info << "APP: deinit " << std::endl;
 	quiting = false;
 }
 
 void smg_overlays::showup_overlays()
 {
-	log_cout << "APP: showup_overlays " << std::endl;
+	log_info << "APP: showup_overlays " << std::endl;
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
@@ -208,7 +208,7 @@ void smg_overlays::showup_overlays()
 
 void smg_overlays::hide_overlays()
 {
-	log_cout << "APP: hide_overlays " << std::endl;
+	log_info << "APP: hide_overlays " << std::endl;
 	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 	std::for_each(showing_windows.begin(), showing_windows.end(), [](std::shared_ptr<overlay_window>& n) {
 		if (n->overlay_hwnd != 0)
@@ -220,7 +220,7 @@ void smg_overlays::hide_overlays()
 
 void smg_overlays::apply_interactive_mode_view()
 {
-	log_cout << "APP: apply_interactive_mode_view " << std::endl;
+	log_info << "APP: apply_interactive_mode_view " << std::endl;
 	{
 		std::shared_lock<std::shared_mutex> lock(overlays_list_access);
 		std::for_each(
@@ -285,7 +285,7 @@ HHOOK llmouse_hook = nullptr;
 
 LRESULT CALLBACK CallWndMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	log_cout << "APP: CallWndMsgProc " << wParam << std::endl;
+	log_info << "APP: CallWndMsgProc " << wParam << std::endl;
 
 	return CallNextHookEx(msg_hook, nCode, wParam, lParam);
 }
@@ -295,7 +295,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (nCode >= 0)
 	{
 		KBDLLHOOKSTRUCT* event = (KBDLLHOOKSTRUCT*)lParam;
-		log_cout << "APP: LowLevelKeyboardProc " << event->vkCode << ", " << event->dwExtraInfo << std::endl;
+		log_info << "APP: LowLevelKeyboardProc " << event->vkCode << ", " << event->dwExtraInfo << std::endl;
 
 		if (event->vkCode == VK_ESCAPE)
 		{
@@ -314,7 +314,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (nCode >= 0)
 	{
 		MSLLHOOKSTRUCT* event = (MSLLHOOKSTRUCT*)lParam;
-		log_cout << "APP: LowLevelMouseProc " << wParam << ", " << event->pt.x << ", " << event->pt.y << ", "
+		log_info << "APP: LowLevelMouseProc " << wParam << ", " << event->pt.x << ", " << event->pt.y << ", "
 		         << event->dwExtraInfo << std::endl;
 
 		std::shared_ptr<smg_overlays> app = smg_overlays::get_instance();
@@ -339,7 +339,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 void smg_overlays::hook_user_input()
 {
-	log_cout << "APP: hook_user_input " << std::endl;
+	log_info << "APP: hook_user_input " << std::endl;
 
 	if (!is_intercepting)
 	{
@@ -359,13 +359,13 @@ void smg_overlays::hook_user_input()
 
 		is_intercepting = true;
 
-		log_cout << "APP: Input hooked" << std::endl;
+		log_info << "APP: Input hooked" << std::endl;
 	}
 }
 
 void smg_overlays::unhook_user_input()
 {
-	log_cout << "APP: unhook_user_input " << std::endl;
+	log_info << "APP: unhook_user_input " << std::endl;
 	if (is_intercepting)
 	{
 		if (msg_hook != nullptr)
@@ -384,7 +384,7 @@ void smg_overlays::unhook_user_input()
 			llmouse_hook = nullptr;
 		}
 
-		log_cout << "APP: Input unhooked" << std::endl;
+		log_info << "APP: Input unhooked" << std::endl;
 		is_intercepting = false;
 	}
 }
@@ -433,7 +433,7 @@ std::shared_ptr<overlay_window> smg_overlays::get_overlay_by_window(HWND overlay
 
 bool smg_overlays::remove_overlay(std::shared_ptr<overlay_window> overlay)
 {
-	log_cout << "APP: RemoveOverlay status " << static_cast<int>(overlay->status) << std::endl;
+	log_info << "APP: RemoveOverlay status " << static_cast<int>(overlay->status) << std::endl;
 	if (overlay->status != overlay_status::destroing)
 	{
 		overlay->clean_resources();
@@ -446,7 +446,7 @@ bool smg_overlays::remove_overlay(std::shared_ptr<overlay_window> overlay)
 bool smg_overlays::on_window_destroy(HWND window)
 {
 	auto overlay = get_overlay_by_window(window);
-	log_cout << "APP: on_window_destroy and overlay found " << (overlay != nullptr) << std::endl;
+	log_info << "APP: on_window_destroy and overlay found " << (overlay != nullptr) << std::endl;
 	const bool removed = on_overlay_destroy(overlay);
 	return removed;
 }
@@ -456,7 +456,7 @@ bool smg_overlays::on_overlay_destroy(std::shared_ptr<overlay_window> overlay)
 	bool removed = false;
 	if (overlay != nullptr)
 	{
-		log_cout << "APP: overlay status was " << static_cast<int>(overlay->status) << std::endl;
+		log_info << "APP: overlay status was " << static_cast<int>(overlay->status) << std::endl;
 		if (overlay->status == overlay_status::destroing)
 		{
 			std::unique_lock<std::shared_mutex> lock(overlays_list_access);
@@ -465,7 +465,7 @@ bool smg_overlays::on_overlay_destroy(std::shared_ptr<overlay_window> overlay)
 		}
 	}
 
-	log_cout << "APP: overlays count " << showing_windows.size() << " and quiting " << quiting << std::endl;
+	log_info << "APP: overlays count " << showing_windows.size() << " and quiting " << quiting << std::endl;
 	if (showing_windows.size() == 0 && quiting)
 	{
 		PostQuitMessage(0);
@@ -502,7 +502,7 @@ smg_overlays::smg_overlays()
 	showing_overlays = false;
 	quiting = false;
 
-	log_cout << "APP: start overlays " << std::endl;
+	log_info << "APP: start overlays " << std::endl;
 }
 
 smg_overlays::~smg_overlays()
