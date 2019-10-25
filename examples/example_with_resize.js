@@ -140,6 +140,8 @@ function step_1() {
   var overlays_ids = streamlabs_overlays.getIds();
   console.log(overlays_ids);
 
+  console.log('' + streamlabs_overlays.getInfo(overlays_ids[0]) );
+
   console.log('Call set overlay transparency 20/255');
   streamlabs_overlays.setTransparency(overlays_ids[0], 150);
   streamlabs_overlays.setTransparency(overlays_ids[1], 150);

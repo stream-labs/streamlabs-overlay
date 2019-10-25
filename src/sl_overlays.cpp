@@ -200,7 +200,7 @@ void smg_overlays::showup_overlays()
 			if (n->overlay_hwnd != 0 && n->is_visible())
 			{
 				ShowWindow(n->overlay_hwnd, SW_SHOW);
-				n->reset_autohide();
+				n->reset_autohide_timer();
 			}
 		});
 	}
@@ -239,18 +239,10 @@ void smg_overlays::create_overlay_window_class()
 	wcex.lpfnWndProc = WndProc;
 	wcex.hInstance = GetModuleHandle(NULL);
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.hbrBackground = 0;
 	wcex.lpszClassName = g_szWindowClass;
 
 	RegisterClassEx(&wcex);
-}
-
-void smg_overlays::create_windows_overlays()
-{
-	std::shared_lock<std::shared_mutex> lock(overlays_list_access);
-	std::for_each(showing_windows.begin(), showing_windows.end(), [this](std::shared_ptr<overlay_window>& n) {
-		create_window_for_overlay(n);
-	});
 }
 
 bool smg_overlays::is_inside_overlay(int x, int y)
@@ -275,14 +267,16 @@ bool smg_overlays::is_inside_overlay(int x, int y)
 
 void smg_overlays::create_window_for_overlay(std::shared_ptr<overlay_window>& overlay)
 {
-	overlay->create_window();
-	if (showing_overlays)
+	if (overlay->create_window())
 	{
-		ShowWindow(overlay->overlay_hwnd, SW_SHOW);
-	} else
-	{
-		ShowWindow(overlay->overlay_hwnd, SW_HIDE);
-	}
+		if (showing_overlays)
+		{
+			ShowWindow(overlay->overlay_hwnd, SW_SHOW);
+		} else
+		{
+			ShowWindow(overlay->overlay_hwnd, SW_HIDE);
+		}
+	} 
 }
 
 HHOOK msg_hook = nullptr;

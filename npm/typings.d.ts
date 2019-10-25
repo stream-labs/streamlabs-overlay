@@ -14,6 +14,8 @@ export type OverlayInfo = {
   x: number;
   /** Vertical position of the window */
   y: number;
+  /** Status of overlay, "ok" if everything went fine with that overlay */
+  status: String;
 };
 
 /** Native windows handle (WinAPI), encoded as a Node Buffer **/

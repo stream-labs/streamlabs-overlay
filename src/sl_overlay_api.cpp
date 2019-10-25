@@ -318,7 +318,7 @@ int WINAPI paint_overlay_from_buffer(int overlay_id, const void* image_array, si
 				if (overlay != nullptr && width == overlay_rect.right - overlay_rect.left &&
 				    height == overlay_rect.bottom - overlay_rect.top)
 				{
-					overlay->paint_window_from_buffer(image_array, array_size, width, height);
+					overlay->apply_image_from_buffer(image_array, array_size, width, height);
 				}
 			}
 			thread_state_mutex.unlock();
