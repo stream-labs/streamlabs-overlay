@@ -21,7 +21,8 @@
 #include <iomanip>
 #include <filesystem>
 
-bool log_output_disabled = false;
+bool log_output_disabled = true;
+bool log_output_old_stored = false;
 
 namespace fs = std::filesystem;
 std::ofstream log_output_file;
@@ -44,27 +45,44 @@ const std::string getTimeStamp()
 
 void logging_start(std::string log_path)
 {
-    if( log_path.size() == 0 )
-        log_output_disabled = true;
-
-    if( !log_output_disabled ) 
+    if (log_output_file.is_open())
     {
-        try {
-            fs::path log_file = log_path;
-            fs::path log_file_old = log_file;
-            log_file_old.replace_extension("log.old");
-            std::error_code ec;
-            fs::remove_all(log_file_old, ec);
-            fs::rename(log_file, log_file_old, ec); 
-        } catch (...) {
+        log_output_disabled = false;
+        return;
+    }
 
+    if( log_path.size() != 0)
+    {
+        std::error_code ec;
+        if( !log_output_old_stored )
+        {
+            log_output_old_stored = true;
+            try {
+                fs::path log_file = log_path;
+                fs::path log_file_old = log_file;
+                log_file_old.replace_extension("log.old");
+                fs::remove(log_file_old, ec);
+                fs::rename(log_file, log_file_old, ec); 
+                fs::remove(log_file, ec);
+            } catch (...) {
+            }   
         }   
-        log_output_file.open( log_path, std::ios_base::out | std::ios_base::app);
+        try {
+            log_output_file.open( log_path, std::ios_base::out | std::ios_base::app);
+            log_output_disabled = false;
+        } catch (...) {
+            log_output_disabled = true;
+        }
+    } else {
+        log_output_disabled  = true;
     }
 }
 
 void logging_end()
 {
-    if( !log_output_disabled ) 
-        log_output_file.close();
+    if( log_output_file.is_open() ) 
+    {
+        log_output_file.flush();
+        log_output_disabled = true;
+    }
 }

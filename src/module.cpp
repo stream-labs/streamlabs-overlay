@@ -91,7 +91,7 @@ napi_value Stop(napi_env env, napi_callback_info args)
 
 	thread_stop_status = stop_overlays_thread();
 
-	log_info << "Stop game overlay thread command complited " << std::endl;
+	log_info << "Stop game overlay thread command completed " << std::endl;
 	logging_end();
 
 	if (napi_create_int32(env, thread_stop_status, &ret) != napi_ok)
