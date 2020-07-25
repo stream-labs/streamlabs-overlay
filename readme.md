@@ -1,5 +1,5 @@
 ## Overlay
-`overlay` - it is a window what try to stay over any other windows( even fullscreen games ) and show content of some `source`. 
+`overlay` - it is a window what try to stay over any other windows ( even fullscreen games ) and show content of some `source`. 
 
 `source` - can be other window like chat or cpu monitor. 
 
@@ -45,7 +45,7 @@ It uses version from package.json so update it to a new value.
 - node
 - yarn
 - python 2.7
-- msbuild (vs studio make tools )
+- msbuild (vs studio make tools)
 
 ### Module use examples
   Examples to show api usage for simple usecases. 
@@ -80,7 +80,7 @@ To create, setup and remove overlay
 - `remove(overlay_id)`
 - `paintOverlay(overlay_id, width, height, bitmap)` 
 
-For interective mode set callbacks and switch on/off. See examples\example_with_hwnd_node.js. 
+For interactive mode set callbacks and switch on/off. See examples\example_with_hwnd_node.js. 
 - `setMouseCallback(callback)` 
 - `setKeyabordCallback(callback)`
 - `switchInteractiveMode()`
