@@ -33,7 +33,7 @@ try {
 try {
   console.log('Releasing version : ' + pack_version);
 
-  let release_package_rawdata = fse.readFileSync(path.join(prepack_path, 'package.json'));  
+  let release_package_rawdata = fse.readFileSync(path.join(prepack_path, 'package.json'));
   let release_package_info = JSON.parse(release_package_rawdata);  
   release_package_info.version = pack_version;
   let release_data = JSON.stringify(release_package_info);  
@@ -42,7 +42,7 @@ try {
   console.error(err)
 }
 
-const release_package = 'game-overlay-v'+pack_version+'.tar.gz';
+const release_package = 'game-overlay-'+pack_version+'.tar.gz';
 const package_path = path.join(__dirname, '..', release_package);
 
 
