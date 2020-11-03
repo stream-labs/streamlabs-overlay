@@ -35,7 +35,7 @@ jobs:
     inputs:
       versionSpec: '10.x'
 
-  - powershell: 'Write-Host "##vso[task.setvariable variable=targetartifact]crash-handler-$((git.exe describe --tags --abbrev=0) | Out-String)"'
+  - powershell: 'Write-Host "##vso[task.setvariable variable=targetartifact]game-overlay-$((git.exe describe --tags --abbrev=0) | Out-String)"'
     displayName: 'Get tag for artifact'
 
   - script: 'yarn install'
