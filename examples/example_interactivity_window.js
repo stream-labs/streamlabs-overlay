@@ -1,6 +1,6 @@
 
 const { app, BrowserWindow } = require("electron")
-const streamlabs_overlays = require('../build/Debug/streamlabs_overlay.node')
+const streamlabs_overlays = require('../build/Debug/game-overlay.node')
 const fs = require("fs")
 
 let win;

@@ -30,8 +30,7 @@ file(GLOB_RECURSE sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR} "src/*.cpp")
 
 add_nodejs_module(game-overlay ${sources})
 
-target_link_libraries(game-overlay ${NODEJS_LIBRARIES})
-target_link_libraries(game-overlay d2d1.lib dwrite.lib Dwmapi.lib)
+target_link_libraries(game-overlay ${NODEJS_LIBRARIES} d2d1.lib dwrite.lib Dwmapi.lib)
 
 target_include_directories(game-overlay PUBLIC ${NODEJS_INCLUDE_DIRS} ${NODE_ADDON_API_DIR} "include/")
  
