@@ -6,44 +6,73 @@ trigger:
     include:
       - '*'
 
-workspace:
-  clean: all
 
-pool:
-  vmImage: 'vs2017-win2016'
+variables:
+  BuildDirectory: build
+  Generator: Visual Studio 16 2019
+  DistributeDirectory: distribute
+  FullDistributePath: $(BuildDirectory)\$(DistributeDirectory)
+  RuntimeURL: https://atom.io/download/atom-shell
+  RuntimeName: iojs
+  RuntimeVersion: v9.3.3
 
-steps:
-- powershell: git config --global core.autocrlf false
-  displayName: 'Set Unix checkout for git'
+jobs:
+- job: 'Windows'
+  pool:
+    vmImage: 'windows-2019'
+  workspace:
+    clean: all
 
-- checkout: self
-  fetchDepth: 10
+  steps:
+  - powershell: git config --global core.autocrlf false
+    displayName: 'Set Unix checkout for git'
 
-- task: NodeTool@0
-  displayName: 'Install Node'
-  inputs:
-    versionSpec: '10.x'
+  - checkout: self
+    fetchDepth: 10
 
-- powershell: 'Write-Host "##vso[task.setvariable variable=version]$((git.exe describe --tags --abbrev=0) | Out-String)"'
-  displayName: 'Get version'
+  - task: NodeTool@0
+    displayName: 'Install Node'
+    inputs:
+      versionSpec: '10.x'
 
-- script: 'yarn install'
-  displayName: 'Install dependencies'
+  - powershell: 'Write-Host "##vso[task.setvariable variable=version]$((git.exe describe --tags --abbrev=0) | Out-String)"'
+    displayName: 'Get version'
 
-- script: 'yarn build'
-  displayName: 'Build module'
+  - script: 'yarn install'
+    displayName: 'Install dependencies'
 
-- script: 'node scripts/pack.js'
-  env:
-    MODULE_VERSION: $(version)
-  displayName: 'Package module'
+  - script: 'cmake -H. -B"%BuildDirectory%" -G"%Generator%"  -DCMAKE_INSTALL_PREFIX="%FullDistributePath%\game-overlay" -DNODEJS_NAME=%RuntimeName% -DNODEJS_URL=%RuntimeURL% -DNODEJS_VERSION=%RuntimeVersion%'
+    displayName: 'Configure game-overlay'
 
-- task: S3Upload@1
-  inputs:
-    awsCredentials: 'Streamlabs AWS'
-    regionName: 'us-west-2'
-    bucketName: 'obs-studio-deployment'
-    globExpressions: 'game-overlay-$(version).tar.gz'
-    filesAcl: 'public-read'
-  displayName: 'Upload artifact to S3'
-  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+  - script: 'node ci/bump-version.js'
+    displayName: 'Bump version number'
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+
+  - script: 'cmake --build %BuildDirectory% --target install --config RelWithDebInfo'
+    displayName: 'Build game-overlay'
+
+  - task: ArchiveFiles@2
+    displayName: 'Generate artifact'
+    inputs:
+      rootFolderOrFile: $(FullDistributePath)
+      includeRootFolder: false
+      archiveType: tar
+      tarCompression: gz
+      archiveFile: '$(tagartifact)-win64.tar.gz'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish build artifact'
+    inputs:
+      pathtoPublish: $(Build.SourcesDirectory)\$(tagartifact)-win64.tar.gz
+      artifactName: $(tagartifact)-win64.tar.gz
+
+  - task: S3Upload@1
+    inputs:
+      awsCredentials: 'SLOBS_BE_AWS'
+      regionName: 'us-west-2'
+      bucketName: 'slobs-crash-handler'
+      globExpressions: '$(tagartifact)-win64.tar.gz'
+      filesAcl: 'public-read'
+    displayName: 'Upload tag artifact to S3'
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+
