@@ -70,7 +70,7 @@ jobs:
     inputs:
       awsCredentials: 'SLOBS_BE_AWS'
       regionName: 'us-west-2'
-      bucketName: 'slobs-crash-handler'
+      bucketName: 'obs-studio-deployment'
       globExpressions: '$(targetartifact)-win64.tar.gz'
       filesAcl: 'public-read'
     displayName: 'Upload tag artifact to S3'
