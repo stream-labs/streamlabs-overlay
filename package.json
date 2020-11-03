@@ -29,12 +29,6 @@
     "endOfLine": "lf",
     "trailingComma": "all"
   },
-  "files": [
-    "npm/index.js",
-    "npm/typings.d.ts",
-    "npm/package.json",
-    "build/*/*/streamlabs_overlay.node"
-  ],
   "devDependencies": {
     "@types/node": "12.7.2",
     "electron": "9.3.3",
