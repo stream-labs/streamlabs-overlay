@@ -44,7 +44,7 @@ jobs:
   - script: 'cmake -H. -B"%BuildDirectory%" -G"%Generator%"  -DCMAKE_INSTALL_PREFIX="%FullDistributePath%\game-overlay" -DNODEJS_NAME=%RuntimeName% -DNODEJS_URL=%RuntimeURL% -DNODEJS_VERSION=%RuntimeVersion%'
     displayName: 'Configure game-overlay'
 
-  - script: 'node ci/bump-version.js'
+  - script: 'node scripts/bump-version.js'
     displayName: 'Bump version number'
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
 
