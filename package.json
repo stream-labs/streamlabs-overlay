@@ -12,28 +12,16 @@
   "version": "0.0.40",
   "license": "SEE LICENSE IN COPYRIGHT LAW",
   "engines": {
-    "node": ">= 8"
+    "node": ">= 10"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/stream-labs/streamlabs-overlay"
   },
   "scripts": {
-    "install": "",
     "pack": "node scripts/pack.js",
-    "build": "node-gyp configure --msvs_version=2017 && node-gyp rebuild --target=9.3.3 --dist-url=https://atom.io/download/atom-shell",
     "test": "",
     "get-version": "echo %npm_package_version%"
-  },
-  "binary": {
-    "module_name": "streamlabs_overlay",
-    "module_path": "./build/{configuration}/{node_abi}-{napi_build_version}-{platform}-{arch}/",
-    "remote_path": "./{module_name}/v{version}/{configuration}/",
-    "package_name": "{module_name}-v{version}-{node_abi}-{napi_build_version}-{platform}-{arch}.tar.gz",
-    "host": "https://streamlabs-overlay-binary.s3-us-east-1.amazonaws.com",
-    "napi_versions": [
-      1
-    ]
   },
   "prettier": {
     "singleQuote": true,
@@ -52,7 +40,7 @@
     "electron": "9.3.3",
     "fs-extra": "9.0.0",
     "prettier": "1.16.4",
-    "node-gyp": "6.1.0",
+    "node-addon-api": "^3.0.2",
     "minimist":"1.2.5",
     "tar": "6.0.1"
   },
