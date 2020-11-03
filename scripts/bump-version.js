@@ -34,7 +34,7 @@ const newVersion = executeCmd('git describe --tags --abbrev=0', { silent: true }
     .replace(/^v/, '');
 
 try {
-    const file = path.join(process.cwd(), 'package.json');
+    const file = path.join(process.cwd(), 'npm', 'package.json');
     const jsonData = fs.readFileSync(file);
     const root = JSON.parse(jsonData.toString());
     const currentVersion = root['version'];

@@ -35,8 +35,8 @@ jobs:
     inputs:
       versionSpec: '10.x'
 
-  - powershell: 'Write-Host "##vso[task.setvariable variable=version]$((git.exe describe --tags --abbrev=0) | Out-String)"'
-    displayName: 'Get version'
+  - powershell: 'Write-Host "##vso[task.setvariable variable=targetartifact]crash-handler-$((git.exe describe --tags --abbrev=0) | Out-String)"'
+    displayName: 'Get tag for artifact'
 
   - script: 'yarn install'
     displayName: 'Install dependencies'
@@ -58,20 +58,20 @@ jobs:
       includeRootFolder: false
       archiveType: tar
       tarCompression: gz
-      archiveFile: '$(tagartifact)-win64.tar.gz'
+      archiveFile: '$(targetartifact)-win64.tar.gz'
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish build artifact'
     inputs:
-      pathtoPublish: $(Build.SourcesDirectory)\$(tagartifact)-win64.tar.gz
-      artifactName: $(tagartifact)-win64.tar.gz
+      pathtoPublish: $(Build.SourcesDirectory)\$(targetartifact)-win64.tar.gz
+      artifactName: $(targetartifact)-win64.tar.gz
 
   - task: S3Upload@1
     inputs:
       awsCredentials: 'SLOBS_BE_AWS'
       regionName: 'us-west-2'
       bucketName: 'slobs-crash-handler'
-      globExpressions: '$(tagartifact)-win64.tar.gz'
+      globExpressions: '$(targetartifact)-win64.tar.gz'
       filesAcl: 'public-read'
     displayName: 'Upload tag artifact to S3'
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))

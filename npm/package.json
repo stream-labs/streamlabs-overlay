@@ -13,14 +13,6 @@
   "engines": {
     "node": ">= 10"
   },  
-  "binary": {
-    "module_name": "streamlabs_overlay",
-    "module_path": "./build/{configuration}/{node_abi}-{platform}-{arch}/",
-    "remote_path": "./{module_name}/v{version}/{configuration}/",
-    "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz",
-    "host": "https://streamlabs-overlay-binary.s3-us-east-1.amazonaws.com",
-    "napi_versions": [1]
-  },  
   "repository": {
     "type": "git",
     "url": "git://github.com/stream-labs/streamlabs-overlay"
@@ -28,6 +20,6 @@
   "scripts": {
   },
   "dependencies": {
-    "nan": "^2.14.0"
+    "node-addon-api": "^3.0.2"
   }
 }
