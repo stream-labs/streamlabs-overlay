@@ -7,44 +7,23 @@ It should be build as nodejs module.
 
 ## NodeJS Module 
 ### Build 
-  There is gyp project file in repository what can be used to make node module. 
+  There is cmake project file in repository what can be used to make node module. 
 
 To setup env and make a build use command
 ```
 yarn install
-yarn build 
 ```
   Module file will be in 'build\Release\'
 
 And to make build again after source code changed
 ```
-yarn node-gyp build
+cmake -G "Visual Studio 16 2019" -A x64  ../ 
+cmake --build . --target install --config Release
 ```
-To work on electron 2 it can be required to set older version of nodejs
-
-```
-nvm use 8.x.x
-set MODULE_VERSION=x.x.x
-yarn install 
-yarn build  
-node scripts\pack.js 
-```
-
-To make debug build for nodejs tests 
-
-```
-yarn node-gyp --debug configure rebuild 
-```
-
-### Pack 
-Use command 'node script\pack.js' to make a package for slobs.
-
-It uses version from package.json so update it to a new value.
 
 #### Requirements
 - node
 - yarn
-- python 2.7
 - msbuild (vs studio make tools )
 
 ### Module use examples
