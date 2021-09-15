@@ -14,7 +14,7 @@ variables:
   FullDistributePath: $(BuildDirectory)\$(DistributeDirectory)
   RuntimeURL: https://atom.io/download/atom-shell
   RuntimeName: iojs
-  RuntimeVersion: v11.4.7
+  RuntimeVersion: v12.1.0
 
 jobs:
 - job: 'Windows'
@@ -29,11 +29,6 @@ jobs:
 
   - checkout: self
     fetchDepth: 10
-
-  - task: NodeTool@0
-    displayName: 'Install Node'
-    inputs:
-      versionSpec: '10.x'
 
   - powershell: 'Write-Host "##vso[task.setvariable variable=targetartifact]game-overlay-$((git.exe describe --tags --abbrev=0) | Out-String)"'
     displayName: 'Get tag for artifact'
