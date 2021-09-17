@@ -14,7 +14,7 @@ variables:
   FullDistributePath: $(BuildDirectory)\$(DistributeDirectory)
   RuntimeURL: https://atom.io/download/atom-shell
   RuntimeName: iojs
-  RuntimeVersion: v12.1.0
+  RuntimeVersion: v13.4.0
 
 jobs:
 - job: 'Windows'
