@@ -11,7 +11,7 @@
   "version": "0.0.1",
   "license": "SEE LICENSE IN COPYRIGHT LAW",
   "engines": {
-    "node": ">= 10"
+    "node": ">= 14"
   },  
   "repository": {
     "type": "git",
@@ -20,6 +20,6 @@
   "scripts": {
   },
   "dependencies": {
-    "node-addon-api": "^3.0.2"
+    "node-addon-api": "^4.1.0"
   }
 }
