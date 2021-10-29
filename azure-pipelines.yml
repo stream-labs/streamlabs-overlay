@@ -51,6 +51,15 @@ jobs:
   - script: 'cmake --build %BuildDirectory% --target install --config RelWithDebInfo'
     displayName: 'Build game-overlay'
 
+  - script: 'git clone https://github.com/stream-labs/symsrv-scripts.git'
+    displayName: 'Fetch symsrv-scripts'
+
+  - script: ./symsrv-scripts/main.bat "%CD%/symsrv-scripts" ".\main.ps1 -localSourceDir '%CD%' -repo_userId 'stream-labs' -repo_name 'streamlabs-overlay' -repo_branch '$(Build.SourceVersion)'"
+    displayName: 'Run symbol server scripts'
+    env:
+      AWS_SYMB_ACCESS_KEY_ID: $(AWS_SYMB_ACCESS_KEY_ID)
+      AWS_SYMB_SECRET_ACCESS_KEY: $(AWS_SYMB_SECRET_ACCESS_KEY)
+
   - task: ArchiveFiles@2
     displayName: 'Generate artifact'
     inputs:
