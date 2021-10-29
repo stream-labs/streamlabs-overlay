@@ -8,7 +8,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 SET(NODEJS_URL "https://atom.io/download/atom-shell" CACHE STRING "Node.JS URL")
 SET(NODEJS_NAME "iojs" CACHE STRING "Node.JS Name")
-SET(NODEJS_VERSION "v11.4.7" CACHE STRING "Node.JS Version")
+SET(NODEJS_VERSION "v13.4.0" CACHE STRING "Node.JS Version")
 
 include(NodeJS)
 include(ExternalProject)
@@ -24,11 +24,21 @@ string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 
 # Define NAPI_VERSION
-add_definitions(-DNAPI_VERSION=4)
+add_definitions(-DNAPI_VERSION=7)
 
-file(GLOB_RECURSE sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR} "src/*.cpp")
-
-add_nodejs_module(game-overlay ${sources})
+set(OVERLAY_SOURCES 
+	src/main.cpp 
+	src/module.cpp 
+	src/overlay_logging.cpp 
+	src/overlay_paint_frame_js.cpp
+	src/overlay_paint_frame.cpp 
+	src/sl_overlay_api.cpp 
+	src/sl_overlay_window.cpp 
+	src/sl_overlays_settings.cpp 
+	src/sl_overlays.cpp 
+	src/stdafx.cpp 
+	src/user_input_callback.cpp )
+add_nodejs_module(game-overlay ${OVERLAY_SOURCES})
 
 target_link_libraries(game-overlay ${NODEJS_LIBRARIES} d2d1.lib dwrite.lib Dwmapi.lib)
 
