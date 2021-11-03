@@ -62,4 +62,4 @@ To create, setup and remove overlay
 For interective mode set callbacks and switch on/off. See examples\example_with_hwnd_node.js. 
 - `setMouseCallback(callback)` 
 - `setKeyabordCallback(callback)`
-- `switchInteractiveMode()`
+- `switchInteractiveMode()` 
