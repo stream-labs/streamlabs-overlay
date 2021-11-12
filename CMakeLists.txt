@@ -70,10 +70,11 @@ SET_TARGET_PROPERTIES(
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
-	COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:game_overlay> > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents.txt
-	COMMAND powershell -command "Get-Content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents.txt | Select-String -Pattern Summary -Context 999,0 > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_cut.txt"
-	COMMAND powershell -command "compare-object (get-content  ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_cut.txt) (get-content  ${CMAKE_SOURCE_DIR}/cmake/approved_dependents.txt)"
-	COMMAND powershell -command "if( compare-object (get-content  ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_cut.txt) (get-content  ${CMAKE_SOURCE_DIR}/cmake/approved_dependents.txt) ) { Write-Error 'Alarm: Module dependencies changed. Please review changes.' }"
+	COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:game_overlay> > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s1.txt
+	COMMAND powershell -command "Get-Content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s1.txt | Select-String -CaseSensitive -Pattern dependencies -Context 0,999 > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s2.txt"
+	COMMAND powershell -command "Get-Content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s2.txt | Select-String -CaseSensitive -Pattern Summary -Context 999,0 > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s3.txt"
+	COMMAND powershell -command "compare-object (get-content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s3.txt) (get-content ${CMAKE_SOURCE_DIR}/cmake/approved_dependents.txt)"
+	COMMAND powershell -command "if( compare-object (get-content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s3.txt) (get-content  ${CMAKE_SOURCE_DIR}/cmake/approved_dependents.txt) ) { Write-Error 'Alarm: Module dependencies changed. Please review changes.' }"
 )
 
 IF(WIN32)
