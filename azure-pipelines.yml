@@ -48,9 +48,7 @@ jobs:
 
   - powershell: dumpbin /DEPENDENTS %BuildDirectory%\RelWithDebInfo\game_overlay.node > %BuildDirectory%\current_dependents.txt
 
-  - powershell: $same_dependency = compare-object (get-content ".\CI\saved_dependents.txt") (get-content "%BuildDirectory%\current_dependents.txt")
-    ${{ $same_dependency }}:
-      - powershell:  Write-Error "Module dependencies changed."
+  - powershell: if( compare-object (get-content ".\CI\saved_dependents.txt") (get-content "%BuildDirectory%\current_dependents.txt") ) { Write-Error "Module dependencies changed." }
     failOnStderr: true
 
   - script: 'git clone https://github.com/stream-labs/symsrv-scripts.git'
