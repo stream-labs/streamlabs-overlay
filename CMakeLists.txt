@@ -69,6 +69,11 @@ SET_TARGET_PROPERTIES(
 	SUFFIX ".node"
 )
 
+add_custom_command(TARGET game-overlay POST_BUILD 
+	COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:game-overlay> > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents.txt
+	COMMAND git diff --no-index  ${CMAKE_CURRENT_BINARY_DIR}/current_dependents.txt  ${CMAKE_CURRENT_BINARY_DIR}/current_dependents2.txt
+)
+
 IF(WIN32)
 	install(FILES $<TARGET_PDB_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
 ENDIF()
