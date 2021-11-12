@@ -30,15 +30,6 @@ jobs:
   - checkout: self
     fetchDepth: 10
 
-  - powershell: | 
-      "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
-      dumpbin /DEPENDENTS %BuildDirectory%\RelWithDebInfo\game_overlay.node > %BuildDirectory%\current_dependents.txt
-      if( compare-object (get-content ".\CI\saved_dependents.txt") (get-content "%BuildDirectory%\current_dependents.txt") ) 
-      { 
-        Write-Error "Module dependencies changed." 
-      }
-    failOnStderr: true
-
   - powershell: 'Write-Host "##vso[task.setvariable variable=targetartifact]game-overlay-$((git.exe describe --tags --abbrev=0) | Out-String)"'
     displayName: 'Get tag for artifact'
 

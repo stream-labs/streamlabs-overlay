@@ -69,9 +69,11 @@ SET_TARGET_PROPERTIES(
 	SUFFIX ".node"
 )
 
-add_custom_command(TARGET game-overlay POST_BUILD 
-	COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:game-overlay> > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents.txt
-	COMMAND git diff --no-index  ${CMAKE_CURRENT_BINARY_DIR}/current_dependents.txt  ${CMAKE_CURRENT_BINARY_DIR}/current_dependents2.txt
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
+	COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:game_overlay> > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents.txt
+	COMMAND powershell -command "Get-Content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents.txt | Select-String -Pattern Summary -Context 999,0 > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_cut.txt"
+	COMMAND powershell -command "compare-object (get-content  ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_cut.txt) (get-content  ${CMAKE_SOURCE_DIR}/cmake/approved_dependents.txt)"
+	COMMAND powershell -command "if( compare-object (get-content  ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_cut.txt) (get-content  ${CMAKE_SOURCE_DIR}/cmake/approved_dependents.txt) ) { Write-Error 'Alarm: Module dependencies changed. Please review changes.' }"
 )
 
 IF(WIN32)
