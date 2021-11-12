@@ -49,7 +49,7 @@ jobs:
   - powershell: dumpbin /DEPENDENTS %BuildDirectory%\RelWithDebInfo\game_overlay.node > %BuildDirectory%\current_dependents.txt
 
   - powershell: $same_dependency = compare-object (get-content ".\CI\saved_dependents.txt") (get-content "%BuildDirectory%\current_dependents.txt")
-    ${{ if($same_dependency) }}:
+    ${{ $same_dependency }}:
       - powershell:  Write-Error "Module dependencies changed."
     failOnStderr: true
 
