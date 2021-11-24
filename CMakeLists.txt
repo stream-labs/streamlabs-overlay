@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.17)
 project(game_overlay)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -45,7 +45,7 @@ add_nodejs_module(${PROJECT_NAME} ${OVERLAY_SOURCES})
 target_link_libraries(${PROJECT_NAME} ${PROJECT_LIBRARIES} d2d1.lib dwrite.lib Dwmapi.lib)
 
 target_include_directories(${PROJECT_NAME} PUBLIC  ${PROJECT_INCLUDE_PATHS})
-set_property (TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17 )
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DUNICODE -D_UNICODE BUILDING_NODE_EXTENSION -D_CRT_SECURE_NO_WARNINGS)
 
 set(CompilerFlags
@@ -70,11 +70,7 @@ SET_TARGET_PROPERTIES(
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
-	COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:game_overlay> > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s1.txt
-	COMMAND powershell -command "Get-Content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s1.txt | Select-String -CaseSensitive -Pattern dependencies -Context 0,999 > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s2.txt"
-	COMMAND powershell -command "Get-Content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s2.txt | Select-String -CaseSensitive -Pattern Summary -Context 999,0 > ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s3.txt"
-	COMMAND powershell -command "compare-object (get-content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s3.txt) (get-content ${CMAKE_SOURCE_DIR}/cmake/approved_dependents.txt)"
-	COMMAND powershell -command "if( compare-object (get-content ${CMAKE_CURRENT_BINARY_DIR}/current_dependents_s3.txt) (get-content  ${CMAKE_SOURCE_DIR}/cmake/approved_dependents.txt) ) { Write-Error 'Alarm: Module dependencies changed. Please review changes.' }"
+		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_dependencies.cmd $<TARGET_FILE:game_overlay> ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR}
 )
 
 IF(WIN32)
