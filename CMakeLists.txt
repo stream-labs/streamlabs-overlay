@@ -45,7 +45,6 @@ add_nodejs_module(${PROJECT_NAME} ${OVERLAY_SOURCES})
 target_link_libraries(${PROJECT_NAME} ${PROJECT_LIBRARIES} d2d1.lib dwrite.lib Dwmapi.lib)
 
 target_include_directories(${PROJECT_NAME} PUBLIC  ${PROJECT_INCLUDE_PATHS})
-
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DUNICODE -D_UNICODE BUILDING_NODE_EXTENSION -D_CRT_SECURE_NO_WARNINGS)
 
 set(CompilerFlags
@@ -62,21 +61,14 @@ foreach(CompilerFlag ${CompilerFlags})
   string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
 endforeach()
 
-SET_TARGET_PROPERTIES(
-	${PROJECT_NAME}
-	PROPERTIES
-	PREFIX ""
-	SUFFIX ".node"
-)
-
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
-		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_dependencies.cmd $<TARGET_FILE:game_overlay> ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR}
+	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_dependencies.cmd $<TARGET_FILE:game_overlay> ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR}
 )
 
-IF(WIN32)
-	install(FILES $<TARGET_PDB_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
-ENDIF()
+get_target_property(OUT ${PROJECT_NAME} LINK_LIBRARIES)
+message(STATUS ${OUT})
 
+install(FILES $<TARGET_PDB_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
 install(FILES $<TARGET_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 install(
