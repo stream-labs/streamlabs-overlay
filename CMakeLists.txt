@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.0)
 project(game_overlay)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -14,6 +14,19 @@ include(NodeJS)
 
 nodejs_init()
 
+set(OVERLAY_SOURCES
+	src/main.cpp
+	src/module.cpp
+	src/overlay_logging.cpp
+	src/overlay_paint_frame_js.cpp
+	src/overlay_paint_frame.cpp
+	src/sl_overlay_api.cpp
+	src/sl_overlay_window.cpp
+	src/sl_overlays_settings.cpp
+	src/sl_overlays.cpp
+	src/stdafx.cpp
+	src/user_input_callback.cpp )
+
 SET(PROJECT_INCLUDE_PATHS ${NODEJS_INCLUDE_DIRS} "${CMAKE_SOURCE_DIR}/include/" )
 
 # Include N-API wrappers
@@ -25,27 +38,15 @@ string(REPLACE "\n" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 string(REPLACE "\"" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
 
 list(APPEND PROJECT_INCLUDE_PATHS ${NODE_ADDON_API_DIR})
-# Define NAPI_VERSION
+
 add_definitions(-DNAPI_VERSION=7)
 
-set(OVERLAY_SOURCES 
-	src/main.cpp 
-	src/module.cpp 
-	src/overlay_logging.cpp 
-	src/overlay_paint_frame_js.cpp
-	src/overlay_paint_frame.cpp 
-	src/sl_overlay_api.cpp 
-	src/sl_overlay_window.cpp 
-	src/sl_overlays_settings.cpp 
-	src/sl_overlays.cpp 
-	src/stdafx.cpp 
-	src/user_input_callback.cpp )
 add_nodejs_module(${PROJECT_NAME} ${OVERLAY_SOURCES})
 
 target_link_libraries(${PROJECT_NAME} ${PROJECT_LIBRARIES} d2d1.lib dwrite.lib Dwmapi.lib)
 
 target_include_directories(${PROJECT_NAME} PUBLIC  ${PROJECT_INCLUDE_PATHS})
-target_compile_definitions(${PROJECT_NAME} PRIVATE -DUNICODE -D_UNICODE BUILDING_NODE_EXTENSION -D_CRT_SECURE_NO_WARNINGS)
+target_compile_definitions(${PROJECT_NAME} PRIVATE BUILDING_NODE_EXTENSION)
 
 set(CompilerFlags
 	CMAKE_CXX_FLAGS
@@ -61,13 +62,20 @@ foreach(CompilerFlag ${CompilerFlags})
   string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
 endforeach()
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
+
+# Compare current linked libs with prev
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
 	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_dependencies.cmd $<TARGET_FILE:game_overlay> ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR}
 )
 
+SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
+
+# Print all linked libs
 get_target_property(OUT ${PROJECT_NAME} LINK_LIBRARIES)
 message(STATUS ${OUT})
 
+# Install
 install(FILES $<TARGET_PDB_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
 install(FILES $<TARGET_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX})
 
