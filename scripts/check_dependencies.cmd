@@ -1,5 +1,14 @@
-dumpbin /DEPENDENTS %1 > %2/current_dependents_s1.txt
-powershell -command "Get-Content %2/current_dependents_s1.txt | Select-String -CaseSensitive -Pattern dependencies -Context 0,999 > %2/current_dependents_s2.txt"
-powershell -command "Get-Content %2/current_dependents_s2.txt | Select-String -CaseSensitive -Pattern Summary -Context 999,0 > %2/current_dependents_s3.txt" 
-powershell -command "compare-object (get-content %2/current_dependents_s3.txt) (get-content %3/cmake/approved_dependents.txt)"
-powershell -command "if( compare-object (get-content %2/current_dependents_s3.txt) (get-content  %3/cmake/approved_dependents.txt) ) { Write-Error 'Alarm: Module dependencies changed. Please review changes.' }"
+Set BinaryFilename=%1
+For %%A in ("%BinaryFilename%") do (
+    Set BinaryFolder=%%~dpA
+    Set BinaryName=%%~nxA
+)
+Set depsFile=%3/cmake/%BinaryName%.txt
+Set depsCurrent=%2/%BinaryName%
+
+dumpbin /DEPENDENTS %BinaryFilename% > %depsCurrent%_1.txt
+powershell -command "Get-Content %depsCurrent%_1.txt | Select-String -CaseSensitive -Pattern dependencies -Context 0,999 > %depsCurrent%_2.txt"
+powershell -command "Get-Content %depsCurrent%_2.txt | Select-String -CaseSensitive -Pattern Summary -Context 999,0 > %depsCurrent%_3.txt" 
+powershell -command "compare-object (get-content %depsCurrent%_3.txt) (get-content %depsFile%)"
+powershell -command "if( compare-object (get-content %depsCurrent%_3.txt) (get-content  %depsFile%) ) { Write-Error 'Alarm: Module dependencies changed. Please review changes.' }"
+del %depsCurrent%_1.txt %depsCurrent%_2.txt
