@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(game_overlay)
+project(game-overlay)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -66,7 +66,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE -DUNICODE -D_UNICODE -D_CRT_S
 
 # Compare current linked libs with prev
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
-	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_dependencies.cmd $<TARGET_FILE:game_overlay> ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR}
+	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_dependencies.cmd $<TARGET_FILE:game-overlay> ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR}
 )
 
 SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
@@ -76,14 +76,14 @@ get_target_property(OUT ${PROJECT_NAME} LINK_LIBRARIES)
 message(STATUS ${OUT})
 
 # Install
-install(FILES $<TARGET_PDB_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
+install(FILES $<TARGET_PDB_FILE:game-overlay> DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
 
-install(FILES $<TARGET_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES $<TARGET_FILE:game-overlay> DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 install(
 	FILES
-		${game_overlay_SOURCE_DIR}/npm/package.json
-		${game_overlay_SOURCE_DIR}/npm/index.js
-		${game_overlay_SOURCE_DIR}/npm/typings.d.ts
+		${game-overlay_SOURCE_DIR}/npm/package.json
+		${game-overlay_SOURCE_DIR}/npm/index.js
+		${game-overlay_SOURCE_DIR}/npm/typings.d.ts
 	DESTINATION
 		${CMAKE_INSTALL_PREFIX})

@@ -9,7 +9,7 @@
     "name": "Streamlabs",
     "url": "https://streamlabs.com"
   },
-  "version": "0.0.40",
+  "version": "0.0.55",
   "license": "SEE LICENSE IN COPYRIGHT LAW",
   "engines": {
     "node": ">= 14"
