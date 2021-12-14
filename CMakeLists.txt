@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.11)
 project(game_overlay)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -77,6 +77,7 @@ message(STATUS ${OUT})
 
 # Install
 install(FILES $<TARGET_PDB_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
+
 install(FILES $<TARGET_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 install(
