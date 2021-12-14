@@ -1,5 +1,5 @@
 {
-  "name": "@streamlabs/game-overlay",
+  "name": "@streamlabs/game_overlay",
   "private": true,
   "description": "Streamlabs Game Overlay module",
   "gypfile": true,

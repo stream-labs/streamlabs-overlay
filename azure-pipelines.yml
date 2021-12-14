@@ -37,14 +37,14 @@ jobs:
     displayName: 'Install dependencies'
 
   - script: 'cmake -H. -B"%BuildDirectory%" -G"%Generator%"  -DCMAKE_INSTALL_PREFIX="%FullDistributePath%\game_overlay" -DNODEJS_NAME=%RuntimeName% -DNODEJS_URL=%RuntimeURL% -DNODEJS_VERSION=%RuntimeVersion%'
-    displayName: 'Configure game-overlay'
+    displayName: 'Configure game_overlay'
 
   - script: 'node scripts/bump-version.js'
     displayName: 'Bump version number'
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
 
   - script: 'cmake --build %BuildDirectory% --target install --config RelWithDebInfo'
-    displayName: 'Build game-overlay'
+    displayName: 'Build game_overlay'
 
 
   - script: 'git clone https://github.com/stream-labs/symsrv-scripts.git'

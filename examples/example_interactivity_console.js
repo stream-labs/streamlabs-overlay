@@ -1,4 +1,4 @@
-const streamlabs_overlays = require('../build/Release/game-overlay.node')
+const streamlabs_overlays = require('../build/Release/game_overlay.node')
 
 console.log('Call start');
 streamlabs_overlays.start();

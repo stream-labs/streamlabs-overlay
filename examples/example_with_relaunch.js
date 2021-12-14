@@ -1,5 +1,5 @@
 const { app, BrowserWindow } = require("electron")
-const streamlabs_overlays = require('../build/Debug/game-overlay.node')
+const streamlabs_overlays = require('../build/Debug/game_overlay.node')
 const fs = require("fs")
 
 //
