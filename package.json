@@ -39,7 +39,7 @@
     "fs": "^0.0.1-security",
     "node-addon-api": "^4.1.0",
     "path": "^0.12.7",
-    "shelljs": "^0.8.4",
+    "shelljs": "^0.8.5",
     "tar": "6.1.11"
   },
   "dependencies": {
