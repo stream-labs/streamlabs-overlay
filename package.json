@@ -34,7 +34,7 @@
     "electron": "13.4.0",
     "fs-extra": "9.0.0",
     "prettier": "1.16.4",
-    "minimist":"1.2.5",
+    "minimist":"1.2.6",
     "colors": "^1.4.0",
     "fs": "^0.0.1-security",
     "node-addon-api": "^4.1.0",
