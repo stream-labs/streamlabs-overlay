@@ -72,8 +72,8 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
 # Print all linked libs
-get_target_property(OUT ${PROJECT_NAME} LINK_LIBRARIES)
-message(STATUS ${OUT})
+get_target_property(LIST_OF_LIBRARIES ${PROJECT_NAME} LINK_LIBRARIES)
+message(STATUS "List of libraries to link with: " "${LIST_OF_LIBRARIES}")
 
 # Install
 install(FILES $<TARGET_PDB_FILE:game_overlay> DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)

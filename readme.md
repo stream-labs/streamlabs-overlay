@@ -9,16 +9,21 @@ It should be build as nodejs module.
 ### Build 
   There is cmake project file in repository what can be used to make node module. 
 
-To setup env and make a build use command
+To setup env 
 ```
 yarn install
 ```
-  Module file will be in 'build\Release\'
 
-And to make build again after source code changed
+To configure a build
 ```
+mkdir build
+cd build
 cmake -G "Visual Studio 16 2019" -A x64  ../ 
-cmake --build . --target install --config Release
+```
+
+And to make a build
+```
+cmake --build . --config Release
 ```
 
 #### Requirements
