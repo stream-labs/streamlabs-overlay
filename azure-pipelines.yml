@@ -9,9 +9,9 @@ trigger:
 
 variables:
   BuildDirectory: build
-  Generator: Visual Studio 16 2019
   DistributeDirectory: distribute
   FullDistributePath: $(BuildDirectory)\$(DistributeDirectory)
+  Generator: Visual Studio 16 2019
   RuntimeURL: https://atom.io/download/atom-shell
   RuntimeName: iojs
   RuntimeVersion: v13.4.0
@@ -45,7 +45,6 @@ jobs:
 
   - script: 'cmake --build %BuildDirectory% --target install --config RelWithDebInfo'
     displayName: 'Build game_overlay'
-
 
   - script: 'git clone https://github.com/stream-labs/symsrv-scripts.git'
     displayName: 'Fetch symsrv-scripts'
