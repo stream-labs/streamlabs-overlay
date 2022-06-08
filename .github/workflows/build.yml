@@ -41,7 +41,7 @@ jobs:
           INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/game_overlay"
 
       - name: Build
-        run: cmake --build "${{env.BUILD_DIRECTORY}}"" --target install --config ${{env.BUILD_CONFIGURATION}}
+        run: cmake --build "${{env.BUILD_DIRECTORY}}" --target install --config ${{env.BUILD_CONFIGURATION}}
 
       - name: Fetch symsrv-scripts
         uses: actions/checkout@v3
