@@ -22,7 +22,7 @@ jobs:
   build:
     runs-on: windows-latest
     env: 
-      FULL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}\\${{env.DISTRIBUTE_DIRECTORY}}"    
+      FULL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}"
     steps:
       - uses: actions/checkout@v3
 
@@ -40,7 +40,7 @@ jobs:
       - name: Configure
         run: cmake -H. -B"${{env.BUILD_DIRECTORY}}" -G"Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX="${{env.INSTALL_DISTRIBUTE_PATH}}"
         env:
-          INSTALL_DISTRIBUTE_PATH: "${{env.FULL_DISTRIBUTE_PATH}}\\game_overlay"
+          INSTALL_DISTRIBUTE_PATH: "${{env.FULL_DISTRIBUTE_PATH}}/game_overlay"
 
       - name: Build
         run: cmake --build ${{env.BUILD_DIRECTORY}} --target install --config ${{env.BUILD_CONFIGURATION}}
