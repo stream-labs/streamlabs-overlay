@@ -21,10 +21,8 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
-
-    steps:
-      env: 
-        FULL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}\\${{env.DISTRIBUTE_DIRECTORY}}"
+    env: 
+      FULL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}\\${{env.DISTRIBUTE_DIRECTORY}}"    steps:
     - uses: actions/checkout@v3
 
     - name: Use Node.js
