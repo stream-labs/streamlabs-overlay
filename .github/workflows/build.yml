@@ -21,7 +21,8 @@ permissions:
 jobs:
   build:
     env: 
-      FullDistributePath: "${{env.BuildDirectory}}\${{env.DistributeDirectory}}"
+      FullDistributePath: "${{env.BuildDirectory}}\\${{env.DistributeDirectory}}"
+
     runs-on: windows-latest
 
     steps:
@@ -39,7 +40,9 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Configure
-      run: cmake -H. -B"${{env.BuildDirectory}}" -G"Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX="${{env.FullDistributePath}}\game_overlay"
+      run: cmake -H. -B"${{env.BuildDirectory}}" -G"Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX="${{env.InstallDistributePath}}"
+      env:
+        InstallDistributePath: "${{env.FullDistributePath}}\\game_overlay"
 
     - name: Build
       run: cmake --build ${{env.BuildDirectory}} --target install --config ${{env.BUILD_CONFIGURATION}}
