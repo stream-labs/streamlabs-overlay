@@ -1,4 +1,4 @@
-name: Build
+name: build
 
 concurrency: 
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
@@ -21,7 +21,7 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
-    env: 
+    env:
       FULL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}"
     steps:
       - uses: actions/checkout@v3
