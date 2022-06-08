@@ -51,7 +51,7 @@ jobs:
         path: symsrv-scripts
 
     -name: Run symbol server scripts
-      run: dir ./symsrv-scripts/main.bat
+      run: dir symsrv-scripts\main.bat
       env:
         AWS_SYMB_ACCESS_KEY_ID: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}
         AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}
