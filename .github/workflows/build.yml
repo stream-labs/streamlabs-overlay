@@ -12,8 +12,8 @@ on:
 
 env:
   BUILD_CONFIGURATION: RelWithDebInfo
-  BuildDirectory: build
-  DistributeDirectory: distribute
+  BuildDirectory: "build"
+  DistributeDirectory: "distribute"
 
 permissions:
   contents: read
@@ -21,7 +21,7 @@ permissions:
 jobs:
   build:
     env: 
-      FullDistributePath: ${{env.BuildDirectory}}\${{env.DistributeDirectory}}
+      FullDistributePath: "${{env.BuildDirectory}}\${{env.DistributeDirectory}}"
     runs-on: windows-latest
 
     steps:
