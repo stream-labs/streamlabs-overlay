@@ -14,13 +14,14 @@ env:
   BUILD_CONFIGURATION: RelWithDebInfo
   BuildDirectory: build
   DistributeDirectory: distribute
-  FullDistributePath: ${{env.BuildDirectory}}\${{env.DistributeDirectory}}
 
 permissions:
   contents: read
 
 jobs:
   build:
+    env: 
+      FullDistributePath: ${{env.BuildDirectory}}\${{env.DistributeDirectory}}
     runs-on: windows-latest
 
     steps:
