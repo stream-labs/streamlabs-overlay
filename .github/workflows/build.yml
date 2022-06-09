@@ -73,7 +73,7 @@ jobs:
         run: ./symsrv-scripts/main.bat "${{ github.workspace }}/symsrv-scripts" ".\main.ps1 -localSourceDir '${{ github.workspace }}' -repo_userId 'stream-labs' -repo_name 'streamlabs-overlay' -repo_branch '${{ github.sha }}'"
         env:
           AWS_SYMB_ACCESS_KEY_ID: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}}
-          AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}}
+          AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
         shell: powershell
   release_module:
     needs: build
@@ -98,7 +98,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           aws-region: us-west-2
       - name: Deploy
         run: aws s3 cp ${{env.TARGET_ARTIFACT}}-win64.tar.gz s3://obs-studio-deployment -acl public-read
