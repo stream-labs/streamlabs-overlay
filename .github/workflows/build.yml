@@ -25,7 +25,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-
+      - name: Show GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
@@ -81,10 +84,6 @@ jobs:
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
         shell: bash
-#      - name: Show GitHub context
-#        env:
-#          GITHUB_CONTEXT: ${{ toJson(github) }}
-#        run: echo "$GITHUB_CONTEXT"
       - name: Get build from cache
         uses: actions/cache@v2
         with:
