@@ -70,7 +70,7 @@ jobs:
           AWS_SYMB_ACCESS_KEY_ID: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}}
           AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}}
         shell: powershell
-  upload_debug:
+  release_module:
     needs: build
     runs-on: windows-latest
     if: startsWith(github.ref_type, 'tags')
