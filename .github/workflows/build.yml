@@ -90,11 +90,11 @@ jobs:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Tar artifact for deployment
-        run: cd ${{env.INSTALL_DISTRIBUTE_PATH}} && tar -cvzf ../../${{env.TARGET_ARTIFACT}}-win64.tar.gz game_overlay
+        run: tar -cvzf ${{env.TARGET_ARTIFACT}}-win64.tar.gz -C ${{env.INSTALL_DISTRIBUTE_PATH}} game_overlay
         env:
 #          TARGET_ARTIFACT: game-overlay-${{ github.event.release.tag_name }}
           TARGET_ARTIFACT: game-overlay-${{ steps.get_version.outputs.VERSION }}
-          INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/game_overlay"
+          INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}"
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
