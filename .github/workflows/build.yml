@@ -90,8 +90,17 @@ jobs:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Tar artifact for deployment
-        run: tar -cvzf ${{env.TARGET_ARTIFACT}}-win64.tar.gz ./build/distribute/* -r
+        run: tar -cvzf ${{env.TARGET_ARTIFACT}}-win64.tar.gz ${{env.INSTALL_DISTRIBUTE_PATH}}
         env:
           TARGET_ARTIFACT: game-overlay-${{ github.event.release.tag_name }}
-      - name: Publish to aws
-        run: dir
+          INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/game_overlay"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}}
+          aws-region: us-west-2
+      - name: Deploy
+        run: aws s3 cp ${{env.TARGET_ARTIFACT}}-win64.tar.gz s3://obs-studio-deployment -acl public-read
+        env:
+          TARGET_ARTIFACT: game-overlay-${{ github.event.release.tag_name }}
