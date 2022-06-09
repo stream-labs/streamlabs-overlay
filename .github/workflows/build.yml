@@ -90,7 +90,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Tar artifact for deployment
         run: tar -cvzf ${{env.TARGET_ARTIFACT}}-win64.tar.gz ./build/distribute/* -r
-          env:
-            TARGET_ARTIFACT: game-overlay-${{ github.event.release.tag_name }}
+        env:
+          TARGET_ARTIFACT: game-overlay-${{ github.event.release.tag_name }}
       - name: Publish to aws
         run: dir
