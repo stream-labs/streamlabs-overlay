@@ -66,6 +66,10 @@ jobs:
     needs: build
     runs-on: windows-latest
     steps:
+      - name: Show GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - name: Fetch symsrv-scripts
         uses: actions/checkout@v3
         with:
