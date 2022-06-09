@@ -44,6 +44,7 @@ jobs:
         run: cmake --build "${{env.BUILD_DIRECTORY}}" --target install --config ${{env.BUILD_CONFIGURATION}}
   publish:
     needs: build
+    runs-on: windows-latest
     if: startsWith(github.ref_type, 'tags')
     steps:
       - name: Fetch symsrv-scripts
@@ -63,6 +64,7 @@ jobs:
         run: tar -zcf release-win64.tar.gz ./build/* -r
   publish_non_tag:
     needs: build
+    runs-on: windows-latest
     steps:
       - name: Fetch symsrv-scripts
         uses: actions/checkout@v3
