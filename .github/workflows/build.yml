@@ -42,36 +42,34 @@ jobs:
 
       - name: Build
         run: cmake --build "${{env.BUILD_DIRECTORY}}" --target install --config ${{env.BUILD_CONFIGURATION}}
+      - name: Cache build
+#        if: startsWith(github.ref_type, 'tags')
+        uses: actions/cache@v2
+        with:
+          path: ${{env.BUILD_DIRECTORY}}
+          key: ${{ runner.os }}-build-${{ github.sha }}
   publish:
     needs: build
     runs-on: windows-latest
-    if: startsWith(github.ref_type, 'tags')
+#    if: startsWith(github.ref_type, 'tags')
     env:
       TARGET_ARTIFACT: "game-overlay-${{ github.ref }}"
     steps:
-      - name: Fetch symsrv-scripts
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-          repository: stream-labs/symsrv-scripts
-          path: symsrv-scripts
-
-      - name: Run symbol server scripts
-        run: ./symsrv-scripts/main.bat "${{ github.workspace }}/symsrv-scripts" ".\main.ps1 -localSourceDir '${{ github.workspace }}' -repo_userId 'stream-labs' -repo_name 'streamlabs-overlay' -repo_branch '${{ github.sha }}'"
-        env:
-          AWS_SYMB_ACCESS_KEY_ID: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}}
-          AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}}
-
-      - name: Tar artifact for deployment
-        run: tar -zcf release-win64.tar.gz ./build/* -r
-  publish_non_tag:
-    needs: build
-    runs-on: windows-latest
-    steps:
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+        shell: bash
       - name: Show GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
+          TARGET_ARTIFACT: game-overlay-${{ github.event.release.tag_name }}
+        run: echo "$GITHUB_CONTEXT" &&  echo "$TARGET_ARTIFACT" && echo "${{ steps.get_version.outputs.VERSION }}"
+      - name: Cache build
+        uses: actions/cache@v2
+        with:
+          path: ${{env.BUILD_DIRECTORY}}
+          key: ${{ runner.os }}-build-${{ github.sha }}
+      - run: dir ${{env.BUILD_DIRECTORY}}
       - name: Fetch symsrv-scripts
         uses: actions/checkout@v3
         with:
@@ -86,4 +84,4 @@ jobs:
           AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}}
 
       - name: Tar artifact for deployment
-        run: tar -zcf release-win64.tar.gz ./build/* -r
+        run: tar -zcf ${{env.TARGET_ARTIFACT}}-win64.tar.gz ./build/* -r
