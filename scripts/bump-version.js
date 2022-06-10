@@ -11,11 +11,10 @@ function log_info(msg) {
     sh.echo(colors.red(`ERROR: ${msg}`));
   }
 
-const newVersion = process.argv[2];
-const packagePath = process.argv[3];
+const newVersion = process.argv[1];
+const packagePath = process.argv[2];
 
-log_info('New version: ' + newVersion);
-log_info('Package Path: ' + packagePath);
+log_info('Script Arguments: ' + process.argv.spice(2));
 
 try {
     const file = path.join(process.cwd(), packagePath, 'package.json');
