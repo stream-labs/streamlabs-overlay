@@ -116,6 +116,6 @@ jobs:
           aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           aws-region: us-west-2
       - name: Deploy
-        run: aws s3 cp ${{env.TARGET_ARTIFACT}}-win64.tar.gz s3://obs-studio-deployment --acl public-read
+        run: aws s3 cp ${{env.TARGET_ARTIFACT}}.tar.gz s3://obs-studio-deployment --acl public-read
         env:
           TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-win64
