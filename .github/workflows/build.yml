@@ -31,16 +31,17 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16.x'
       - name: Check for cached build
         id: cache-check
         uses: actions/cache@v2
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
+      - name: Install Node.js
+        if: steps.cache-check.outputs.cache-hit != 'true'      
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
       - name: Install dependencies
         if: steps.cache-check.outputs.cache-hit != 'true'
         run: yarn install --immutable --immutable-cache --check-cache
@@ -99,10 +100,11 @@ jobs:
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
-      - name: Use Node.js
+      - name: Use install Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
+      - name: Use Node.js
         run: npm install shelljs fs path colors
       - name: Put version into package.json
         run: node scripts/bump-version.js ${{ steps.get_version.outputs.VERSION }} ${{env.PACKAGE_PATH}}
