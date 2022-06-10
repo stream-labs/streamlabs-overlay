@@ -103,6 +103,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
+        run: npm install shelljs fs path colors
       - name: Put version into package.json
         run: node scripts/bump-version.js ${{ steps.get_version.outputs.VERSION }} ${{env.PACKAGE_PATH}}
         env:
