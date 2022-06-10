@@ -13,6 +13,8 @@ on:
     branches: [ "master" ]
 
 env:
+  PACKAGE_DIRECTORY: game_overlay
+  PACKAGE_NAME: game-overlay
   BUILD_CONFIGURATION: RelWithDebInfo
   BUILD_DIRECTORY: "build"
   DISTRIBUTE_DIRECTORY: "distribute"
@@ -33,18 +35,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-
       - name: Install dependencies
         run: yarn install --immutable --immutable-cache --check-cache
-
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v1
-
       - name: Configure
         run: cmake -H"${{ github.workspace }}" -B"${{env.BUILD_DIRECTORY}}" -G"Visual Studio 17 2022" -A x64 -DCMAKE_INSTALL_PREFIX="${{env.INSTALL_DISTRIBUTE_PATH}}"
         env:
-          INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/game_overlay"
-
+          INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/${{env.PACKAGE_DIRECTORY}}"
       - name: Build
         run: cmake --build "${{env.BUILD_DIRECTORY}}" --target install --config ${{env.BUILD_CONFIGURATION}}
       - name: Cache build
@@ -53,6 +51,7 @@ jobs:
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
+
   upload_debug:
     needs: build
     runs-on: windows-latest
@@ -75,6 +74,7 @@ jobs:
           AWS_SYMB_ACCESS_KEY_ID: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}}
           AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
         shell: powershell
+
   upload_release:
     needs: build
     runs-on: windows-latest
@@ -89,10 +89,14 @@ jobs:
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
-      - name: Tar artifact for deployment
-        run: tar -cvzf ${{env.TARGET_ARTIFACT}}-win64.tar.gz -C ${{env.INSTALL_DISTRIBUTE_PATH}} game_overlay
+      - name: Put version into package.json
+        run: node scripts/bump-version.js ${{ steps.get_version.outputs.VERSION }} ${{env.PACKAGE_PATH}}
         env:
-          TARGET_ARTIFACT: game-overlay-${{ steps.get_version.outputs.VERSION }}
+        PACKAGE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/${{env.PACKAGE_DIRECTORY}}"
+      - name: Tar artifact for deployment
+        run: tar -cvzf ${{env.TARGET_ARTIFACT}}.tar.gz -C ${{env.INSTALL_DISTRIBUTE_PATH}} ${{env.PACKAGE_DIRECTORY}}
+        env:
+          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-win64
           INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}"
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -103,4 +107,4 @@ jobs:
       - name: Deploy
         run: aws s3 cp ${{env.TARGET_ARTIFACT}}-win64.tar.gz s3://obs-studio-deployment --acl public-read
         env:
-          TARGET_ARTIFACT: game-overlay-${{ steps.get_version.outputs.VERSION }}
+          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-win64
