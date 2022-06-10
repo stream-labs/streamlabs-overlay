@@ -14,7 +14,7 @@ function log_info(msg) {
 const newVersion = process.argv[1];
 const packagePath = process.argv[2];
 
-log_info('Script Arguments: ' + process.argv.spice(2));
+log_info('Script Arguments: ' + process.argv.splice(2));
 
 try {
     const file = path.join(process.cwd(), packagePath, 'package.json');
