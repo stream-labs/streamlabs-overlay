@@ -58,7 +58,7 @@ jobs:
         run: cmake --build "${{env.BUILD_DIRECTORY}}" --target install --config ${{env.BUILD_CONFIGURATION}}
       - name: Put version into package.json
         if: startsWith(github.ref, 'refs/tags/')
-        run: node scripts/bump-version.js ${{ steps.get_version.outputs.VERSION }} ${{env.PACKAGE_PATH}}
+        run: node scripts/bump-version.js "${{ steps.get_version.outputs.VERSION }}" "${{env.PACKAGE_PATH}}"
         env:
           PACKAGE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/${{env.PACKAGE_DIRECTORY}}"
       - name: Cache build
