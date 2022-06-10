@@ -35,18 +35,28 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
+      - name: Check for cached build
+        id: cache-check
+        uses: actions/cache@v2
+        with:
+          path: ${{env.BUILD_DIRECTORY}}
+          key: ${{ runner.os }}-build-${{ github.sha }}
       - name: Install dependencies
+        if: steps.cache-check.outputs.cache-hit != 'true'
         run: yarn install --immutable --immutable-cache --check-cache
       - name: Add MSBuild to PATH
+        if: steps.cache-check.outputs.cache-hit != 'true'
         uses: microsoft/setup-msbuild@v1
       - name: Configure
+        if: steps.cache-check.outputs.cache-hit != 'true'
         run: cmake -H"${{ github.workspace }}" -B"${{env.BUILD_DIRECTORY}}" -G"Visual Studio 17 2022" -A x64 -DCMAKE_INSTALL_PREFIX="${{env.INSTALL_PACKAGE_PATH}}"
         env:
           INSTALL_PACKAGE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/${{env.PACKAGE_DIRECTORY}}"
       - name: Build
+        if: steps.cache-check.outputs.cache-hit != 'true'
         run: cmake --build "${{env.BUILD_DIRECTORY}}" --target install --config ${{env.BUILD_CONFIGURATION}}
       - name: Cache build
-        if: startsWith(github.ref, 'refs/tags/')
+        if: steps.cache-check.outputs.cache-hit != 'true'
         uses: actions/cache@v2
         with:
           path: ${{env.BUILD_DIRECTORY}}
@@ -89,6 +99,10 @@ jobs:
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
       - name: Put version into package.json
         run: node scripts/bump-version.js ${{ steps.get_version.outputs.VERSION }} ${{env.PACKAGE_PATH}}
         env:
