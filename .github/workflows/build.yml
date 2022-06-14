@@ -82,8 +82,8 @@ jobs:
       - name: Run symbol server scripts
         run: ./symsrv-scripts/main.bat "${{ github.workspace }}/symsrv-scripts" ".\main.ps1 -localSourceDir '${{ github.workspace }}' -repo_userId 'stream-labs' -repo_name 'streamlabs-overlay' -repo_branch '${{ github.sha }}'"
         env:
-          AWS_SYMB_ACCESS_KEY_ID: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}}
-          AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}}
+          AWS_SYMB_ACCESS_KEY_ID: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}}
+          AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}}
         shell: powershell
 
   upload_release_package:
