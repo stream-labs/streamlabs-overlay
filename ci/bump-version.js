@@ -11,8 +11,8 @@ function log_error(msg) {
     sh.echo(colors.red(`ERROR: ${msg}`));
 }
 
-const newVersion = process.argv[1];
-const packagePath = process.argv[2];
+const newVersion = process.argv[2];
+const packagePath = process.argv[3];
 log_info('Script Arguments: ' + process.argv.splice(2));
 
 try {
