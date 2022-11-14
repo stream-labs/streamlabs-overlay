@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "12.7.2",
-    "electron": "14.2.9",
+    "electron": "18.3.7",
     "fs-extra": "9.0.0",
     "prettier": "1.16.4",
     "minimist":"1.2.6",
