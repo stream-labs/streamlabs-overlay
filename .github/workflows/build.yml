@@ -19,7 +19,7 @@ env:
   BUILD_DIRECTORY: "build"
   DISTRIBUTE_DIRECTORY: "distribute"
   RELEASE_BUCKET: "obs-studio-deployment"
-  ELECTRON_VERSION: "v25.8.2"
+  ELECTRON_VERSION: "v25.9.3"
 
 permissions:
   contents: read
@@ -69,6 +69,20 @@ jobs:
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
+      - name: Get the version of aws cli 
+        run: aws --version
+        shell: powershell
+      - name: Install specific version of AWS CLI
+        run: |
+          $version = "2.13.29"
+          $zipfile = "AWSCLIV2.zip"
+          Invoke-WebRequest -OutFile $zipfile "https://awscli.amazonaws.com/AWSCLIV2-$version.msi"
+          Start-Process msiexec.exe -Wait -ArgumentList "/i $zipfile /qn"
+          rm $zipfile
+        shell: pwsh
+      - name: Get the version of aws cli after install
+        run: aws --version
+        shell: powershell
       - name: Get build from cache
         id: cache-check
         uses: actions/cache@v3
