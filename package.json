@@ -40,7 +40,7 @@
     "node-addon-api": "^7.0.0",
     "path": "^0.12.7",
     "shelljs": "^0.8.5",
-    "tar": "6.1.11"
+    "tar": "6.2.1"
   },
   "dependencies": {
   }
