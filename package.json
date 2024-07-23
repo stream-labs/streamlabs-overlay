@@ -31,13 +31,13 @@
   },
   "devDependencies": {
     "@types/node": "12.7.2",
-    "electron": "25.9.3",
+    "electron": "29.4.3",
     "fs-extra": "9.0.0",
     "prettier": "1.16.4",
     "minimist":"1.2.6",
     "colors": "^1.4.0",
     "fs": "^0.0.1-security",
-    "node-addon-api": "^7.0.0",
+    "node-addon-api": "^7.1.1",
     "path": "^0.12.7",
     "shelljs": "^0.8.5",
     "tar": "6.1.11"
