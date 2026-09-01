@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/stream-labs/streamlabs-overlay"
+    "url": "git://github.com/streamlabs/streamlabs-overlay"
   },
   "scripts": {
     "pack": "node scripts/pack.js",
